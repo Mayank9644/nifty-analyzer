@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analysis — Equities, ETFs, Bonds & Derivatives</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Chart.js for Radar and Doughnut charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- macOS Design System CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-[#f5f5f7] text-[#1c1c1e] min-h-screen flex flex-col antialiased selection:bg-[#007aff] selection:text-white">
+
+    <!-- macOS TOP APP WINDOW BAR & SPOTLIGHT SEARCH -->
+    <header class="macos-header px-4 lg:px-7 pt-3.5 pb-2.5 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.04)] bg-[#f5f5f7]/95 backdrop-blur-md">
+        <!-- Top Row: Brand, Spotlight Search, Status -->
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 mb-2">
+            
+            <!-- Left: Brand Logo & Title -->
+            <div class="flex items-center space-x-3 w-full md:w-auto">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-md flex-shrink-0" style="background: linear-gradient(135deg, #0052d4 0%, #4364f7 55%, #6fb1fc 100%);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="10" width="3" height="8" rx="1" fill="rgba(255,255,255,0.4)"/>
+                        <rect x="4" y="7" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
+                        <rect x="4" y="18" width="1" height="2" fill="rgba(255,255,255,0.4)"/>
+                        <rect x="10" y="5" width="4" height="11" rx="1" fill="white"/>
+                        <rect x="11.5" y="2" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
+                        <rect x="11.5" y="16" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
+                        <rect x="18" y="8" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/>
+                        <rect x="19" y="5" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
+                        <rect x="19" y="17" width="1" height="2.5" fill="rgba(255,255,255,0.4)"/>
+                        <path d="M3 20 L10 13 L14 16 L21 8" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-[15px] font-bold tracking-tight text-[#1c1c1e] leading-tight">
+                        Market Analysis
+                    </h1>
+                    <p class="text-[10.5px] text-[#6e6e73] font-medium">Equities • ETFs • Bonds • Commodities • Derivatives</p>
+                </div>
+            </div>
+
+            <!-- Center: Enlarged Spotlight Search Bar -->
+            <div class="relative w-full md:w-[460px] lg:w-[580px]">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="stockSearchInput" 
+                        placeholder="🔍  Search Stocks, ETFs, Bonds, Commodities, Indices… (Press '/' to focus)" 
+                        class="w-full bg-[#e8e8ed] border border-transparent rounded-xl px-4 py-2.5 text-sm text-[#1c1c1e] placeholder-[#8e8e93] focus:bg-white focus:border-[#007aff] focus:outline-none transition-all shadow-sm"
+                        style="font-size: 13.5px;"
+                    />
+                </div>
+                <!-- Autocomplete Dropdown -->
+                <div id="searchDropdown" class="absolute left-0 right-0 top-12 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-xl hidden z-50 max-h-80 overflow-y-auto"></div>
+                <!-- Recent Searches Quick Chips -->
+                <div id="recentSearchesBar" class="hidden sm:flex items-center space-x-1.5 overflow-x-auto pt-1 text-[11px] text-[#6e6e73]"></div>
+            </div>
+
+            <!-- Right: Watchlist Drawer & Shortcuts & Live Status -->
+            <div class="flex items-center space-x-2 text-xs text-[#6e6e73]">
+                <!-- Dark / Light Mode Switcher -->
+                <button id="themeToggleBtn" onclick="toggleAppTheme()" title="Toggle Dark / Light Mode" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span id="themeToggleIcon">🌙</span>
+                </button>
+                <!-- Command Palette Launcher -->
+                <button onclick="openCommandPalette()" title="Spotlight Command Palette (Cmd + K / Ctrl + K)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span>⌘</span>
+                    <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">K</kbd>
+                </button>
+                <button onclick="toggleWatchlistDrawer()" title="Toggle Watchlist (W)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span>⭐️</span>
+                    <span class="hidden sm:inline">Watchlist</span>
+                    <span id="watchlistCountBadge" class="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[10px]">0</span>
+                </button>
+                <button onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>⌨️</span>
+                    <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">?</kbd>
+                </button>
+                <span id="navbarMarketStatus" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#f2f2f7] text-[#6e6e73] font-semibold text-[11px] border border-[rgba(0,0,0,0.08)] shadow-xs transition-all" title="National Stock Exchange of India (NSE) Session State">
+                    <span id="navbarMarketDot" class="w-2 h-2 rounded-full bg-[#8e8e93] mr-1.5"></span>
+                    <span id="navbarMarketText">Checking Market...</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Row 2: Categorized macOS Segmented Navigation (Zero Horizontal Scrolling) -->
+        <div class="max-w-7xl mx-auto py-1">
+            <nav class="flex flex-wrap items-center gap-2">
+                <!-- Group 1: Equities & Screening -->
+                <div class="flex items-center macos-segmented-track shadow-xs">
+                    <button class="nav-tab-btn active" data-tab="stocks" title="Stocks Deep Dive & Charting">📈 Stocks</button>
+                    <button class="nav-tab-btn" data-tab="institutional" title="Institutional Smart Money Radar">🏛️ Institutional</button>
+                    <button class="nav-tab-btn" data-tab="best-picks" title="Top AI & Guru Stock Picks">💡 Picks</button>
+                    <button class="nav-tab-btn" data-tab="screener" title="Multi-Metric Stock Screener">🎯 Screener</button>
+                    <button class="nav-tab-btn" data-tab="scanner" title="SEPA V4 Momentum Alpha Scanner">📡 Scan</button>
+                </div>
+
+                <!-- Group 2: Markets & Asset Desks -->
+                <div class="flex items-center macos-segmented-track shadow-xs">
+                    <button class="nav-tab-btn" data-tab="bees" title="NiftyBees vs GoldBees Strategy">⚖️ Bees</button>
+                    <button class="nav-tab-btn" data-tab="sectors" title="Sectoral Heatmap & Rotation">📊 Sectors</button>
+                    <button class="nav-tab-btn" data-tab="etf" title="All-India ETF Screener">📉 ETFs</button>
+                    <button class="nav-tab-btn" data-tab="commodities" title="MCX Gold, Silver & Crude Oil">🥇 Commodities</button>
+                    <button class="nav-tab-btn" data-tab="options" title="F&O Options Chain & Max Pain">📋 F&O</button>
+                </div>
+
+                <!-- Group 3: Analytics & Execution Tools -->
+                <div class="flex items-center macos-segmented-track shadow-xs">
+                    <button class="nav-tab-btn" data-tab="ipo" title="Current & Upcoming IPOs">🚀 IPOs</button>
+                    <button class="nav-tab-btn" data-tab="calendar" title="Economic & RBI Policy Events">📅 Calendar</button>
+                    <button class="nav-tab-btn" data-tab="journal" title="Personal Trading Journal & P&L">📒 Journal</button>
+                    <button class="nav-tab-btn" data-tab="backtest" title="Historical Strategy Backtester">🧪 Backtest</button>
+                    <button class="nav-tab-btn" data-tab="news" title="Live Financial Market News">📰 News</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 2. STICKY LIVE FINANCIAL TICKER TAPE -->
+    <div id="liveTickerStrip" class="live-ticker-strip">
+        <div class="ticker-tape-container" id="tickerTapeContainer">
+            <div class="ticker-item" onclick="loadStock('^NSEI')"><span class="ticker-sym">NIFTY 50</span> <span class="ticker-price" id="ttNifty">23,779.15</span> <span class="ticker-badge down" id="ttNiftyChg">-0.50%</span></div>
+            <div class="ticker-item" onclick="loadStock('^NSEBANK')"><span class="ticker-sym">BANK NIFTY</span> <span class="ticker-price" id="ttBank">57,088.30</span> <span class="ticker-badge down" id="ttBankChg">-0.49%</span></div>
+            <div class="ticker-item"><span class="ticker-sym">INDIA VIX</span> <span class="ticker-price" id="ttVix">13.82</span> <span class="ticker-badge down" id="ttVixChg">-2.10%</span></div>
+            <div class="ticker-item" onclick="switchTab('commodities')"><span class="ticker-sym">GOLD (MCX)</span> <span class="ticker-price" id="ttGold">₹71,850</span> <span class="ticker-badge up" id="ttGoldChg">+0.35%</span></div>
+            <div class="ticker-item" onclick="switchTab('commodities')"><span class="ticker-sym">CRUDE OIL</span> <span class="ticker-price" id="ttCrude">$73.40</span> <span class="ticker-badge up" id="ttCrudeChg">+0.42%</span></div>
+            <div class="ticker-item"><span class="ticker-sym">USD / INR</span> <span class="ticker-price" id="ttUsdInr">₹94.47</span> <span class="ticker-badge down" id="ttUsdInrChg">-0.05%</span></div>
+            <div class="ticker-item" onclick="switchTab('bees')"><span class="ticker-sym">NIFTYBEES</span> <span class="ticker-price" id="ttNiftyBees">₹271.21</span> <span class="ticker-badge down" id="ttNiftyBeesChg">-0.48%</span></div>
+            <div class="ticker-item" onclick="switchTab('bees')"><span class="ticker-sym">GOLDBEES</span> <span class="ticker-price" id="ttGoldBees">₹125.58</span> <span class="ticker-badge up" id="ttGoldBeesChg">+0.30%</span></div>
+        </div>
+    </div>
+
+
+    <!-- 3. macOS SUB-TOOLBAR (Execution Strategy Strip + Display Density + Position Calculator) -->
+    <section class="bg-[#fafafc] border-b border-[rgba(0,0,0,0.06)] px-4 lg:px-7 py-1.5">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5 text-xs">
+            <div class="flex items-center space-x-2 text-[#5a5a5f]">
+                <span class="font-semibold text-[#1c1c1e] text-[11.5px]">Execution Strategy:</span>
+                <span class="text-[11px] text-[#8e8e93] hidden sm:inline">(Adapts indicator lookbacks, profit targets & stop-loss rules)</span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <div class="macos-segmented-track">
+                    <button class="style-btn" data-style="intraday">
+                        <span>⚡</span> <span>Intraday</span>
+                    </button>
+                    <button class="style-btn active" data-style="swing">
+                        <span>🔄</span> <span>Swing</span>
+                    </button>
+                    <button class="style-btn" data-style="positional">
+                        <span>📈</span> <span>Positional</span>
+                    </button>
+                </div>
+
+                <!-- Display Density Toggle (Standard vs Compact) -->
+                <div class="hidden sm:inline-flex macos-segmented-track" title="Display Density (Toggle with 'D')">
+                    <button id="densityStandardBtn" onclick="setDisplayDensity('standard')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#1c1c1e] bg-white shadow-xs">
+                        Standard
+                    </button>
+                    <button id="densityCompactBtn" onclick="setDisplayDensity('compact')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#6e6e73]">
+                        Compact
+                    </button>
+                </div>
+
+                <button onclick="openPositionCalcModal()" class="px-2.5 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#007aff] hover:bg-[#eff6ff] font-semibold text-[11px] shadow-sm flex items-center gap-1 transition-all">
+                    <span>🧮</span> <span>Position Calculator</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- MAIN DASHBOARD CONTENT CANVAS -->
+    <main class="max-w-7xl mx-auto w-full px-4 lg:px-7 py-5 flex-1">
+
+        <!-- GLOBAL LOADER -->
+        <div id="globalLoader" class="hidden mb-5 p-3.5 rounded-xl bg-white border border-[#bfdbfe] text-[#0062cc] text-xs flex items-center space-x-2.5 shadow-sm">
+            <svg class="animate-spin h-4 w-4 text-[#007aff]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Analyzing real-time market data, calculating indicators, and updating models...</span>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: STOCKS VIEW                                                  -->
+        <!-- =================================================================== -->
+        <div id="tab-view-stocks" class="tab-view space-y-5">
+
+            <!-- Stock Hero Information Card -->
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
+                        <h2 id="stockName" class="text-xl lg:text-2xl font-bold text-[#1c1c1e] tracking-tight">Reliance Industries Ltd</h2>
+                        <span id="stockSymbol" class="text-xs px-2 py-0.5 rounded-md bg-[#e5e5ea] text-[#48484a] font-mono font-medium">RELIANCE.NS</span>
+                        <span id="stockSector" class="badge-stock">Energy</span>
+                        <span id="stockRsBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]">RS 88/99</span>
+                        <span id="stockMinerviniBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">Minervini Stage 2</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3.5 mt-2 text-xs text-[#6e6e73]">
+                        <span id="stockHighLow">Day H: — | L: —</span>
+                        <span class="text-[#d1d1d6]">•</span>
+                        <span id="stock52W">52W H: — | L: —</span>
+                        <span class="text-[#d1d1d6]">•</span>
+                        <span>Market Cap: <strong id="stockMarketCap" class="text-[#1c1c1e] font-semibold">—</strong></span>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <div class="flex items-center justify-end gap-2.5">
+                        <div id="stockPrice" class="text-2xl lg:text-3xl font-bold text-[#1c1c1e] mono tracking-tight">—</div>
+                        <button onclick="refreshCurrentStock()" id="stockRefreshBtn" class="p-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#007aff] hover:bg-[#f2f2f7] shadow-xs transition-all cursor-pointer" title="Refresh live real-time price">
+                            <svg id="stockRefreshSvg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 mt-1">
+                        <div id="stockChange" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mono bg-[#f2f2f7] text-[#6e6e73] border border-[rgba(0,0,0,0.08)]">
+                            —
+                        </div>
+                        <button onclick="openBrokerOrderModalFromHero()" class="px-2.5 py-1 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer" title="Execute directly via Zerodha Kite or Dhan">
+                            <span>⚡</span> <span>Trade on Broker</span>
+                        </button>
+                    </div>
+                    <div id="liveTickTimestamp" class="mt-1 flex justify-end">
+                        <span class="inline-flex items-center text-[10.5px] text-[#8e8e93] font-mono">● Connecting to exchange feed...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MULTI-TIMEFRAME (MTF) CONFLUENCE STRIP (15M · 1H · Daily · Weekly) -->
+            <div id="stockMtfStrip" class="macos-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-[#1c1c1e] text-[11.5px] flex items-center gap-1.5">
+                        <span>🧭</span> Multi-Timeframe Trend Confluence:
+                    </span>
+                    <span id="mtfVerdictBadge" class="px-2 py-0.5 rounded-md font-bold text-[10.5px] bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
+                        Checking alignment...
+                    </span>
+                </div>
+                <div id="mtfPillsContainer" class="flex items-center space-x-2 text-[11px] font-medium flex-wrap gap-y-1">
+                    <!-- Dynamic MTF pills injected via JavaScript -->
+                </div>
+            </div>
+
+            <!-- LAYMAN PREDICTION & TRADE PLAN BOX (Target for renderSignalsBox) -->
+            <div id="signalsBoxContainer"></div>
+
+            <!-- CHART CONTAINER WITH TIMEFRAME SWITCHERS -->
+            <div class="macos-card p-5 space-y-3.5">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-1.5">
+                            <span>📊</span> Price Action & Moving Averages
+                        </h3>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Chart Style: Candles vs Line -->
+                        <div class="macos-segmented-track">
+                            <button class="chart-type-btn active text-[11px] px-2 py-0.5" data-type="candle" onclick="setChartType('candle')">🕯️ Candle</button>
+                            <button class="chart-type-btn text-[11px] px-2 py-0.5" data-type="area" onclick="setChartType('area')">📈 Line</button>
+                        </div>
+
+                        <!-- Technical Overlays Toggles -->
+                        <div class="flex items-center space-x-1 text-[10.5px]">
+                            <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma20" onclick="toggleChartOverlay('sma20')">SMA 20</button>
+                            <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma50" onclick="toggleChartOverlay('sma50')">SMA 50</button>
+                            <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma200" onclick="toggleChartOverlay('sma200')">SMA 200</button>
+                            <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="volume" onclick="toggleChartOverlay('volume')">Vol</button>
+                            <button id="riskRewardToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#ff9500]/40 bg-[#fef6ed] text-[#b35900] hover:bg-[#fcdcb8] transition-all cursor-pointer" onclick="toggleRiskRewardPlanner()" title="Toggle Interactive Risk-Reward Projection">🎯 R:R Plan</button>
+                        </div>
+
+                        <!-- Period Buttons (macOS Segmented Control) -->
+                        <div class="macos-segmented-track">
+                            <button class="period-btn" data-period="5d" data-interval="15m">5D</button>
+                            <button class="period-btn" data-period="1mo" data-interval="1d">1M</button>
+                            <button class="period-btn" data-period="6mo" data-interval="1d">6M</button>
+                            <button class="period-btn active" data-period="1y" data-interval="1d">1Y</button>
+                            <button class="period-btn" data-period="5y" data-interval="1wk">5Y</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candlestick Chart Render Target -->
+                <div id="candlestickChartContainer" class="w-full h-[400px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+
+                <!-- Interactive Risk-Reward Live Projection Bar (Active when toggled) -->
+                <div id="riskRewardBar" class="hidden p-2.5 rounded-lg bg-[#fafafc] border border-[rgba(0,0,0,0.06)] flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-[#b35900] flex items-center gap-1"><span>🎯</span> R:R Planner:</span>
+                        <span>Entry: <strong id="rrEntryVal" class="mono text-[#007aff]">₹0.00</strong></span>
+                        <span>Stop Loss: <strong id="rrStopVal" class="mono text-[#d9383a]">₹0.00</strong> (-<span id="rrRiskPct">2.0%</span>)</span>
+                        <span>Target 1 (1:2): <strong id="rrTarget1Val" class="mono text-[#28a745]">₹0.00</strong></span>
+                        <span>Target 2 (1:3): <strong id="rrTarget2Val" class="mono text-[#1e7e34]">₹0.00</strong></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-[#6e6e73]">Risk per 100 shares: <strong id="rrRiskTotal" class="mono text-[#d9383a]">₹0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- PERFECTLY ALIGNED RESULTS: TECHNICALS & FUNDAMENTALS (2 EQUAL COLUMNS) -->
+            <!-- =============================================================== -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+
+                <!-- COLUMN 1: TECHNICAL INDICATORS CARD -->
+                <div class="macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                    <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
+                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>⚡</span> Technical Momentum & Indicators
+                        </h3>
+                        <span class="text-[11px] text-[#6e6e73]">Calculated from daily candles</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- RSI Indicator -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">Relative Strength Index (RSI 14)</span>
+                                <span id="rsiValue" class="font-bold mono text-[#1c1c1e]">50.0</span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] rounded-full h-1.5 mt-2 overflow-hidden">
+                                <div id="rsiProgressBar" class="h-1.5 rounded-full bg-[#007aff] transition-all" style="width: 50%"></div>
+                            </div>
+                            <p id="rsiExplanation" class="text-[11px] text-[#6e6e73] mt-1.5"></p>
+                        </div>
+
+                        <!-- MACD Status -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">MACD (12, 26, 9) Trend:</span>
+                                <span id="macdStatus" class="font-bold text-emerald-700">BULLISH CROSSOVER</span>
+                            </div>
+                            <p id="macdExplanation" class="text-[11px] text-[#6e6e73] mt-1"></p>
+                        </div>
+
+                        <!-- Volume Trend & OBV -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">Volume Surge vs 20-Day Avg:</span>
+                                <span id="volRatio" class="font-bold mono text-[#1c1c1e]">1.0x</span>
+                            </div>
+                            <div id="volSpikeBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] mt-1.5 inline-block">
+                                🔥 Institutional Volume Surge (>1.8x)
+                            </div>
+                            <p id="volExplanation" class="text-[11px] text-[#6e6e73] mt-1"></p>
+                            <div class="text-[11px] text-[#6e6e73] mt-1.5 pt-1.5 border-t border-[rgba(0,0,0,0.05)] flex justify-between items-center">
+                                <span>On-Balance Volume (OBV):</span>
+                                <strong id="obvTrendText" class="text-[#1c1c1e] mono">Accumulation (Rising)</strong>
+                            </div>
+                        </div>
+
+                        <!-- NSE Delivery Volume & Institutional Accumulation Card -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium flex items-center gap-1.5">
+                                    <span>📦</span> NSE Delivery Accumulation Radar:
+                                </span>
+                                <span id="deliveryBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
+                                    Checking Delivery...
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center text-[11px] text-[#6e6e73] mt-2">
+                                <span>Delivery %: <strong id="deliveryPctVal" class="text-[#1c1c1e] mono">--%</strong> (20D Avg: <span id="deliveryAvgVal" class="mono">--%</span>)</span>
+                                <span>Delivery Surge: <strong id="deliverySurgeVal" class="text-[#007aff] mono">--x</strong></span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] rounded-full h-1.5 mt-2 overflow-hidden">
+                                <div id="deliveryProgressBar" class="h-1.5 rounded-full bg-[#34c759] transition-all" style="width: 50%"></div>
+                            </div>
+                            <p id="deliveryExplanation" class="text-[11px] text-[#6e6e73] mt-1.5 leading-tight">
+                                High delivery percentage (>55%) confirms shares are being physically deposited into Demat accounts (smart money accumulation).
+                            </p>
+                        </div>
+
+                        <!-- Key Risk Pivot Levels -->
+                        <div class="macos-box p-3">
+                            <span class="text-[11px] text-[#6e6e73] font-medium block mb-2">Key Floor & Ceiling Levels (Classic Pivots):</span>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#b32020] block font-medium">Support (S1)</span>
+                                    <span id="supportLevel" class="font-bold mono text-[#b32020]">₹0</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#0062cc] block font-medium">Pivot Point</span>
+                                    <span id="pivotLevel" class="font-bold mono text-[#1c1c1e]">₹0</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#1e7e34] block font-medium">Resistance (R1)</span>
+                                    <span id="resistanceLevel" class="font-bold mono text-[#1e7e34]">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Moving Averages Status -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">Macro Trend Status:</span>
+                                <span id="maTrendStatus" class="font-bold text-emerald-700">BULLISH</span>
+                            </div>
+                            <div id="crossBadge" class="text-[10px] font-bold mt-1 px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] inline-block">
+                                🌟 Golden Cross Active (50 DMA > 200 DMA)
+                            </div>
+                            <p id="maExplanation" class="text-[11px] text-[#6e6e73] mt-1"></p>
+                            <div class="flex justify-between items-center text-xs mt-2 text-[#6e6e73] pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                                <span>50 SMA: <strong id="valSma50" class="text-[#007aff] mono">₹0</strong></span>
+                                <span>200 SMA: <strong id="valSma200" class="text-[#8944ab] mono">₹0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMN 2: COMPANY FUNDAMENTALS & HEALTH CARD -->
+                <div class="macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                    <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
+                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>🏢</span> Company Fundamentals & Health
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-[#6e6e73]">Score: <strong id="fundamentalScore" class="text-[#1c1c1e] mono">85/100</strong></span>
+                            <span id="fundamentalGradeBadge" class="text-xs font-bold px-2 py-0.5 rounded-md border bg-[#edf7ee] text-[#1e7e34] border-[#c6e8cc]">A+</span>
+                        </div>
+                    </div>
+
+                    <!-- Promoter Pledge Warning Alert (conditionally shown) -->
+                    <div id="promoterPledgeAlert" class="hidden p-2.5 rounded-xl bg-[#fdf0f0] border border-[#f7c8c8] text-[#b32020] text-xs space-y-0.5">
+                        <div class="font-bold flex items-center gap-1.5">
+                            <span>⚠️</span> <span>High Promoter Pledge Risk</span>
+                        </div>
+                        <p id="promoterPledgeText" class="text-[11px] leading-relaxed"></p>
+                    </div>
+
+
+                    <div class="space-y-3">
+                        <!-- Quality Verdict Banner -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">Business Health Rating:</span>
+                                <span id="fundamentalRating" class="font-bold text-[#1e7e34]">Outstanding Quality</span>
+                            </div>
+                            <p id="fundamentalSummary" class="text-[11px] text-[#6e6e73] mt-1 leading-relaxed"></p>
+                        </div>
+
+                        <!-- Institutional Quant Health: Piotroski F-Score & Altman Z-Score -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="macos-box p-2.5">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-[#48484a] font-medium">Piotroski F-Score</span>
+                                    <span id="piotroskiScoreVal" class="font-bold mono text-emerald-700">8 / 9</span>
+                                </div>
+                                <div id="piotroskiVerdict" class="text-[10.5px] font-semibold text-emerald-700 mt-0.5">High Financial Strength</div>
+                                <p id="piotroskiSummary" class="text-[10px] text-[#6e6e73] mt-0.5 leading-tight">Strong profitability & positive cash flow.</p>
+                            </div>
+                            <div class="macos-box p-2.5">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-[#48484a] font-medium">Altman Z-Score</span>
+                                    <span id="altmanScoreVal" class="font-bold mono text-[#007aff]">3.4</span>
+                                </div>
+                                <div id="altmanVerdict" class="text-[10.5px] font-semibold text-emerald-700 mt-0.5">Safe Zone</div>
+                                <p id="altmanSummary" class="text-[10px] text-[#6e6e73] mt-0.5 leading-tight">Negligible insolvency probability.</p>
+                            </div>
+                        </div>
+
+                        <!-- Core Valuation & Returns (6 equal-sized cells) -->
+                        <div class="macos-box p-3">
+                            <span class="text-[11px] text-[#6e6e73] font-medium block mb-2">Core Valuation & Returns:</span>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">P/E Ratio</span>
+                                    <span id="peRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0x</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">P/B Ratio</span>
+                                    <span id="pbRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0x</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#1e7e34] block font-medium">Return on Eq (ROE)</span>
+                                    <span id="roeVal" class="font-bold text-[#1e7e34] mono mt-0.5 inline-flex items-center justify-center">0%</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Debt to Equity</span>
+                                    <span id="debtVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Div Yield</span>
+                                    <span id="divYieldVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">EPS (TTM)</span>
+                                    <span id="epsVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Operating Margins & Growth -->
+                        <div class="macos-box p-3">
+                            <span class="text-[11px] text-[#6e6e73] font-medium block mb-2">Operating Margins & Book Value:</span>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Net Margin</span>
+                                    <span id="netMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Op Margin</span>
+                                    <span id="opMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Book Value</span>
+                                    <span id="bookVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Liquidity & Capital Efficiency -->
+                        <div class="macos-box p-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-medium">Free Cash Flow (FCF):</span>
+                                <span id="fcfVal" class="font-bold mono text-[#1c1c1e]">₹0 Cr</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs mt-2 text-[#6e6e73] pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                                <span>PEG Ratio: <strong id="pegVal" class="text-[#007aff] mono">0.0</strong></span>
+                                <span>Return on Assets: <strong id="roaVal" class="text-[#1e7e34] mono">0%</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- FinceptTerminal Institutional Intrinsic Valuation & Margin of Safety -->
+                        <div class="macos-box p-3 border border-[#007aff]/20 bg-gradient-to-br from-white to-[#f0f7ff]">
+                            <div class="flex justify-between items-center text-xs mb-2">
+                                <span class="text-[#007aff] font-bold flex items-center gap-1.5">
+                                    <span>💎</span> <span>DCF & Graham Intrinsic Valuation</span>
+                                </span>
+                                <span id="valuationVerdictBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-md border bg-[#eff6ff] text-[#007aff] border-[#bfdbfe]">
+                                    Calculating...
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs mb-2">
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] shadow-2xs">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">2-Stage DCF Value</span>
+                                    <span id="dcfFairValueVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹—</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] shadow-2xs">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Graham Number</span>
+                                    <span id="grahamNumberVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹—</span>
+                                </div>
+                                <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] shadow-2xs">
+                                    <span class="text-[10px] text-[#6e6e73] block font-medium">Margin of Safety</span>
+                                    <span id="marginOfSafetyVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—%</span>
+                                </div>
+                            </div>
+                            
+                            <p id="valuationSummaryText" class="text-[10.5px] text-[#555] leading-tight">Quant equity research model valuing cashflows against 10Y Indian G-Sec yield benchmark.</p>
+                        </div>
+
+                        <!-- Valuation Summary Note -->
+                        <div class="macos-box p-3 text-[11px] text-[#6e6e73] leading-relaxed">
+                            💡 <strong>Valuation Context:</strong> P/E & P/B are evaluated against historical industry medians. Debt-to-Equity below 0.5 indicates strong financial safety.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- DEDICATED PANEL: SHAREHOLDING & OWNERSHIP STRUCTURE -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                        <span>👥</span> Shareholding & Institutional Ownership Structure
+                    </h3>
+                    <span class="text-[11px] text-[#6e6e73]">Who owns the company?</span>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-36 h-36 relative flex-shrink-0">
+                        <canvas id="shareholdingChartCanvas"></canvas>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+                        <div class="macos-box p-3">
+                            <span class="text-[10px] text-[#0062cc] font-semibold uppercase tracking-wider block">Promoters (Founders)</span>
+                            <span id="promoterVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">50%</span>
+                            <span class="text-[10px] text-[#8e8e93]">Controlling stake</span>
+                        </div>
+                        <div class="macos-box p-3">
+                            <span class="text-[10px] text-[#1e7e34] font-semibold uppercase tracking-wider block">FII (Foreign Funds)</span>
+                            <span id="fiiVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">20%</span>
+                            <span class="text-[10px] text-[#8e8e93]">Global smart money</span>
+                        </div>
+                        <div class="macos-box p-3">
+                            <span class="text-[10px] text-[#8a4500] font-semibold uppercase tracking-wider block">DII (Domestic MFs)</span>
+                            <span id="diiVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">15%</span>
+                            <span class="text-[10px] text-[#8e8e93]">LIC & Indian AMCs</span>
+                        </div>
+                        <div class="macos-box p-3">
+                            <span class="text-[10px] text-[#6b2f8a] font-semibold uppercase tracking-wider block">Retail / Public</span>
+                            <span id="publicVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">15%</span>
+                            <span class="text-[10px] text-[#8e8e93]">General public</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPERT STRATEGIES SECTION -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div>
+                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>🧠</span> Top 8 Legendary Investor Frameworks
+                        </h3>
+                        <p class="text-xs text-[#6e6e73]">Simulated evaluation against Warren Buffett, Peter Lynch, Mark Minervini, William O'Neil, etc.</p>
+                    </div>
+                    <span class="text-xs font-medium text-[#007aff]">Multi-Factor Strategy Score</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                    <!-- Best Match Highlight Card -->
+                    <div class="macos-box p-4 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="text-[10px] text-[#007aff] font-semibold uppercase tracking-wider">Top Alignment:</span>
+                            <h4 id="bestStrategyName" class="text-base font-bold text-[#1c1c1e] mt-1">Warren Buffett Moat</h4>
+                            <p id="bestStrategyGuru" class="text-xs text-[#6e6e73]">Value Investing Framework</p>
+                            <p id="bestStrategyDesc" class="text-xs text-[#48484a] mt-2.5 leading-relaxed"></p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)] flex justify-between items-center">
+                            <span class="text-xs text-[#6e6e73]">Score:</span>
+                            <span id="bestStrategyScore" class="text-base font-bold mono text-[#1e7e34]">85 / 100</span>
+                        </div>
+                    </div>
+
+                    <!-- 8-Axis Radar Chart -->
+                    <div class="w-full h-64 relative">
+                        <canvas id="expertRadarCanvas"></canvas>
+                    </div>
+
+                    <!-- Strategy Cards Grid -->
+                    <div class="lg:col-span-3">
+                        <div id="expertStrategiesCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STOCK LATEST NEWS -->
+            <div class="macos-card p-5 space-y-3.5">
+                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <span>📰</span> Latest News & Media Buzz
+                </h3>
+                <div id="stockNewsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: INSTITUTIONAL SMART MONEY RADAR                                -->
+        <!-- =================================================================== -->
+        <div id="tab-view-institutional" class="tab-view hidden space-y-5">
+            <!-- Header Card -->
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>🏛️</span> Institutional Smart Money Radar
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">FII / DII Daily Cash Flows · Index Futures Long/Short Positioning · High-Delivery Accumulation Scanner</p>
+                </div>
+                <button onclick="loadInstitutionalRadar()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                    <span>🔄</span> <span>Refresh Radar</span>
+                </button>
+            </div>
+
+            <!-- Loader -->
+            <div id="institutionalLoader" class="hidden p-8 text-center text-xs text-[#8e8e93]">
+                <svg class="animate-spin h-5 w-5 text-[#007aff] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Scanning NSE delivery volumes and institutional flow matrix...</span>
+            </div>
+
+            <div id="institutionalContent" class="space-y-5">
+                <!-- Two Columns: Cash Flow Bar Chart + Futures Positioning Gauge -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                    <!-- FII / DII Cash Flow Chart (7 cols) -->
+                    <div class="lg:col-span-7 macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-1.5">
+                                    <span>💰</span> FII & DII Cash Market Daily Net Flows
+                                </h3>
+                                <p class="text-[11px] text-[#6e6e73]">Past 10 Trading Sessions (in ₹ Crore)</p>
+                            </div>
+                            <div class="flex items-center space-x-3 text-xs">
+                                <div>
+                                    <span class="text-[10.5px] text-[#6e6e73] block">Today FII:</span>
+                                    <span id="instLatestFii" class="text-sm font-bold mono text-emerald-700">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10.5px] text-[#6e6e73] block">Today DII:</span>
+                                    <span id="instLatestDii" class="text-sm font-bold mono text-emerald-700">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full h-56">
+                            <canvas id="fiiDiiCashChart"></canvas>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs pt-2 border-t border-[rgba(0,0,0,0.05)] text-[#6e6e73]">
+                            <span>30-Day FII Cumulative: <strong id="instNet30Fii" class="mono text-[#1c1c1e]">--</strong></span>
+                            <span>30-Day DII Cumulative: <strong id="instNet30Dii" class="mono text-emerald-700">--</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- FII Index Futures Long/Short Positioning (5 cols) -->
+                    <div class="lg:col-span-5 macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                        <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-1.5">
+                                    <span>🎯</span> FII Futures Long / Short Ratio
+                                </h3>
+                                <p class="text-[11px] text-[#6e6e73]">Nifty & Bank Nifty Open Contracts</p>
+                            </div>
+                            <span id="instRegimeBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg border bg-[#edf7ee] text-emerald-700 border-[#c6e8cc]">
+                                ⚡ Squeeze Alert
+                            </span>
+                        </div>
+
+                        <!-- Progress Ratio Bar -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span id="instLongPct" class="text-[#007aff] mono">23.8% Long</span>
+                                <span id="instShortPct" class="text-[#ef4444] mono">76.2% Short</span>
+                            </div>
+                            <div class="w-full bg-[#ef4444]/20 rounded-full h-3 overflow-hidden">
+                                <div id="instLongProgressBar" class="h-3 bg-[#007aff] rounded-full transition-all" style="width: 24%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-[#8e8e93]">
+                                <span>Extreme Bearish (&lt;20%)</span>
+                                <span>Neutral (50%)</span>
+                                <span>Overbought (&gt;75%)</span>
+                            </div>
+                        </div>
+
+                        <!-- Plain English Tactical Regime Verdict -->
+                        <div class="macos-box p-3.5 space-y-1.5">
+                            <div class="text-[11px] font-bold text-[#1c1c1e] flex items-center gap-1">
+                                <span>💡</span> <span>Tactical Interpretation:</span>
+                            </div>
+                            <p id="instVerdictText" class="text-xs text-[#48484a] leading-relaxed">
+                                FIIs are heavily net short. Historically, when FII Longs drop below 25%, downside momentum is exhausted, triggering sharp short-covering rallies.
+                            </p>
+                            <div id="instActionAdvice" class="text-[11px] font-semibold text-emerald-700 pt-1 border-t border-[rgba(0,0,0,0.05)]">
+                                🟢 Favorable risk-reward for swing longs & buying call spreads on dips.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Delivery Accumulation Table Card -->
+                <div class="macos-card p-5 space-y-3.5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                                <span>💎</span> High-Delivery Institutional Accumulation Scanner
+                            </h3>
+                            <p class="text-xs text-[#6e6e73]">Identifies stocks where &gt;50% of high volume was marked for genuine physical delivery into demat accounts</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#edf7ee] text-emerald-700 border border-[#c6e8cc]">
+                            Institutional Mark-Up Filter Active
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[10.5px] uppercase tracking-wider text-[#6e6e73] bg-[#f8f8fa] border-b border-[rgba(0,0,0,0.06)]">
+                                    <th class="py-2.5 px-3">Stock Symbol</th>
+                                    <th class="py-2.5 px-3">Sector</th>
+                                    <th class="py-2.5 px-3">Price</th>
+                                    <th class="py-2.5 px-3">Day %</th>
+                                    <th class="py-2.5 px-3">Vol Surge</th>
+                                    <th class="py-2.5 px-3">Delivery %</th>
+                                    <th class="py-2.5 px-3">Institutional Status</th>
+                                    <th class="py-2.5 px-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="instDeliveryTableBody">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: BEST PICKS (Top Shares & ETFs)                                -->
+        <!-- =================================================================== -->
+        <div id="tab-view-best-picks" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>💡</span> Best Shares & ETFs to Trade Today
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">High-confluence swing breakouts, blue-chip compounders & mean-reversion ETFs</p>
+                </div>
+                <button onclick="loadBestRecommendations()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                    <span>🔄</span> <span>Refresh Picks</span>
+                </button>
+            </div>
+
+            <!-- Best Picks Content Target -->
+            <div id="bestPicksContainer"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: NIFTYBEES VS GOLDBEES (Single ETF Momentum Switcher)           -->
+        <!-- =================================================================== -->
+        <div id="tab-view-bees" class="tab-view hidden space-y-5">
+            <!-- Header & Controls -->
+            <div class="macos-card p-5">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                            <span>⚖️</span> NiftyBees vs GoldBees — Single ETF Strategy
+                        </h2>
+                        <p class="text-xs text-[#6e6e73] mt-1 max-w-2xl">
+                            Invest 100% in ONE ETF at a time. The tool calculates momentum, 200 DMA trend, and macro volatility to advise when to hold or shift.
+                        </p>
+                    </div>
+
+                    <!-- Controls Row -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">I currently hold:</span>
+                            <select id="beesCurrentHolding" class="bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] font-semibold outline-none">
+                                <option value="NONE">Nothing (New Allocation)</option>
+                                <option value="NIFTYBEES">📈 NIFTYBEES</option>
+                                <option value="GOLDBEES">🥇 GOLDBEES</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">My capital:</span>
+                            <div class="flex items-center bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5">
+                                <span class="text-xs text-[#6e6e73] mr-1">₹</span>
+                                <input type="number" id="beesInvestmentInput" value="100000" step="10000"
+                                    class="bg-transparent text-xs text-[#1c1c1e] font-mono w-28 outline-none font-semibold" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col justify-end">
+                            <span class="text-[10px] text-transparent">–</span>
+                            <button onclick="loadBeesStrategy()"
+                                class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                                <span>⚡</span> <span>Get Decision</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bees Content Target -->
+            <div id="beesResultsContainer"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: COMMODITIES VIEW (Gold, Silver, Crude Oil, etc.)              -->
+        <!-- =================================================================== -->
+        <div id="tab-view-commodities" class="tab-view hidden space-y-5">
+            <!-- Commodities Grid Cards -->
+            <div id="commoditiesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5"></div>
+
+            <!-- Selected Commodity Detail & Candlestick Chart -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div>
+                        <h3 id="selectedCommTitle" class="text-lg font-bold text-[#1c1c1e]">🥇 Gold</h3>
+                        <p class="text-xs text-[#6e6e73]">All prices converted to Indian Rupee (₹) equivalents via live USD/INR exchange rate.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <span class="text-[10px] text-[#6e6e73] block font-medium">Commodity Signal</span>
+                            <span id="commSignalVerdict" class="text-sm font-bold mono text-[#1e7e34]">BUY</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signal Summary & Reasons -->
+                <div class="macos-box p-3.5">
+                    <p id="commSignalSummary" class="text-xs text-[#1c1c1e] font-medium"></p>
+                    <ul id="commSignalReasons" class="mt-2 space-y-1 text-xs text-[#48484a]"></ul>
+                </div>
+
+                <!-- Gold / Silver Ratio Tracker Box -->
+                <div id="commRatioCard" class="hidden macos-box p-3.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold text-[#8a4500] uppercase tracking-wider">Gold / Silver Ratio Tracker</span>
+                        <span id="gsRatioVal" class="text-sm font-bold mono text-[#8a4500]">82.5</span>
+                    </div>
+                    <p id="gsRatioDesc" class="text-xs text-[#48484a] mt-1"></p>
+                </div>
+
+                <!-- Commodity Candlestick Chart Target -->
+                <div>
+                    <h4 class="text-xs font-semibold text-[#6e6e73] mb-2">Technical Futures Chart (Converted to ₹ INR)</h4>
+                    <div id="commodityChartContainer" class="w-full h-[400px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: F&O / OPTIONS CHAIN VIEW                                     -->
+        <!-- =================================================================== -->
+        <div id="tab-view-options" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">📋</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#1c1c1e]">NSE Derivatives & Options Chain</h3>
+                        <p id="optionsUnderlyingPrice" class="text-xs font-semibold mono text-[#007aff]">Spot: ₹24,850.00</p>
+                    </div>
+                </div>
+
+                <!-- Underlyings Switcher -->
+                <div class="macos-segmented-track">
+                    <button onclick="loadOptionsDashboard('NIFTY')" class="macos-segmented-item active">NIFTY 50</button>
+                    <button onclick="loadOptionsDashboard('BANKNIFTY')" class="macos-segmented-item">BANK NIFTY</button>
+                    <button onclick="loadOptionsDashboard('RELIANCE')" class="macos-segmented-item">RELIANCE</button>
+                </div>
+            </div>
+
+            <!-- Prominent F&O Summary Callout Banner -->
+            <div id="fnoCalloutBanner"></div>
+
+            <!-- KEY F&O METRICS CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="macos-card p-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-[#6e6e73] font-medium">Put-Call Ratio (PCR)</span>
+                        <span id="pcrValue" class="text-xl font-bold mono text-emerald-700">1.15</span>
+                    </div>
+                    <div id="pcrSentiment" class="text-xs font-semibold text-emerald-700 mt-1">Strong Bullish</div>
+                    <p class="text-[11px] text-[#8e8e93] mt-1">PCR > 1.0 indicates put writing support.</p>
+                </div>
+
+                <div class="macos-card p-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-[#6e6e73] font-medium">Max Pain Strike</span>
+                        <span id="maxPainStrike" class="text-xl font-bold mono text-[#b35900]">₹—</span>
+                    </div>
+                    <div id="maxPainDistance" class="text-xs font-semibold text-[#48484a] mt-1">—</div>
+                    <p class="text-[11px] text-[#8e8e93] mt-1">Strike where writers face least liability.</p>
+                </div>
+
+                <div class="macos-card p-4">
+                    <div class="text-xs text-[#007aff] font-semibold uppercase tracking-wider">Suggested Strategy</div>
+                    <div id="optionsStrategyName" class="text-sm font-bold text-[#1c1c1e] mt-1">🐂 Bull Call Spread</div>
+                    <div id="optionsStrategySetup" class="text-[11px] text-emerald-700 mt-0.5 font-medium"></div>
+                    <p id="optionsStrategyRationale" class="text-[11px] text-[#6e6e73] mt-1 line-clamp-2"></p>
+                </div>
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- OPTIONS STRATEGY PAYOFF VISUALIZER & IV PERCENTILE CARD         -->
+            <!-- =============================================================== -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div>
+                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>📈</span> Options Strategy Payoff Risk Curve & IV Percentile
+                        </h3>
+                        <p class="text-xs text-[#6e6e73]">Model multi-leg P&L curves, breakevens, and volatility regime before execution</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Strategy Selector -->
+                        <div class="macos-segmented-track text-xs">
+                            <button class="payoff-strat-btn active text-[11px] px-2.5 py-1" data-strategy="bull_call_spread" onclick="loadOptionsPayoff('bull_call_spread')">🐂 Bull Call Spread</button>
+                            <button class="payoff-strat-btn text-[11px] px-2.5 py-1" data-strategy="bear_put_spread" onclick="loadOptionsPayoff('bear_put_spread')">🐻 Bear Put Spread</button>
+                            <button class="payoff-strat-btn text-[11px] px-2.5 py-1" data-strategy="iron_condor" onclick="loadOptionsPayoff('iron_condor')">🛡️ Iron Condor</button>
+                            <button class="payoff-strat-btn text-[11px] px-2.5 py-1" data-strategy="long_call" onclick="loadOptionsPayoff('long_call')">🎯 Long Call</button>
+                        </div>
+
+                        <!-- Lot Size Input -->
+                        <div class="flex items-center space-x-1.5 macos-box px-2.5 py-1 text-xs">
+                            <span class="text-[#6e6e73] text-[11px]">Qty / Lot:</span>
+                            <input type="number" id="payoffLotSizeInput" value="25" min="1" step="25" onchange="loadOptionsPayoff(null, this.value)" class="w-12 bg-transparent font-bold mono text-[#1c1c1e] outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payoff Metrics Strip (4 Equal Cards) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#1e7e34] block font-semibold uppercase tracking-wider">Max Profit</span>
+                        <span id="payoffMaxProfit" class="text-base font-bold mono text-[#1e7e34] mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#b32020] block font-semibold uppercase tracking-wider">Max Loss</span>
+                        <span id="payoffMaxLoss" class="text-base font-bold mono text-[#b32020] mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#0062cc] block font-semibold uppercase tracking-wider">Breakeven</span>
+                        <span id="payoffBreakeven" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#6e6e73] block font-semibold uppercase tracking-wider">Risk / Reward</span>
+                        <span id="payoffRiskReward" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">1 : 1.6</span>
+                    </div>
+                </div>
+
+                <!-- Payoff Curve Chart Canvas -->
+                <div class="w-full h-52 bg-white rounded-xl p-3 border border-[rgba(0,0,0,0.06)]">
+                    <canvas id="optionsPayoffChartCanvas"></canvas>
+                </div>
+
+                <!-- Strategy Legs & IV Percentile Context -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-semibold text-[#48484a] block">Strategy Structure:</span>
+                        <div id="payoffLegsList" class="flex flex-wrap gap-2"></div>
+                        <p id="payoffSummary" class="text-[11px] text-[#6e6e73] pt-1 leading-relaxed"></p>
+                    </div>
+
+                    <!-- IV Regime Box -->
+                    <div class="macos-box p-3 space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#48484a] font-medium">India VIX / IV Percentile:</span>
+                            <span id="payoffIvRank" class="font-bold mono text-[#007aff]">32%</span>
+                        </div>
+                        <div id="payoffIvBadge" class="text-[11px] font-bold text-emerald-700">CHEAP VOLATILITY (FAVOR BUYING DEBIT SPREADS)</div>
+                        <p id="payoffIvRule" class="text-[10.5px] text-[#6e6e73] leading-tight">Options are cheap. Buying Debit Spreads offers favorable convex payoff.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTIONS CHAIN TABLE CONTAINER -->
+            <div class="macos-card p-5 space-y-3">
+                <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-[#48484a]">Open Interest Heatmap & Strike Chain</h4>
+                    <span class="text-[11px] text-[#8e8e93]">Red Bars = Call Wall • Green Bars = Put Wall</span>
+                </div>
+                <div id="optionsChainTableContainer"></div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: MARKET NEWS VIEW                                             -->
+        <!-- =================================================================== -->
+        <div id="tab-view-news" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 space-y-4">
+                <h3 class="text-base font-bold text-[#1c1c1e] flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <span>📰</span> Live Indian Financial Markets & Economy News
+                </h3>
+                <div id="generalNewsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: LIVE SCANNER VIEW (SEPA V4 & Position Sizing)                   -->
+        <!-- =================================================================== -->
+        <div id="tab-view-scanner" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>📡</span> Alpha-Momentum Scanner
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">SEPA V4 · Breakout Entry · ATR Stop · Automated Position Sizing</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2 macos-box px-3 py-1.5 text-xs">
+                        <span class="text-[#6e6e73]">Capital ₹</span>
+                        <input type="number" id="scannerCapitalInput" value="1000000" class="w-24 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
+                        <span class="text-[#d1d1d6]">|</span>
+                        <span class="text-[#6e6e73]">Risk %</span>
+                        <input type="number" id="scannerRiskInput" value="2.0" step="0.5" class="w-12 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
+                    </div>
+                    <button onclick="runLiveScanner()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                        <span>▶</span> <span>Run Live Scan</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="scannerStatusBanner" class="text-xs text-[#6e6e73]">
+                Click <strong>Run Live Scan</strong> to find qualified breakout candidates with automated share allocation.
+            </div>
+
+            <div id="scannerResultsContainer" class="macos-card p-5"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: 15 SECTORS ROTATION (RRG) VIEW                                 -->
+        <!-- =================================================================== -->
+        <div id="tab-view-sectors" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>📊</span> 15 Nifty Sectors Analysis
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">Sector health, institutional money flow, and market rotation</p>
+                </div>
+                <button onclick="loadSectorsAnalysis()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                    <span>🔍</span> <span>Refresh Sector Health</span>
+                </button>
+            </div>
+
+            <!-- Hot Money / Sector Rotation Callout Banner -->
+            <div id="sectorRotationBanner"></div>
+
+            <div id="sectorsGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+
+        <!-- =================================================================== -->
+        <!-- TAB: ETF MEAN-REVERSION (FRESH VARIANT) VIEW                        -->
+        <!-- =================================================================== -->
+        <div id="tab-view-etf" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>📉</span> ETF Mean-Reversion Screener (FRESH)
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">14 Core Liquid Indian ETFs · 5% Systematic Bullet Allocation · -5% Avg-Down · 30% Target</p>
+                </div>
+
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <div class="flex items-center gap-2 macos-box px-3 py-1.5 text-xs">
+                        <span class="text-[#6e6e73]">Capital ₹</span>
+                        <input type="number" id="etfCapitalInput" value="1000000" class="w-24 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
+                    </div>
+                    <button onclick="exportEtfToCSV()" title="Download ETF Screener CSV" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
+                        <span>📥</span> <span>Export CSV</span>
+                    </button>
+                    <button onclick="loadEtfScreener()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                        <span>▶</span> <span>Evaluate ETFs</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Strategy Rules Description Card -->
+            <div class="macos-box p-4 text-xs space-y-1.5">
+                <div class="font-semibold text-[#007aff] text-xs">🎯 FRESH Strategy Framework:</div>
+                <ul class="list-disc list-inside space-y-1 text-[#6e6e73] text-[11px] leading-relaxed">
+                    <li><strong>Universe:</strong> NIFTYBEES, JUNIORBEES, BANKBEES, PSUBNKBEES, CPSEETF, MON100, HNGSNGBEES, GOLDBEES</li>
+                    <li><strong>Capital Allocation:</strong> 20 chunks (5% per bullet), Max 15% (3 chunks) per sector</li>
+                    <li><strong>Macro Filter:</strong> Entries permitted only if NIFTY 50 &gt; 100 DMA</li>
+                    <li><strong>Average Down:</strong> Triggered when position drops -5% below average purchase cost</li>
+                    <li><strong>Patient Exit:</strong> Hold until +30% unrealized profit, then activate a wide -10% trailing stop</li>
+                </ul>
+            </div>
+
+            <div id="etfMacroBanner"></div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="macos-card p-4">
+                    <span class="text-xs text-[#6e6e73] block">Single Chunk Size (5% Allocation)</span>
+                    <span id="etfChunkSizeVal" class="text-xl font-bold mono text-emerald-700">₹50,000</span>
+                </div>
+                <div class="macos-card p-4">
+                    <span class="text-xs text-[#6e6e73] block">Total Chunks Allowed</span>
+                    <span id="etfTotalChunksVal" class="text-xl font-bold mono text-[#1c1c1e]">20 Chunks</span>
+                </div>
+            </div>
+
+            <div class="macos-card p-5 space-y-3">
+                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                    <span>⚡</span> Triggered Action Report (New Entries & Average-Downs)
+                </h3>
+                <div id="etfNewEntriesContainer"></div>
+            </div>
+
+            <div class="macos-card p-5 space-y-3">
+                <h3 class="text-sm font-semibold text-[#1c1c1e]">Core 8 Indian ETFs Technical Status</h3>
+                <div id="etfTableContainer"></div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: TRADE JOURNAL & PORTFOLIO TRACKER                              -->
+        <!-- =================================================================== -->
+        <div id="tab-view-journal" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>📒</span> Trade Journal & Portfolio Advisory
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">Track active positions, live P&L, and 9-factor algorithmic advice (Buy More, Hold, Sell)</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="exportJournalToCSV()" title="Download Journal CSV" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
+                        <span>📥</span> <span>Export CSV</span>
+                    </button>
+                    <button onclick="printJournalSummary()" title="Print / PDF View" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
+                        <span>🖨️</span> <span>Print</span>
+                    </button>
+                    <button onclick="openManualTradeModal()" class="btn-primary px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
+                        <span>✏️</span> <span>Add Position Manually</span>
+                    </button>
+                    <button onclick="loadTradeJournal()" class="btn-secondary text-xs cursor-pointer">
+                        🔄 Refresh P&L
+                    </button>
+                </div>
+            </div>
+
+            <div id="journalNotification"></div>
+
+            <!-- Performance Metrics Strip -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="macos-card p-3.5 text-center">
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Win Rate</span>
+                    <span id="statsWinRate" class="text-xl font-bold mono text-emerald-700">0%</span>
+                </div>
+                <div class="macos-card p-3.5 text-center">
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Profit Factor</span>
+                    <span id="statsProfitFactor" class="text-xl font-bold mono text-[#007aff]">1.0</span>
+                </div>
+                <div class="macos-card p-3.5 text-center">
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Realized Net P&L</span>
+                    <span id="statsNetPnl" class="text-xl font-bold mono text-[#1c1c1e]">₹0.00</span>
+                </div>
+                <div class="macos-card p-3.5 text-center">
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Closed Trades</span>
+                    <span id="statsTotalTrades" class="text-xl font-bold mono text-[#48484a]">0</span>
+                </div>
+            </div>
+
+            <!-- Active Open Trades Table -->
+            <div class="macos-card p-5 space-y-3">
+                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                    <span>🎯</span> Active Open Positions (Live Tracking & Algorithmic Advice)
+                </h3>
+                <div id="activeTradesTableContainer"></div>
+            </div>
+
+            <!-- Closed Trades History -->
+            <div class="macos-card p-5 space-y-3">
+                <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
+                    <span>🏆</span> Closed Trade History
+                </h3>
+                <div id="closedTradesHistoryContainer" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: HISTORICAL BACKTESTING ENGINE                                  -->
+        <!-- =================================================================== -->
+        <div id="tab-view-backtest" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>🧪</span> Historical Backtesting Engine
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">SEPA V3 · Trend Template + VCP Breakout · 21 EMA Trailing Exit</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <select id="backtestSymbolSelect" class="bg-white border border-[rgba(0,0,0,0.12)] px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] mono outline-none">
+                        <option value="RELIANCE.NS">RELIANCE.NS</option>
+                        <option value="TCS.NS">TCS.NS</option>
+                        <option value="HDFCBANK.NS">HDFCBANK.NS</option>
+                        <option value="INFY.NS">INFY.NS</option>
+                        <option value="TATASTEEL.NS">TATASTEEL.NS</option>
+                        <option value="SUNPHARMA.NS">SUNPHARMA.NS</option>
+                        <option value="BEL.NS">BEL.NS</option>
+                    </select>
+                    <select id="backtestPeriodSelect" class="bg-white border border-[rgba(0,0,0,0.12)] px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] mono outline-none">
+                        <option value="1y">1 Year</option>
+                        <option value="3y" selected>3 Years</option>
+                        <option value="5y">5 Years</option>
+                    </select>
+                    <button onclick="runBacktest()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                        <span>▶</span> <span>Run Backtest</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Backtest Results Target -->
+            <div id="backtestResultsContainer"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: CUSTOM STOCK SCREENER                                          -->
+        <!-- =================================================================== -->
+        <div id="tab-view-screener" class="tab-view hidden space-y-5">
+            <!-- Screener Control Panel -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3.5">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">🎯</span>
+                            <h3 class="text-base font-bold text-[#1c1c1e]">Multi-Factor Stock Screener</h3>
+                        </div>
+                        <p class="text-xs text-[#6e6e73] mt-0.5">Filter Nifty 50 & Midcap universe by Valuation, Profitability, RSI momentum, and 52W High breakout</p>
+                    </div>
+
+                    <!-- Quick Preset Pills & Export -->
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[11px] text-[#8e8e93] font-medium mr-1">Presets:</span>
+                        <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all">
+                            🔥 52W Breakouts
+                        </button>
+                        <button onclick="loadScreenerPresets('compounder')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe] hover:bg-[#dbeafe] transition-all">
+                            💎 Compounders
+                        </button>
+                        <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all">
+                            🎯 Oversold Dips
+                        </button>
+                        <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
+                            <span>📥</span> <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Sector Filter</label>
+                        <select id="screenerSectorSelect" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e]">
+                            <option value="All">All Sectors</option>
+                            <option value="Financial Services">Financial Services</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Energy">Energy</option>
+                            <option value="Consumer Goods">Consumer Goods</option>
+                            <option value="Automobile">Automobile</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Capital Goods">Capital Goods</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Renewable Energy">Renewable Energy</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Max P/E Ratio (x)</label>
+                        <input type="number" id="screenerPeMax" placeholder="e.g. 35" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Min ROE (%)</label>
+                        <input type="number" id="screenerRoeMin" placeholder="e.g. 15" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">RSI Range (14D)</label>
+                        <div class="flex items-center space-x-1.5">
+                            <input type="number" id="screenerRsiMin" placeholder="Min" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                            <span class="text-[#8e8e93]">-</span>
+                            <input type="number" id="screenerRsiMax" placeholder="Max" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkbox Filters & Run Button -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                    <div class="flex items-center space-x-4 text-xs">
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screener52wCheck" class="rounded text-[#007aff]">
+                            <span>Near 52W High (&lt; 8%)</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screenerVolSurgeCheck" class="rounded text-[#007aff]">
+                            <span>Volume Surge (&gt; 1.4x)</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screenerGoldenCheck" class="rounded text-[#007aff]">
+                            <span>Golden Cross (50 &gt; 200 DMA)</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center space-x-2.5">
+                        <span id="screenerMatchCount" class="text-xs font-semibold text-[#007aff] px-2.5 py-1 rounded-full bg-[#eff6ff] border border-[#bfdbfe]">Ready to Scan</span>
+                        <button onclick="runScreenerQuery()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                            <span>🔍</span> <span>Run Screener</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screener Results Table -->
+            <div class="macos-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa]">
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Stock / Company</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Sector</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">CMP & Day Change</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">P/E</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">ROE</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">RSI (14)</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">Setup Type</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="screenerResultsTable">
+                            <!-- Injected by screener.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: INDIAN IPO TRACKER & GMP                                       -->
+        <!-- =================================================================== -->
+        <div id="tab-view-ipo" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🚀</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#1c1c1e]">Indian IPO Tracker & Grey Market Premium (GMP)</h3>
+                        <p class="text-xs text-[#6e6e73]">Real-time tracking of Mainboard & SME IPOs, listing estimates, and actionable apply/avoid advice</p>
+                    </div>
+                </div>
+                <button onclick="loadIpoTracker()" class="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>🔄</span> <span>Refresh IPOs</span>
+                </button>
+            </div>
+
+            <!-- Active & Upcoming IPOs Grid -->
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73] mb-3">🔥 Upcoming & Open IPOs for Bidding</h4>
+                <div id="activeIposContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Recently Listed IPOs Table -->
+            <div class="macos-card p-5 space-y-3">
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">🏆 Blockbuster Recent Listings (Performance Review)</h4>
+                <div id="recentIposContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: MACRO ECONOMIC CALENDAR                                        -->
+        <!-- =================================================================== -->
+        <div id="tab-view-calendar" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">📅</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#1c1c1e]">Macro Economic Calendar & Expiry Watch</h3>
+                        <p class="text-xs text-[#6e6e73]">Track RBI MPC, US Federal Reserve interest rates, inflation numbers, and volatility catalysts</p>
+                    </div>
+                </div>
+                <button onclick="loadEconomicCalendar()" class="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>🔄</span> <span>Refresh Calendar</span>
+                </button>
+            </div>
+
+            <div id="calendarEventsContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- MODAL: POSITION SIZING CALCULATOR                                   -->
+        <!-- =================================================================== -->
+        <div id="positionCalcModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm hidden">
+            <div class="macos-modal max-w-md w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl">🧮</span>
+                        <h3 class="text-base font-bold text-[#1c1c1e]">Position Sizing & Risk Calculator</h3>
+                    </div>
+                    <button onclick="closePositionCalcModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold">✕</button>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Total Trading Capital (₹)</label>
+                        <input type="number" id="calcCapital" value="500000" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Max Risk Per Trade (%)</label>
+                            <input type="number" id="calcRiskPct" value="1.5" step="0.1" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Entry Price (₹)</label>
+                            <input type="number" id="calcEntryPrice" value="2500" step="0.5" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#b32020] mb-1">Stop-Loss Price (₹)</label>
+                        <input type="number" id="calcStopLoss" value="2425" step="0.5" class="w-full bg-[#f8f8fa] border border-[#f7c8c8] rounded-lg p-2 text-xs mono text-[#b32020]">
+                    </div>
+
+                    <button onclick="calculatePositionModal()" class="w-full btn-primary py-2.5 text-xs font-semibold mt-2">
+                        Calculate Sizing
+                    </button>
+                </div>
+
+                <!-- Calculator Result Box -->
+                <div id="calcResultBox" class="hidden p-3.5 rounded-xl bg-[#eff6ff] border border-[#bfdbfe] space-y-2 text-xs">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <div class="text-[10.5px] text-[#6e6e73]">Suggested Quantity</div>
+                            <div id="calcQty" class="text-base font-bold mono text-[#007aff]">0 Shares</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] text-[#6e6e73]">Total Capital Deployed</div>
+                            <div id="calcTotalInv" class="text-base font-bold mono text-[#1c1c1e]">₹0</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] text-[#b32020]">Strict Capital at Risk</div>
+                            <div id="calcRiskAmt" class="text-sm font-bold mono text-[#b32020]">₹0</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] text-[#6e6e73]">Capital Allocated</div>
+                            <div id="calcAllocPct" class="text-sm font-bold mono text-[#1c1c1e]">0%</div>
+                        </div>
+                    </div>
+                    <p id="calcNote" class="text-[11px] text-[#0062cc] leading-relaxed pt-1 border-t border-[#bfdbfe]"></p>
+                </div>
+        <!-- =================================================================== -->
+        <!-- MODAL: INDIAN BROKER ORDER EXECUTION BRIDGE (ZERODHA & DHAN)         -->
+        <!-- =================================================================== -->
+        <div id="brokerOrderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm hidden">
+            <div class="macos-modal max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl">⚡</span>
+                        <div>
+                            <h3 class="text-base font-bold text-[#1c1c1e]">Execute Trade on Broker</h3>
+                            <p class="text-[10.5px] text-[#6e6e73]">Pre-populated 1-click execution for Zerodha Kite & Dhan Web</p>
+                        </div>
+                    </div>
+                    <button onclick="closeBrokerOrderModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold cursor-pointer">✕</button>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <!-- Order parameters prefill -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Stock / Asset</label>
+                            <input type="text" id="brokerModalSymbol" readonly class="w-full bg-[#f0f0f3] font-bold text-[#1c1c1e] rounded-lg p-2 mono outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Exchange & Product</label>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-2 rounded-lg bg-[#f0f0f3] font-bold text-[#1c1c1e] text-xs">NSE</span>
+                                <select id="brokerModalProduct" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs text-[#1c1c1e]">
+                                    <option value="CNC">CNC (Delivery / Swing)</option>
+                                    <option value="MIS">MIS (Intraday)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Quantity</label>
+                            <input type="number" id="brokerModalQty" value="10" min="1" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Entry Price (₹)</label>
+                            <input type="number" id="brokerModalPrice" value="0.0" step="0.5" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#48484a] mb-1">Order Type</label>
+                            <select id="brokerModalOrderType" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs text-[#1c1c1e]">
+                                <option value="LIMIT">LIMIT</option>
+                                <option value="MARKET">MARKET</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="macos-box p-2.5">
+                            <span class="text-[10px] text-[#b32020] block font-semibold">Recommended Stop-Loss</span>
+                            <span id="brokerModalStopLoss" class="text-sm font-bold mono text-[#b32020]">₹0.00</span>
+                        </div>
+                        <div class="macos-box p-2.5">
+                            <span class="text-[10px] text-[#1e7e34] block font-semibold">Profit Target 1</span>
+                            <span id="brokerModalTarget" class="text-sm font-bold mono text-[#1e7e34]">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Broker Action Buttons -->
+                    <div class="pt-2 space-y-2">
+                        <a id="brokerKiteBtn" href="#" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-[#ff5722] hover:bg-[#e64a19] text-white font-semibold flex items-center justify-between text-xs shadow-sm transition-all">
+                            <span class="flex items-center gap-2"><span>🪁</span> <span>Open in Zerodha Kite</span></span>
+                            <span>Direct Order ➔</span>
+                        </a>
+                        <a id="brokerDhanBtn" href="#" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-[#2e7d32] hover:bg-[#1b5e20] text-white font-semibold flex items-center justify-between text-xs shadow-sm transition-all">
+                            <span class="flex items-center gap-2"><span>🎯</span> <span>Open in Dhan Web</span></span>
+                            <span>Direct Order ➔</span>
+                        </a>
+                    </div>
+
+                    <!-- Webhook payload copy option for algo traders -->
+                    <div class="pt-2 border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between">
+                        <span class="text-[10.5px] text-[#8e8e93]">Automated trading webhook available</span>
+                        <button onclick="copyBrokerWebhookPayload()" class="text-[10.5px] font-semibold text-[#007aff] hover:underline cursor-pointer">
+                            📋 Copy Webhook JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    </footer>
+
+    <!-- macOS SLIDE-OVER WATCHLIST DRAWER -->
+    <div id="watchlistBackdrop" class="macos-drawer-backdrop" onclick="toggleWatchlistDrawer()"></div>
+    <aside id="watchlistDrawer" class="macos-drawer" aria-label="Quick Watchlist">
+        <!-- Drawer Header -->
+        <div class="px-5 py-4 border-b border-[rgba(0,0,0,0.08)] flex items-center justify-between bg-[#fafafc]">
+            <div class="flex items-center space-x-2">
+                <span class="text-lg">⭐️</span>
+                <div>
+                    <h3 class="text-sm font-bold text-[#1c1c1e] leading-none">Quick Watchlist</h3>
+                    <p class="text-[10.5px] text-[#6e6e73] mt-0.5">Live Ticks • 1-Click Analysis</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="refreshWatchlistPrices()" title="Refresh Watchlist Ticks" class="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#e8e8ed] transition-colors text-xs cursor-pointer">
+                    🔄
+                </button>
+                <button onclick="toggleWatchlistDrawer()" class="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#e8e8ed] transition-colors text-xs font-semibold cursor-pointer">
+                    ✕
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Current Stock to Watchlist Button -->
+        <div class="px-4 py-2.5 bg-white border-b border-[rgba(0,0,0,0.06)] flex items-center justify-between text-xs">
+            <span class="text-[#6e6e73] text-[11px] truncate max-w-[210px]" id="drawerCurrentStockLabel">Currently: RELIANCE.NS</span>
+            <button id="pinCurrentStockBtn" onclick="pinCurrentStockToWatchlist()" class="px-2.5 py-1 rounded-lg bg-[#007aff]/10 text-[#007aff] hover:bg-[#007aff]/20 font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                <span>➕</span> <span>Pin to List</span>
+            </button>
+        </div>
+
+        <!-- Watchlist Items List Container -->
+        <div id="watchlistItemsList" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+
+        <!-- Drawer Footer with Quick Tip -->
+        <div class="p-3 border-t border-[rgba(0,0,0,0.08)] bg-[#fafafc] text-[10.5px] text-[#8e8e93] text-center">
+            Tip: Press <kbd class="macos-kbd text-[9px] px-1 py-0">W</kbd> anywhere to open / close Watchlist.
+        </div>
+    </aside>
+
+    <!-- macOS KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
+    <div id="shortcutsModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="macos-card w-full max-w-md p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">⌨️</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-[#1c1c1e] leading-tight">Keyboard Shortcuts</h3>
+                        <p class="text-[10.5px] text-[#6e6e73]">Navigate Market Analysis like a native macOS app</p>
+                    </div>
+                </div>
+                <button onclick="closeShortcutsModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold cursor-pointer">✕</button>
+            </div>
+
+            <div class="space-y-2 text-xs text-[#1c1c1e]">
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Spotlight Search (Focus Search Input)</span>
+                    <kbd class="macos-kbd">/</kbd>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Toggle Slide-Over Watchlist Drawer</span>
+                    <kbd class="macos-kbd">W</kbd>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Open Position Sizing Calculator</span>
+                    <kbd class="macos-kbd">C</kbd>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Toggle Display Density (Standard / Compact)</span>
+                    <kbd class="macos-kbd">D</kbd>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Direct Tab Jump (Stocks, Picks, Screener...)</span>
+                    <div class="flex items-center space-x-1">
+                        <kbd class="macos-kbd">1</kbd>
+                        <span class="text-[#8e8e93] text-[10px]">to</span>
+                        <kbd class="macos-kbd">9</kbd>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
+                    <span class="text-[#48484a]">Close Any Active Modal, Drawer or Search</span>
+                    <kbd class="macos-kbd">Esc</kbd>
+                </div>
+                <div class="flex items-center justify-between py-1.5">
+                    <span class="text-[#48484a]">Open this Keyboard Shortcuts Cheat Sheet</span>
+                    <kbd class="macos-kbd">?</kbd>
+                </div>
+            </div>
+
+            <div class="pt-2 text-center border-t border-[rgba(0,0,0,0.06)]">
+                <button onclick="closeShortcutsModal()" class="btn-primary w-full py-2 text-xs cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPOTLIGHT COMMAND PALETTE MODAL (Cmd + K / Ctrl + K) -->
+    <div id="commandPaletteModal" class="command-palette-backdrop hidden" onclick="handleCommandPaletteBackdrop(event)">
+        <div class="command-palette-modal">
+            <div class="command-palette-input-box">
+                <span class="text-base text-[#8e8e93]">🔍</span>
+                <input 
+                    type="text" 
+                    id="commandPaletteInput" 
+                    placeholder="Search desks, stocks, actions (e.g. 'TCS', 'Bees', 'Dark', 'Calc')..." 
+                    class="command-palette-input"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <kbd class="macos-kbd text-[10px]">Esc</kbd>
+            </div>
+            <div id="commandPaletteResults" class="command-palette-results">
+                <!-- Dynamically populated commands and stocks -->
+            </div>
+            <div class="px-4 py-2 bg-[#f8f8fa] border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between text-[11px] text-[#8e8e93]">
+                <div class="flex items-center gap-2">
+                    <span>Use <kbd class="macos-kbd text-[9px] py-0 px-1">↑</kbd> <kbd class="macos-kbd text-[9px] py-0 px-1">↓</kbd> to navigate</span>
+                    <span>•</span>
+                    <span><kbd class="macos-kbd text-[9px] py-0 px-1">↵</kbd> to select</span>
+                </div>
+                <span class="font-medium text-[10.5px]">Antigravity Spotlight</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script src="/static/js/options_charts.js"></script>
+    <script src="/static/js/scanner.js"></script>
+    <script src="/static/js/screener.js"></script>
+    <script src="/static/js/ipo.js"></script>
+    <script src="/static/js/calendar.js"></script>
+    <script src="/static/js/sectors.js"></script>
+    <script src="/static/js/etf.js"></script>
+    <script src="/static/js/journal.js"></script>
+    <script src="/static/js/backtest.js"></script>
+    <script src="/static/js/recommendations.js"></script>
+    <script src="/static/js/bees.js"></script>
+    <script src="/static/js/institutional.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+

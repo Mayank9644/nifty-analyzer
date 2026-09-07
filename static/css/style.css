@@ -1,0 +1,868 @@
+/* ============================================================
+   MARKET ANALYSIS — AUTHENTIC macOS DESIGN SYSTEM
+   Calm, elegant, zero-glare aesthetics inspired by macOS Sequoia
+   ============================================================ */
+
+:root {
+    /* macOS Window Canvas */
+    --macos-window-bg:       #f5f5f7;
+    --macos-titlebar-bg:     rgba(255, 255, 255, 0.88);
+    --macos-subbar-bg:       rgba(250, 250, 252, 0.92);
+
+    /* macOS Surfaces */
+    --macos-card:            #ffffff;
+    --macos-card-sub:        #f8f8fa;
+    --macos-card-hover:      #f0f0f4;
+    --macos-border:          rgba(0, 0, 0, 0.07);
+    --macos-border-sub:      rgba(0, 0, 0, 0.045);
+    --macos-border-strong:   rgba(0, 0, 0, 0.12);
+
+    /* Typography — macOS Hierarchy */
+    --macos-label-primary:   #1c1c1e;
+    --macos-label-secondary: #48484a;
+    --macos-label-tertiary:  #6e6e73;
+    --macos-label-quaternary:#8e8e93;
+
+    /* Non-punchy, comfortable macOS System Accents */
+    --macos-blue:            #007aff;
+    --macos-blue-hover:      #0062cc;
+    --macos-blue-tint:       #eff6ff;
+    --macos-blue-border:     #bfdbfe;
+
+    --macos-green:           #28a745;
+    --macos-green-text:      #1e7e34;
+    --macos-green-tint:      #edf7ee;
+    --macos-green-border:    #c6e8cc;
+
+    --macos-red:             #d9383a;
+    --macos-red-text:        #b32020;
+    --macos-red-tint:        #fdf0f0;
+    --macos-red-border:      #f7c8c8;
+
+    --macos-orange:          #b35900;
+    --macos-orange-text:     #8a4500;
+    --macos-orange-tint:     #fef6ed;
+    --macos-orange-border:   #fcdcb8;
+
+    --macos-purple:          #8944ab;
+    --macos-purple-tint:     #f9efff;
+    --macos-purple-border:   #e5b3ff;
+
+    --macos-teal:            #00827c;
+    --macos-teal-tint:       #e6faf9;
+    --macos-teal-border:     #99ebe6;
+}
+
+[data-theme="dark"] {
+    /* macOS Window Canvas (OLED Deep Slate / Pitch Black) */
+    --macos-window-bg:       #0c0d12;
+    --macos-titlebar-bg:     rgba(18, 20, 29, 0.92);
+    --macos-subbar-bg:       rgba(14, 16, 23, 0.95);
+
+    /* macOS Surfaces */
+    --macos-card:            #151722;
+    --macos-card-sub:        #1c1f2e;
+    --macos-card-hover:      #23273a;
+    --macos-border:          rgba(255, 255, 255, 0.08);
+    --macos-border-sub:      rgba(255, 255, 255, 0.05);
+    --macos-border-strong:   rgba(255, 255, 255, 0.16);
+
+    /* Typography — macOS Hierarchy */
+    --macos-label-primary:   #f5f5f7;
+    --macos-label-secondary: #d1d1d6;
+    --macos-label-tertiary:  #a1a1a6;
+    --macos-label-quaternary:#636366;
+
+    /* Accents in Dark Mode */
+    --macos-blue:            #0a84ff;
+    --macos-blue-hover:      #409cff;
+    --macos-blue-tint:       rgba(10, 132, 255, 0.15);
+    --macos-blue-border:     rgba(10, 132, 255, 0.35);
+
+    --macos-green:           #30d158;
+    --macos-green-text:      #34c759;
+    --macos-green-tint:      rgba(48, 209, 88, 0.15);
+    --macos-green-border:    rgba(48, 209, 88, 0.35);
+
+    --macos-red:             #ff453a;
+    --macos-red-text:        #ff6961;
+    --macos-red-tint:        rgba(255, 69, 58, 0.15);
+    --macos-red-border:      rgba(255, 69, 58, 0.35);
+
+    --macos-orange:          #ff9f0a;
+    --macos-orange-text:     #ffb340;
+    --macos-orange-tint:     rgba(255, 159, 10, 0.15);
+    --macos-orange-border:   rgba(255, 159, 10, 0.35);
+
+    --macos-purple:          #bf5af2;
+    --macos-purple-tint:     rgba(191, 90, 242, 0.15);
+    --macos-purple-border:   rgba(191, 90, 242, 0.35);
+
+    --macos-teal:            #64d2ff;
+    --macos-teal-tint:       rgba(100, 210, 255, 0.15);
+    --macos-teal-border:     rgba(100, 210, 255, 0.35);
+}
+
+/* Base reset & typography */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: var(--macos-window-bg) !important;
+    color: var(--macos-label-primary) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    margin: 0;
+    padding: 0;
+}
+
+.mono {
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Smooth macOS Scrollbars */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.16);
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+/* ---- macOS Window Header ---- */
+header.macos-header {
+    background: var(--macos-titlebar-bg) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border-bottom: 1px solid var(--macos-border) !important;
+}
+
+/* macOS Traffic Light Buttons */
+.traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.1);
+}
+.traffic-close { background-color: #ff5f56; border: 1px solid #e0443e; }
+.traffic-min   { background-color: #ffbd2e; border: 1px solid #dea123; }
+.traffic-max   { background-color: #27c93f; border: 1px solid #1aab29; }
+
+/* ---- macOS Segmented Control (Tabs) ---- */
+.macos-segmented-track {
+    background: #e3e3e8 !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-radius: 9px !important;
+    padding: 2.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+}
+
+.nav-tab-btn, .macos-segmented-item {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--macos-label-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 7px !important;
+    padding: 3.5px 9px !important;
+    transition: all 0.16s ease !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+}
+
+.nav-tab-btn:hover:not(.active),
+.macos-segmented-item:hover:not(.active) {
+    color: var(--macos-label-primary) !important;
+    background: rgba(255, 255, 255, 0.45) !important;
+}
+
+.nav-tab-btn.active,
+.macos-segmented-item.active {
+    background: #ffffff !important;
+    color: var(--macos-label-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2.5px rgba(0, 0, 0, 0.1), 0 0.5px 1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Strategy Subtab Strip */
+.style-btn {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--macos-label-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 4px 10px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+.style-btn:hover:not(.active) {
+    color: var(--macos-label-primary) !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+}
+.style-btn.active {
+    background: #ffffff !important;
+    color: var(--macos-label-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Period Buttons on Chart */
+.period-btn {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--macos-label-secondary) !important;
+    background: transparent !important;
+    border-radius: 6px !important;
+    padding: 3.5px 9px !important;
+    transition: all 0.15s ease !important;
+}
+.period-btn:hover:not(.active) {
+    color: var(--macos-label-primary) !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+}
+.period-btn.active {
+    background: #ffffff !important;
+    color: var(--macos-label-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ---- macOS Spotlight Search Field (Enlarged) ---- */
+#stockSearchInput {
+    background-color: #e8e8ed !important;
+    border: 1.5px solid transparent !important;
+    border-radius: 12px !important;
+    color: var(--macos-label-primary) !important;
+    font-size: 13.5px !important;
+    padding: 10px 16px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+#stockSearchInput::placeholder {
+    color: var(--macos-label-quaternary) !important;
+    font-size: 13px !important;
+}
+#stockSearchInput:focus {
+    background-color: #ffffff !important;
+    border-color: var(--macos-blue) !important;
+    box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.15), 0 1px 4px rgba(0,0,0,0.05) !important;
+    outline: none !important;
+}
+
+/* Search Dropdown */
+#searchDropdown {
+    background: #ffffff !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.14), 0 3px 10px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ---- macOS Cards & Boxes ---- */
+.macos-card,
+[class*="bg-\\[\\#151924\\]"],
+[class*="bg-[#151924]"] {
+    background-color: var(--macos-card) !important;
+    border: 1px solid var(--macos-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Inset boxes inside cards (replaces dark slate boxes) */
+.macos-box,
+.bg-slate-900, [class~="bg-slate-900"],
+.bg-slate-950, [class~="bg-slate-950"],
+.bg-slate-850, [class~="bg-slate-850"] {
+    background-color: var(--macos-card-sub) !important;
+    border: 1px solid var(--macos-border-sub) !important;
+    border-radius: 10px !important;
+}
+
+/* Border overrides */
+.border-slate-800, [class~="border-slate-800"],
+.border-slate-700, [class~="border-slate-700"],
+[class*="border-\\[\\#232936\\]"] {
+    border-color: var(--macos-border) !important;
+}
+
+/* ---- Text Hierarchy ---- */
+h1, h2, h3, h4 {
+    color: var(--macos-label-primary) !important;
+}
+.text-slate-100 { color: var(--macos-label-primary) !important; }
+.text-slate-200 { color: #2c2c2e !important; }
+.text-slate-300 { color: var(--macos-label-secondary) !important; }
+.text-slate-400 { color: var(--macos-label-tertiary) !important; }
+.text-slate-500 { color: var(--macos-label-quaternary) !important; }
+
+/* Primary Blue Buttons retain clean white text */
+button.bg-blue-600,
+button.bg-blue-500,
+button[class*="bg-blue-600"],
+button.bg-[#007aff],
+.btn-primary {
+    background-color: var(--macos-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 1px 2px rgba(0, 122, 255, 0.25) !important;
+    transition: all 0.15s ease !important;
+}
+button.bg-blue-600:hover,
+button.btn-primary:hover {
+    background-color: var(--macos-blue-hover) !important;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: #ffffff !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    color: var(--macos-label-primary) !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    padding: 5px 12px !important;
+    transition: all 0.15s ease !important;
+}
+.btn-secondary:hover {
+    background-color: var(--macos-card-hover) !important;
+}
+
+/* ---- Category Badges ---- */
+.badge-stock {
+    background: var(--macos-blue-tint) !important;
+    color: var(--macos-blue) !important;
+    border: 1px solid var(--macos-blue-border) !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 5px !important;
+    padding: 1.5px 6px !important;
+}
+
+.badge-etf {
+    background: var(--macos-teal-tint) !important;
+    color: var(--macos-teal) !important;
+    border: 1px solid var(--macos-teal-border) !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 5px !important;
+    padding: 1.5px 6px !important;
+}
+
+.badge-bond {
+    background: var(--macos-purple-tint) !important;
+    color: var(--macos-purple) !important;
+    border: 1px solid var(--macos-purple-border) !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 5px !important;
+    padding: 1.5px 6px !important;
+}
+
+.badge-commodity {
+    background: var(--macos-orange-tint) !important;
+    color: var(--macos-orange) !important;
+    border: 1px solid var(--macos-orange-border) !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 5px !important;
+    padding: 1.5px 6px !important;
+}
+
+.badge-index {
+    background: #e5e5ea !important;
+    color: var(--macos-label-secondary) !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 5px !important;
+    padding: 1.5px 6px !important;
+}
+
+/* ---- Non-punchy Semantic Indicators ---- */
+.text-emerald-400, .text-emerald-500, .text-emerald-600 {
+    color: var(--macos-green-text) !important;
+}
+.text-rose-400, .text-rose-500, .text-rose-600 {
+    color: var(--macos-red-text) !important;
+}
+.text-amber-400, .text-amber-500, .text-amber-600 {
+    color: var(--macos-orange-text) !important;
+}
+.text-blue-400, .text-blue-500, .text-blue-600 {
+    color: var(--macos-blue) !important;
+}
+
+/* Soft Tints */
+.bg-emerald-500\/20, .bg-emerald-900\/20, .bg-emerald-50 {
+    background-color: var(--macos-green-tint) !important;
+}
+.bg-rose-500\/20, .bg-rose-950\/20, .bg-rose-50 {
+    background-color: var(--macos-red-tint) !important;
+}
+.bg-amber-500\/20, .bg-amber-900\/20, .bg-amber-50 {
+    background-color: var(--macos-orange-tint) !important;
+}
+.bg-blue-500\/10, .bg-blue-600\/20, .bg-blue-50 {
+    background-color: var(--macos-blue-tint) !important;
+}
+
+/* Soft Borders */
+.border-emerald-500\/30, .border-emerald-800\/40, .border-emerald-200 {
+    border-color: var(--macos-green-border) !important;
+}
+.border-rose-500\/30, .border-rose-800\/50, .border-rose-200 {
+    border-color: var(--macos-red-border) !important;
+}
+.border-amber-500\/30, .border-amber-800\/40, .border-amber-200 {
+    border-color: var(--macos-orange-border) !important;
+}
+.border-blue-500\/30, .border-blue-800\/30, .border-blue-200 {
+    border-color: var(--macos-blue-border) !important;
+}
+
+/* Form inputs & selects */
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    background-color: #ffffff !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    border-radius: 8px !important;
+    color: var(--macos-label-primary) !important;
+    font-size: 12.5px !important;
+    transition: all 0.15s ease !important;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--macos-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.18) !important;
+    outline: none !important;
+}
+
+/* Clean Tables */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+table thead tr {
+    background-color: #f5f5f7 !important;
+}
+table thead th {
+    color: var(--macos-label-tertiary) !important;
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    border-bottom: 1px solid var(--macos-border) !important;
+    padding: 8px 12px !important;
+}
+table tbody tr {
+    border-bottom: 1px solid var(--macos-border-sub) !important;
+    transition: background-color 0.12s ease !important;
+}
+table tbody tr:hover {
+    background-color: #f7f7fa !important;
+}
+table tbody td {
+    padding: 9px 12px !important;
+}
+
+/* Modals */
+.macos-modal,
+.fixed.inset-0.z-50 > div,
+.fixed.inset-0.z-\[100\] > div,
+#manualTradeModal > div > div,
+#positionAdviceModal > div {
+    background-color: #ffffff !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.18), 0 6px 18px -4px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Ticker strip hidden (removed from UI per user request) */
+.ticker-wrap { display: none !important; }
+
+/* Options Heatmap Bars */
+.oi-bar-call { background-color: rgba(217, 56, 58, 0.22) !important; }
+.oi-bar-put  { background-color: rgba(40, 167, 69, 0.22) !important; }
+
+/* Global loader */
+#globalLoader {
+    background-color: #ffffff !important;
+    border: 1px solid var(--macos-blue-border) !important;
+    border-radius: 12px !important;
+    color: var(--macos-blue) !important;
+    box-shadow: 0 1px 6px rgba(0, 122, 255, 0.08) !important;
+}
+
+/* Tooltip styles */
+.tooltip-box {
+    visibility: hidden;
+    position: absolute;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+    background: #ffffff !important;
+    color: #1d1d1f !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    border-radius: 8px !important;
+}
+.has-tooltip:hover .tooltip-box {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Footer */
+footer {
+    background-color: var(--macos-window-bg) !important;
+    border-top: 1px solid var(--macos-border) !important;
+    color: var(--macos-label-tertiary) !important;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* macOS Slide-Over Watchlist Drawer */
+.macos-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.macos-drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.macos-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 380px;
+    max-width: 90vw;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.12);
+    z-index: 70;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+.macos-drawer.open {
+    transform: translateX(0);
+}
+
+/* Compact Display Density Mode */
+body.density-compact .macos-card {
+    padding: 14px !important;
+    gap: 10px !important;
+}
+body.density-compact .macos-box {
+    padding: 8px 10px !important;
+}
+body.density-compact table td,
+body.density-compact table th {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+    font-size: 11px !important;
+}
+body.density-compact main {
+    padding-top: 12px !important;
+    padding-bottom: 16px !important;
+}
+body.density-compact .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.85rem !important;
+}
+
+/* macOS Keyboard Shortcut Keycap */
+kbd.macos-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    border: 1px solid #d2d2d7;
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   DARK THEME COMPONENT SURFACE OVERRIDES
+   ============================================================ */
+[data-theme="dark"] kbd.macos-kbd {
+    color: #f5f5f7;
+    background: #222534;
+    border-color: #3b3f54;
+}
+
+[data-theme="dark"] .macos-segmented-track {
+    background: #1b1e2b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .nav-tab-btn.active,
+[data-theme="dark"] .macos-segmented-item.active {
+    background: #2b2f42 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .macos-card {
+    background: var(--macos-card) !important;
+    border-color: var(--macos-border) !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: var(--macos-card) !important;
+}
+
+[data-theme="dark"] .bg-\[\#f5f5f7\],
+[data-theme="dark"] .bg-\[\#f8f8fa\],
+[data-theme="dark"] .bg-\[\#fafafc\],
+[data-theme="dark"] .bg-\[\#f2f2f7\],
+[data-theme="dark"] .bg-\[\#e8e8ed\] {
+    background-color: var(--macos-card-sub) !important;
+}
+
+[data-theme="dark"] .text-\[\#1c1c1e\] {
+    color: var(--macos-label-primary) !important;
+}
+
+[data-theme="dark"] .text-\[\#48484a\],
+[data-theme="dark"] .text-\[\#5a5a5f\] {
+    color: var(--macos-label-secondary) !important;
+}
+
+[data-theme="dark"] .text-\[\#6e6e73\] {
+    color: var(--macos-label-tertiary) !important;
+}
+
+[data-theme="dark"] .text-\[\#8e8e93\] {
+    color: var(--macos-label-quaternary) !important;
+}
+
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.06\)\],
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.07\)\],
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.08\)\],
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.12\)\] {
+    border-color: var(--macos-border) !important;
+}
+
+[data-theme="dark"] input#stockSearchInput {
+    background-color: #171926 !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] #searchDropdown {
+    background-color: #171926 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---- Live Financial Ticker Tape Strip ---- */
+.live-ticker-strip {
+    background: var(--macos-card);
+    border-bottom: 1px solid var(--macos-border);
+    height: 32px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    user-select: none;
+    font-size: 11px;
+    overflow: hidden;
+}
+
+.ticker-tape-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    white-space: nowrap;
+    padding: 0 16px;
+    width: 100%;
+    overflow-x: auto;
+}
+.ticker-tape-container::-webkit-scrollbar {
+    display: none;
+}
+
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.ticker-item:hover {
+    opacity: 0.8;
+}
+
+.ticker-sym {
+    font-weight: 700;
+    color: var(--macos-label-primary);
+    letter-spacing: 0.02em;
+}
+
+.ticker-price {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--macos-label-secondary);
+}
+
+.ticker-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ticker-badge.up {
+    background: var(--macos-green-tint);
+    color: var(--macos-green-text);
+}
+
+.ticker-badge.down {
+    background: var(--macos-red-tint);
+    color: var(--macos-red-text);
+}
+
+/* ---- Spotlight Command Palette (Cmd + K) ---- */
+.command-palette-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12vh;
+}
+
+.command-palette-modal {
+    width: 100%;
+    max-width: 600px;
+    background: var(--macos-card);
+    border: 1px solid var(--macos-border-strong);
+    border-radius: 16px;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.command-palette-input-box {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--macos-border);
+    gap: 12px;
+}
+
+.command-palette-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: var(--macos-label-primary);
+    font-weight: 500;
+}
+
+.command-palette-results {
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.command-palette-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--macos-label-quaternary);
+    padding: 6px 10px 4px;
+}
+
+.command-palette-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    font-size: 12.5px;
+    color: var(--macos-label-primary);
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+    background: var(--macos-blue) !important;
+    color: #ffffff !important;
+}
+
+.command-palette-item:hover .command-sub,
+.command-palette-item.selected .command-sub {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ---- Chart Indicator Quick Toggles ---- */
+.chart-pill-btn {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--macos-border) !important;
+    background: var(--macos-card-sub) !important;
+    color: var(--macos-label-secondary) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    user-select: none;
+}
+.chart-pill-btn:hover {
+    background: var(--macos-card-hover) !important;
+    color: var(--macos-label-primary) !important;
+}
+.chart-pill-btn.active {
+    background: var(--macos-blue) !important;
+    color: #ffffff !important;
+    border-color: var(--macos-blue) !important;
+}
+
+
+
