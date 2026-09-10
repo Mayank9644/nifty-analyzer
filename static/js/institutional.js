@@ -255,30 +255,30 @@ function renderDeliveryAccumulationTable(stocks) {
 
         return `
         <tr class="border-b border-[rgba(0,0,0,0.04)] hover:bg-[#fafafc] transition-colors text-xs">
-            <td class="py-2.5 px-3">
+            <td class="py-2.5 px-3 text-col">
                 <div class="font-bold text-[#1c1c1e]">${s.code}</div>
                 <div class="text-[10px] text-[#8e8e93]">${s.name}</div>
             </td>
-            <td class="py-2.5 px-3 text-[#5a5a5f] text-[11px]">${s.sector || "Large Cap"}</td>
-            <td class="py-2.5 px-3 font-semibold mono text-[#1c1c1e]">₹${(s.price || 0).toLocaleString("en-IN")}</td>
-            <td class="py-2.5 px-3 font-semibold mono ${changeClass}">${changeSign}${s.day_change_pct}%</td>
-            <td class="py-2.5 px-3 font-semibold mono text-[#007aff]">${s.volume_surge}</td>
-            <td class="py-2.5 px-3">
-                <div class="flex items-center gap-2">
+            <td class="py-2.5 px-3 text-col text-[#5a5a5f] text-[11px]">${s.sector || "Large Cap"}</td>
+            <td class="py-2.5 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(s.price || 0)}</td>
+            <td class="py-2.5 px-3 num-col font-semibold ${changeClass}">${changeSign}${s.day_change_pct}%</td>
+            <td class="py-2.5 px-3 num-col font-semibold text-[#007aff]">${s.volume_surge}</td>
+            <td class="py-2.5 px-3 num-col">
+                <div class="flex items-center justify-end gap-2">
                     <span class="font-bold mono text-[#1c1c1e]">${s.delivery_pct}%</span>
-                    <div class="w-16 bg-[#e5e5ea] rounded-full h-1.5 overflow-hidden">
+                    <div class="w-14 bg-[#e5e5ea] rounded-full h-1.5 overflow-hidden">
                         <div class="h-1.5 rounded-full ${s.delivery_pct >= 50 ? 'bg-[#10b981]' : 'bg-[#007aff]'}" style="width: ${Math.min(100, s.delivery_pct)}%"></div>
                     </div>
                 </div>
             </td>
-            <td class="py-2.5 px-3">
+            <td class="py-2.5 px-3 badge-col">
                 <span class="px-2 py-0.5 rounded-md text-[10.5px] font-bold" style="background-color: ${s.status_color}18; color: ${s.status_color};">
                     ${s.status}
                 </span>
             </td>
             <td class="py-2.5 px-3 text-right">
-                <button onclick="selectSearchedStock('${s.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff]/10 text-[#007aff] hover:bg-[#007aff]/20 font-semibold text-[11px] transition-all cursor-pointer">
-                    Analyze ➔
+                <button onclick="selectSearchedStock('${s.symbol}')" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
+                    <span>📈</span> <span>Chart</span>
                 </button>
             </td>
         </tr>

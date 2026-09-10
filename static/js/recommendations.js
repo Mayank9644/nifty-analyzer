@@ -190,10 +190,13 @@ function renderBestPicksUI(data) {
                                     <span>📐</span> View Math & VWAP
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${item.cmp}, ${item.stop_loss}, ${item.target})" class="px-2 py-1 rounded-md bg-[#fff7ed] hover:bg-[#fed7aa] text-[#ea580c] font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${item.cmp}, ${item.stop_loss}, ${item.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_intraday_picks[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <button onclick="logPickToJournal('${item.symbol}', ${item.cmp}, ${item.shares_qty || 10}, ${item.stop_loss}, ${item.target}, 'Intraday')" class="btn-log" title="Log trade in personal journal">
+                                        <span>🎯</span> <span>Log</span>
+                                    </button>
+                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_intraday_picks[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
                                         <span>📈</span> <span>Chart</span>
                                     </button>
                                 </div>
@@ -351,10 +354,13 @@ function renderBestPicksUI(data) {
                                     <span>📐</span> View Math & ATR
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${b.symbol}', ${b.shares_qty || 10}, ${b.cmp}, ${b.stop_loss}, ${b.target})" class="px-2 py-1 rounded-md bg-[#eff6ff] hover:bg-[#dbeafe] text-[#007aff] font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${b.symbol}', ${b.shares_qty || 10}, ${b.cmp}, ${b.stop_loss}, ${b.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_swing_shares[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <button onclick="logPickToJournal('${b.symbol}', ${b.cmp}, ${b.shares_qty || 10}, ${b.stop_loss}, ${b.target}, 'Swing')" class="btn-log" title="Log trade in personal journal">
+                                        <span>🎯</span> <span>Log</span>
+                                    </button>
+                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_swing_shares[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
                                         <span>📈</span> <span>Chart</span>
                                     </button>
                                 </div>
@@ -439,10 +445,13 @@ function renderBestPicksUI(data) {
                                     <span>📐</span> View Math & 50 SMA
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${p.symbol}', ${p.shares_qty || 10}, ${p.cmp}, ${p.stop_loss}, ${p.target})" class="px-2 py-1 rounded-md bg-[#faf5ff] hover:bg-[#f3e8ff] text-[#7e22ce] font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${p.symbol}', ${p.shares_qty || 10}, ${p.cmp}, ${p.stop_loss}, ${p.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_positional_picks[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <button onclick="logPickToJournal('${p.symbol}', ${p.cmp}, ${p.shares_qty || 10}, ${p.stop_loss}, ${p.target}, 'Positional')" class="btn-log" title="Log trade in personal journal">
+                                        <span>🎯</span> <span>Log</span>
+                                    </button>
+                                    <button onclick="inspectPickOnChart(_activeRecommendationsData.best_positional_picks[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
                                         <span>📈</span> <span>Chart</span>
                                     </button>
                                 </div>
@@ -677,3 +686,31 @@ function closeFormulaInspectionModal() {
     if (modal) modal.classList.add("hidden");
 }
 window.closeFormulaInspectionModal = closeFormulaInspectionModal;
+
+async function logPickToJournal(symbol, cmp, qty, sl, target, style = "Swing") {
+    try {
+        const res = await fetch("/api/journal/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                symbol: symbol,
+                entry_price: cmp,
+                quantity: qty,
+                stop_loss: sl,
+                target_1: target,
+                style: style,
+                notes: `Logged from ${style} Guru Picks`
+            })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+            showNotification(`🎉 Logged ${symbol.replace('.NS', '')} (${qty} shares @ ₹${cmp}) to Journal`, "success");
+        } else {
+            showNotification(`Failed to log trade: ${data.message || 'Error'}`, "error");
+        }
+    } catch (e) {
+        console.error("Error logging pick to journal:", e);
+        showNotification("Failed to log pick to journal", "error");
+    }
+}
+window.logPickToJournal = logPickToJournal;

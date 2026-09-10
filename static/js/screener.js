@@ -138,10 +138,15 @@ async function runScreenerQuery() {
                             ${s.setup_tag}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right">
-                        <button class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-[#007aff] text-white hover:bg-[#0062cc] transition-all">
-                            Analyze ➔
-                        </button>
+                    <td class="px-3 py-3 text-right">
+                        <div class="flex items-center justify-end gap-1.5" onclick="event.stopPropagation()">
+                            <button onclick="openBrokerOrderModal('${s.symbol}', 10, ${priceVal || 0}, ${((priceVal*0.97).toFixed(2)) || 0}, ${((priceVal*1.05).toFixed(2)) || 0})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                <span>⚡</span> <span>Broker</span>
+                            </button>
+                            <button onclick="selectSearchedStock('${s.symbol}')" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
+                                <span>📈</span> <span>Chart</span>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;

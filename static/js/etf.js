@@ -109,26 +109,31 @@ function renderEtfDashboard(data) {
                             const sym = e.code.endsWith('.NS') ? e.code : `${e.code}.NS`;
                             return `
                                 <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors cursor-pointer" onclick="selectSearchedStock('${sym}')">
-                                    <td class="py-3 px-3">
+                                    <td class="py-3 px-3 text-col">
                                         <div class="font-bold text-[#1c1c1e] text-xs">${e.icon || '📈'} ${e.code}</div>
                                         <span class="text-[10.5px] text-[#86868b]">${e.name}</span>
                                     </td>
-                                    <td class="py-3 px-3 text-[#6e6e73] text-[11px]">
+                                    <td class="py-3 px-3 text-col text-[#6e6e73] text-[11px]">
                                         <span class="badge-stock">${e.category || 'Equity'}</span>
                                     </td>
-                                    <td class="py-3 px-3 font-semibold text-[#1c1c1e] mono text-right">₹${e.current_price}</td>
-                                    <td class="py-3 px-3 text-center mono ${e.rsi < 35 ? 'text-[#1e7e34] font-bold' : (e.rsi > 70 ? 'text-[#b32020] font-bold' : 'text-[#48484a]')}">
+                                    <td class="py-3 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(e.current_price || 0)}</td>
+                                    <td class="py-3 px-3 badge-col mono ${e.rsi < 35 ? 'text-[#1e7e34] font-bold' : (e.rsi > 70 ? 'text-[#b32020] font-bold' : 'text-[#48484a]')}">
                                         <span class="px-2 py-0.5 rounded-full ${e.rsi < 35 ? 'bg-[#edf7ee]' : (e.rsi > 70 ? 'bg-[#fdf0f0]' : 'bg-[#f5f5f7]')}">${e.rsi}</span>
                                     </td>
-                                    <td class="py-3 px-3 text-center mono ${e.dist_20dma <= 0 ? 'text-[#1e7e34] font-medium' : 'text-[#6e6e73]'}">${e.dist_20dma > 0 ? '+' : ''}${e.dist_20dma}%</td>
-                                    <td class="py-3 px-3 text-center mono text-[#b32020] font-medium">-${e.dist_52h}%</td>
-                                    <td class="py-3 px-3 text-center font-bold text-[11px]" style="color: ${e.action_color}">
+                                    <td class="py-3 px-3 num-col mono ${e.dist_20dma <= 0 ? 'text-[#1e7e34] font-medium' : 'text-[#6e6e73]'}">${e.dist_20dma > 0 ? '+' : ''}${e.dist_20dma}%</td>
+                                    <td class="py-3 px-3 num-col mono text-[#b32020] font-medium">-${e.dist_52h}%</td>
+                                    <td class="py-3 px-3 badge-col font-bold text-[11px]" style="color: ${e.action_color}">
                                         ${e.action}
                                     </td>
                                     <td class="py-3 px-3 text-right" onclick="event.stopPropagation();">
-                                        <button onclick="selectSearchedStock('${sym}')" class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-[#007aff] text-white hover:bg-[#0062cc] transition-all">
-                                            Chart ➔
-                                        </button>
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <button onclick="openBrokerOrderModal('${sym}', 20, ${e.current_price || 0}, ${((e.current_price*0.97).toFixed(2)) || 0}, ${((e.current_price*1.05).toFixed(2)) || 0})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                                <span>⚡</span> <span>Broker</span>
+                                            </button>
+                                            <button onclick="selectSearchedStock('${sym}')" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
+                                                <span>📈</span> <span>Chart</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             `;

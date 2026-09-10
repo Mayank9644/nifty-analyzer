@@ -882,5 +882,252 @@ kbd.macos-kbd {
     border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+/* ============================================================
+   UI/UX STANDARDIZATION & WORKSPACE NAVIGATION SYSTEM
+   ============================================================ */
 
+/* Master Workspace Navigation Track */
+.workspace-track {
+    background: #e5e5ea !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 10px !important;
+    padding: 3px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+}
 
+.workspace-btn {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--macos-label-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 5px 12px !important;
+    transition: all 0.16s ease !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    user-select: none;
+}
+
+.workspace-btn:hover:not(.active) {
+    color: var(--macos-label-primary) !important;
+    background: rgba(255, 255, 255, 0.55) !important;
+}
+
+.workspace-btn.active {
+    background: #ffffff !important;
+    color: var(--macos-label-primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0.5px 1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Contextual Sub-Desk Navigation Pills */
+.subdesk-track {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+}
+
+.subdesk-btn, .nav-tab-btn {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--macos-label-secondary) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 7px !important;
+    padding: 3.5px 10px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    user-select: none;
+}
+
+.subdesk-btn:hover:not(.active), .nav-tab-btn:hover:not(.active) {
+    color: var(--macos-label-primary) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.subdesk-btn.active, .nav-tab-btn.active {
+    background: #ffffff !important;
+    color: var(--macos-blue) !important;
+    border-color: rgba(0, 122, 255, 0.22) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Standardized Component Buttons (Linear / Apple HIG) */
+.btn-primary {
+    background: var(--macos-blue) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+.btn-primary:hover {
+    background: var(--macos-blue-hover) !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25) !important;
+}
+
+.btn-secondary {
+    background: var(--macos-card) !important;
+    color: var(--macos-label-primary) !important;
+    border: 1px solid var(--macos-border-strong) !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+.btn-secondary:hover {
+    background: var(--macos-card-hover) !important;
+}
+
+/* Standardized Action Cluster for Table Rows */
+.btn-broker {
+    background: #eff6ff !important;
+    color: #007aff !important;
+    border: 1px solid #bfdbfe !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+}
+.btn-broker:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+
+.btn-log {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    box-shadow: 0 1px 2px rgba(0, 122, 255, 0.2) !important;
+}
+.btn-log:hover {
+    background: #0062cc !important;
+}
+
+.btn-chart {
+    background: transparent !important;
+    color: var(--macos-label-tertiary) !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    font-size: 10.5px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+}
+.btn-chart:hover {
+    color: var(--macos-blue) !important;
+    text-decoration: underline !important;
+}
+
+/* Tabular Financial Alignment Standards */
+.num-col {
+    text-align: right !important;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.text-col {
+    text-align: left !important;
+}
+
+.badge-col {
+    text-align: center !important;
+}
+
+/* Dark Mode Tokens for Workspace Navigation & Standards */
+[data-theme="dark"] .workspace-track {
+    background: #151722 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .workspace-btn {
+    color: #a1a1a6 !important;
+}
+
+[data-theme="dark"] .workspace-btn:hover:not(.active) {
+    color: #f5f5f7 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .workspace-btn.active {
+    background: #23273a !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .subdesk-btn,
+[data-theme="dark"] .nav-tab-btn {
+    color: #a1a1a6 !important;
+}
+
+[data-theme="dark"] .subdesk-btn:hover:not(.active),
+[data-theme="dark"] .nav-tab-btn:hover:not(.active) {
+    color: #f5f5f7 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .subdesk-btn.active,
+[data-theme="dark"] .nav-tab-btn.active {
+    background: #1c1f2e !important;
+    color: #409cff !important;
+    border-color: rgba(64, 156, 255, 0.4) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-broker {
+    background: rgba(10, 132, 255, 0.15) !important;
+    border-color: rgba(10, 132, 255, 0.35) !important;
+    color: #409cff !important;
+}
+
+[data-theme="dark"] .btn-broker:hover {
+    background: rgba(10, 132, 255, 0.25) !important;
+}
+
+[data-theme="dark"] #subDeskContainer {
+    background-color: #0e1017 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] #moreDesksDropdown {
+    background-color: #151722 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f5f5f7 !important;
+}
+
+[data-theme="dark"] #moreDesksDropdown button:hover {
+    background-color: #1c1f2e !important;
+}

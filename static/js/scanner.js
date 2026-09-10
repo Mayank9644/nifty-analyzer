@@ -80,51 +80,51 @@ function renderScannerTable(candidates, capital, riskPct) {
         return `
             <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors text-xs text-[#1c1c1e]">
                 <!-- Stock Details -->
-                <td class="py-3 px-3">
+                <td class="py-3 px-3 text-col">
                     <div class="font-bold text-[#1c1c1e]">${c.code}</div>
                     <span class="text-[10px] text-[#86868b] block">${c.name}</span>
                     <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#eef5fd] text-[#007aff] font-medium mt-0.5 inline-block">${c.pattern}</span>
                 </td>
 
                 <!-- Alpha Score -->
-                <td class="py-3 px-2 text-center">
+                <td class="py-3 px-2 badge-col">
                     <span class="font-bold px-2.5 py-1 rounded-md text-xs ${c.score >= 80 ? 'bg-[#edf7ee] text-[#1e7e34] border border-[#c3e6cb]' : 'bg-[#eef5fd] text-[#007aff] border border-[#b9d7fb]'}">
                         ${c.score}
                     </span>
                 </td>
 
                 <!-- Price & Stops -->
-                <td class="py-3 px-3 font-semibold text-[#1c1c1e] mono">₹${(c.current_price || 0).toLocaleString('en-IN')}</td>
-                <td class="py-3 px-3 text-[#b32020] mono">
-                    ₹${(c.stop_loss || 0).toLocaleString('en-IN')}
+                <td class="py-3 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(c.current_price || 0)}</td>
+                <td class="py-3 px-3 num-col text-[#b32020]">
+                    ${formatINR(c.stop_loss || 0)}
                     <span class="text-[10px] text-[#86868b] block font-normal">(-${c.stop_loss_pct}%)</span>
                 </td>
 
                 <!-- Targets -->
-                <td class="py-3 px-3 text-[#1e7e34] mono font-semibold">
-                    ₹${(c.target_2r || 0).toLocaleString('en-IN')} <span class="text-[10px] text-[#86868b] font-normal">(2R)</span>
-                    <span class="text-[10px] text-[#1e7e34] block font-normal">₹${(c.target_3r || 0).toLocaleString('en-IN')} (3R)</span>
+                <td class="py-3 px-3 num-col text-[#1e7e34] font-semibold">
+                    ${formatINR(c.target_2r || 0)} <span class="text-[10px] text-[#86868b] font-normal">(2R)</span>
+                    <span class="text-[10px] text-[#1e7e34] block font-normal">${formatINR(c.target_3r || 0)} (3R)</span>
                 </td>
 
                 <!-- Calculated Position Sizing -->
-                <td class="py-3 px-3 bg-[#eef5fd]/60 border-x border-[rgba(0,0,0,0.06)]">
-                    <div class="font-bold text-[#007aff] mono text-sm">${s.shares_to_buy || 0} Shares</div>
-                    <span class="text-[10px] text-[#6e6e73] block">Capital: ₹${(s.position_value || 0).toLocaleString('en-IN')} (${s.position_pct_capital || 0}%)</span>
-                    <span class="text-[9px] text-[#b32020] block">Max Risk: ₹${(s.max_risk_rupees || 0).toLocaleString('en-IN')}</span>
+                <td class="py-3 px-3 num-col bg-[#eef5fd]/60 border-x border-[rgba(0,0,0,0.06)]">
+                    <div class="font-bold text-[#007aff] text-sm">${s.shares_to_buy || 0} Shares</div>
+                    <span class="text-[10px] text-[#6e6e73] block">Capital: ${formatINR(s.position_value || 0)} (${s.position_pct_capital || 0}%)</span>
+                    <span class="text-[9px] text-[#b32020] block">Max Risk: ${formatINR(s.max_risk_rupees || 0)}</span>
                 </td>
 
                 <!-- Action Buttons: Trade on Broker, Journal, and Analyze -->
-                <td class="py-3 px-3 text-center space-y-1">
+                <td class="py-3 px-3 badge-col space-y-1">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="openBrokerOrderModal('${c.symbol}', ${s.shares_to_buy || 10}, ${c.current_price}, ${c.stop_loss}, ${c.target_2r})" class="px-2 py-1 rounded-md bg-[#eff6ff] hover:bg-[#dbeafe] text-[#007aff] font-semibold text-[10.5px] transition-all flex items-center gap-1 cursor-pointer" title="Execute on Zerodha Kite or Dhan">
+                        <button onclick="openBrokerOrderModal('${c.symbol}', ${s.shares_to_buy || 10}, ${c.current_price}, ${c.stop_loss}, ${c.target_2r})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                             <span>⚡</span> <span>Broker</span>
                         </button>
-                        <button onclick="takeTradeFromScanner('${c.symbol}', ${c.current_price}, ${s.shares_to_buy}, ${c.stop_loss}, ${c.target_2r}, ${c.target_3r})" class="px-2 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[10.5px] shadow-xs transition-all flex items-center gap-1 cursor-pointer" title="Log trade in personal journal">
+                        <button onclick="takeTradeFromScanner('${c.symbol}', ${c.current_price}, ${s.shares_to_buy}, ${c.stop_loss}, ${c.target_2r}, ${c.target_3r})" class="btn-log" title="Log trade in personal journal">
                             <span>🎯</span> <span>Log</span>
                         </button>
                     </div>
-                    <button onclick="selectSearchedStock('${c.symbol}')" class="text-[10px] text-[#86868b] hover:text-[#007aff] underline block mx-auto transition-colors cursor-pointer">
-                        Analyze Chart ➔
+                    <button onclick="selectSearchedStock('${c.symbol}')" class="btn-chart mx-auto" title="Analyze chart">
+                        <span>📈</span> <span>Chart ➔</span>
                     </button>
                 </td>
             </tr>
@@ -136,13 +136,13 @@ function renderScannerTable(candidates, capital, riskPct) {
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-[#f5f5f7] text-[#6e6e73] text-[11px] font-semibold uppercase tracking-wider border-b border-[rgba(0,0,0,0.08)]">
-                        <th class="py-2.5 px-3">Stock / Pattern</th>
-                        <th class="py-2.5 px-2 text-center">Alpha Score</th>
-                        <th class="py-2.5 px-3">Entry (CMP)</th>
-                        <th class="py-2.5 px-3">Stop-Loss (ATR)</th>
-                        <th class="py-2.5 px-3">Targets (2R / 3R)</th>
-                        <th class="py-2.5 px-3 bg-[#eef5fd] text-[#007aff] font-semibold border-x border-[rgba(0,0,0,0.08)]">Calculated Sizing (Qty)</th>
-                        <th class="py-2.5 px-3 text-center">Action</th>
+                        <th class="py-2.5 px-3 text-col">Stock / Pattern</th>
+                        <th class="py-2.5 px-2 badge-col">Alpha Score</th>
+                        <th class="py-2.5 px-3 num-col">Entry (CMP)</th>
+                        <th class="py-2.5 px-3 num-col">Stop-Loss (ATR)</th>
+                        <th class="py-2.5 px-3 num-col">Targets (2R / 3R)</th>
+                        <th class="py-2.5 px-3 num-col bg-[#eef5fd] text-[#007aff] font-semibold border-x border-[rgba(0,0,0,0.08)]">Calculated Sizing</th>
+                        <th class="py-2.5 px-3 badge-col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -152,6 +152,7 @@ function renderScannerTable(candidates, capital, riskPct) {
         </div>
     `;
 }
+
 
 async function takeTradeFromScanner(symbol, entryPrice, qty, sl, t1, t2) {
     try {

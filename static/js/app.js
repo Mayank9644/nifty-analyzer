@@ -35,10 +35,18 @@ async function initApp() {
     loadStock(appState.currentSymbol);
     // Asynchronously load universe assets & market overview in background
     loadInitialData();
-    fetchMarketOverview();
     if (typeof loadPremarketBriefing === "function") {
         loadPremarketBriefing();
     }
+    // Restore saved ticker tape state
+    if (localStorage.getItem("terminal_ticker_hidden") === "true") {
+        const strip = document.getElementById("liveTickerStrip");
+        if (strip) strip.classList.add("hidden");
+        const btn = document.getElementById("tickerToggleBtn");
+        if (btn) btn.classList.add("opacity-60");
+    }
+    // Initialize workspace sub-desk bar
+    switchTab(appState.currentTab || "stocks");
 }
 
 
@@ -320,19 +328,145 @@ function renderMarketTicker(data) {
     tickerContainer.innerHTML = `<div class="ticker-move">${htmlContent}${htmlContent}</div>`;
 }
 
+const WORKSPACE_MAP = {
+    "stocks": { ws: "terminal", label: "Terminal", desks: [{ id: "stocks", label: "📈 Stocks Deep Dive" }] },
+    "scanner": { ws: "discovery", label: "Discovery", desks: [
+        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
+        { id: "best-picks", label: "💡 Curated Guru Picks" },
+        { id: "screener", label: "🎯 Multi-Metric Screener" }
+    ]},
+    "best-picks": { ws: "discovery", label: "Discovery", desks: [
+        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
+        { id: "best-picks", label: "💡 Curated Guru Picks" },
+        { id: "screener", label: "🎯 Multi-Metric Screener" }
+    ]},
+    "screener": { ws: "discovery", label: "Discovery", desks: [
+        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
+        { id: "best-picks", label: "💡 Curated Guru Picks" },
+        { id: "screener", label: "🎯 Multi-Metric Screener" }
+    ]},
+    "institutional": { ws: "markets", label: "Markets & Macro", desks: [
+        { id: "institutional", label: "🏛️ Institutional Breadth" },
+        { id: "sectors", label: "📊 Sector Heatmap" },
+        { id: "options", label: "📋 F&O Options Desk" },
+        { id: "commodities", label: "🥇 MCX Commodities" }
+    ]},
+    "sectors": { ws: "markets", label: "Markets & Macro", desks: [
+        { id: "institutional", label: "🏛️ Institutional Breadth" },
+        { id: "sectors", label: "📊 Sector Heatmap" },
+        { id: "options", label: "📋 F&O Options Desk" },
+        { id: "commodities", label: "🥇 MCX Commodities" }
+    ]},
+    "options": { ws: "markets", label: "Markets & Macro", desks: [
+        { id: "institutional", label: "🏛️ Institutional Breadth" },
+        { id: "sectors", label: "📊 Sector Heatmap" },
+        { id: "options", label: "📋 F&O Options Desk" },
+        { id: "commodities", label: "🥇 MCX Commodities" }
+    ]},
+    "commodities": { ws: "markets", label: "Markets & Macro", desks: [
+        { id: "institutional", label: "🏛️ Institutional Breadth" },
+        { id: "sectors", label: "📊 Sector Heatmap" },
+        { id: "options", label: "📋 F&O Options Desk" },
+        { id: "commodities", label: "🥇 MCX Commodities" }
+    ]},
+    "bees": { ws: "allocation", label: "ETFs & Allocation", desks: [
+        { id: "bees", label: "⚖️ Bees Donchian Rotation" },
+        { id: "etf", label: "📉 All-India ETF Screener" }
+    ]},
+    "etf": { ws: "allocation", label: "ETFs & Allocation", desks: [
+        { id: "bees", label: "⚖️ Bees Donchian Rotation" },
+        { id: "etf", label: "📉 All-India ETF Screener" }
+    ]},
+    "journal": { ws: "execution", label: "Execution & Risk", desks: [
+        { id: "journal", label: "📒 Trading Journal & Risk" },
+        { id: "backtest", label: "🧪 Strategy Backtester" }
+    ]},
+    "backtest": { ws: "execution", label: "Execution & Risk", desks: [
+        { id: "journal", label: "📒 Trading Journal & Risk" },
+        { id: "backtest", label: "🧪 Strategy Backtester" }
+    ]},
+    "ipo": { ws: "more", label: "Intelligence", desks: [
+        { id: "ipo", label: "🚀 IPOs Tracker" },
+        { id: "calendar", label: "📅 Economic Calendar" },
+        { id: "news", label: "📰 Live Market News" }
+    ]},
+    "calendar": { ws: "more", label: "Intelligence", desks: [
+        { id: "ipo", label: "🚀 IPOs Tracker" },
+        { id: "calendar", label: "📅 Economic Calendar" },
+        { id: "news", label: "📰 Live Market News" }
+    ]},
+    "news": { ws: "more", label: "Intelligence", desks: [
+        { id: "ipo", label: "🚀 IPOs Tracker" },
+        { id: "calendar", label: "📅 Economic Calendar" },
+        { id: "news", label: "📰 Live Market News" }
+    ]}
+};
+
+function switchWorkspace(workspaceKey, defaultTab) {
+    switchTab(defaultTab || "stocks");
+}
+window.switchWorkspace = switchWorkspace;
+
+function toggleTickerTape() {
+    const strip = document.getElementById("liveTickerStrip");
+    const btn = document.getElementById("tickerToggleBtn");
+    if (!strip) return;
+    const isHidden = strip.classList.toggle("hidden");
+    localStorage.setItem("terminal_ticker_hidden", isHidden ? "true" : "false");
+    if (btn) {
+        btn.classList.toggle("opacity-60", isHidden);
+    }
+}
+window.toggleTickerTape = toggleTickerTape;
+
+function toggleMoreDesksDropdown(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const dd = document.getElementById("moreDesksDropdown");
+    if (dd) dd.classList.toggle("hidden");
+}
+window.toggleMoreDesksDropdown = toggleMoreDesksDropdown;
+
+function toggleMobileMoreSheet() {
+    const sheet = document.getElementById("mobileMoreSheet");
+    if (sheet) sheet.classList.toggle("hidden");
+}
+window.toggleMobileMoreSheet = toggleMobileMoreSheet;
+
+// Close dropdown on outside click
+document.addEventListener("click", () => {
+    const dd = document.getElementById("moreDesksDropdown");
+    if (dd && !dd.classList.contains("hidden")) dd.classList.add("hidden");
+});
+
 function switchTab(tab) {
     if (tab === "recommendations") tab = "best-picks";
     appState.currentTab = tab;
-    document.querySelectorAll(".nav-tab-btn").forEach(btn => {
-        if (btn.dataset.tab === tab) {
-            btn.classList.add("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
-            btn.classList.remove("text-[#636366]", "hover:text-[#1d1d1f]", "bg-blue-600", "text-white");
+
+    // Synchronize Master Workspace navigation
+    const info = WORKSPACE_MAP[tab] || WORKSPACE_MAP["stocks"];
+    document.querySelectorAll(".workspace-btn").forEach(wb => {
+        if (wb.dataset.workspace === info.ws) {
+            wb.classList.add("active");
         } else {
-            btn.classList.remove("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm", "bg-blue-600", "text-white");
-            btn.classList.add("text-[#636366]", "hover:text-[#1d1d1f]");
+            wb.classList.remove("active");
         }
     });
 
+    // Populate Contextual Sub-Desks Track
+    const subDeskTrack = document.getElementById("subDeskNavTrack");
+    const breadcrumb = document.getElementById("activeWorkspaceBreadcrumb");
+    if (breadcrumb) {
+        breadcrumb.innerHTML = `Workspace: <strong class="text-[#1c1c1e]">${info.label}</strong>`;
+    }
+    if (subDeskTrack) {
+        subDeskTrack.innerHTML = info.desks.map(d => `
+            <button class="nav-tab-btn ${d.id === tab ? 'active' : ''}" data-tab="${d.id}" onclick="switchTab('${d.id}')">
+                ${d.label}
+            </button>
+        `).join("");
+    }
+
+    // Toggle active tab view
     document.querySelectorAll(".tab-view").forEach(view => view.classList.add("hidden"));
     const activeView = document.getElementById(`tab-view-${tab}`);
     if (activeView) activeView.classList.remove("hidden");

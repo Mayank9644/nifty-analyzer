@@ -130,29 +130,32 @@ function renderActiveTrades(trades) {
         const manualBadge = t.is_manual ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-[#eef5fd] text-[#007aff] border border-[#b9d7fb] ml-1">Manual</span>` : "";
         return `
             <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors text-xs">
-                <td class="py-3 px-3">
-                    <div class="font-semibold text-[#1c1c1e]">${t.code}${manualBadge}</div>
+                <td class="py-3 px-3 text-col">
+                    <div class="font-bold text-[#1c1c1e]">${t.code}${manualBadge}</div>
                     <span class="text-[10px] text-[#86868b]">Entry: ${t.entry_date}</span>
                 </td>
-                <td class="py-3 px-3 text-[#6e6e73] mono">₹${t.entry_price}</td>
-                <td class="py-3 px-3 font-semibold text-[#1c1c1e] mono">₹${t.current_price}</td>
-                <td class="py-3 px-3 text-[#6e6e73] mono">${t.quantity} Qty</td>
-                <td class="py-3 px-3 text-[#b32020] mono">₹${t.stop_loss}</td>
-                <td class="py-3 px-3 text-[#1e7e34] mono">₹${t.target_1}</td>
-                <td class="py-3 px-3 font-bold mono">
-                    <span class="px-2 py-1 rounded-lg border text-xs ${pnlBg} ${pnlColor}">
-                        ${t.pnl > 0 ? '+' : ''}₹${formatNumber(t.pnl, 0)}
+                <td class="py-3 px-3 num-col text-[#6e6e73]">${formatINR(t.entry_price || 0)}</td>
+                <td class="py-3 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(t.current_price || 0)}</td>
+                <td class="py-3 px-3 num-col text-[#6e6e73]">${t.quantity} Qty</td>
+                <td class="py-3 px-3 num-col text-[#b32020]">${formatINR(t.stop_loss || 0)}</td>
+                <td class="py-3 px-3 num-col text-[#1e7e34]">${formatINR(t.target_1 || 0)}</td>
+                <td class="py-3 px-3 num-col font-bold">
+                    <span class="inline-block px-2 py-1 rounded-lg border text-xs ${pnlBg} ${pnlColor}">
+                        ${t.pnl > 0 ? '+' : ''}${formatINR(t.pnl || 0)}
                         <span class="text-[10px] block font-normal">(${t.pnl_pct > 0 ? '+' : ''}${t.pnl_pct}%)</span>
                     </span>
                 </td>
-                <td class="py-3 px-3 text-center">
+                <td class="py-3 px-3 badge-col">
                     <div class="flex items-center gap-1.5 justify-center flex-wrap">
+                        <button onclick="selectSearchedStock('${t.symbol}')" class="btn-chart" title="Analyze chart">
+                            <span>📈</span> <span>Chart</span>
+                        </button>
                         <button onclick="getPositionAdvice('${t.id}', '${t.symbol}', ${t.entry_price}, ${t.quantity}, ${t.current_price})"
-                            class="px-2.5 py-1.5 rounded-lg bg-[#eef5fd] text-[#007aff] border border-[#b9d7fb] hover:bg-[#007aff] hover:text-white transition-all text-[11px] font-semibold whitespace-nowrap">
+                            class="px-2 py-1 rounded-md bg-[#eef5fd] text-[#007aff] border border-[#b9d7fb] hover:bg-[#007aff] hover:text-white transition-all text-[10.5px] font-semibold whitespace-nowrap cursor-pointer">
                             🧠 Advice
                         </button>
                         <button onclick="closeJournalTradePrompt('${t.id}', ${t.current_price})"
-                            class="px-2.5 py-1.5 rounded-lg bg-[#fdf0f0] text-[#b32020] border border-[#f5c6cb] hover:bg-[#b32020] hover:text-white transition-all text-[11px] font-semibold whitespace-nowrap">
+                            class="px-2 py-1 rounded-md bg-[#fdf0f0] text-[#b32020] border border-[#f5c6cb] hover:bg-[#b32020] hover:text-white transition-all text-[10.5px] font-semibold whitespace-nowrap cursor-pointer">
                             Close
                         </button>
                     </div>
@@ -167,14 +170,14 @@ function renderActiveTrades(trades) {
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-[#f5f5f7] text-[#6e6e73] text-[11px] uppercase font-semibold tracking-wider border-b border-[rgba(0,0,0,0.08)]">
-                        <th class="py-2.5 px-3">Stock</th>
-                        <th class="py-2.5 px-3">Entry Price</th>
-                        <th class="py-2.5 px-3">Current Price</th>
-                        <th class="py-2.5 px-3">Qty</th>
-                        <th class="py-2.5 px-3">Stop Loss</th>
-                        <th class="py-2.5 px-3">Target 1</th>
-                        <th class="py-2.5 px-3">Live P&amp;L</th>
-                        <th class="py-2.5 px-3 text-center">Actions</th>
+                        <th class="py-2.5 px-3 text-col">Stock</th>
+                        <th class="py-2.5 px-3 num-col">Entry Price</th>
+                        <th class="py-2.5 px-3 num-col">Current Price</th>
+                        <th class="py-2.5 px-3 num-col">Qty</th>
+                        <th class="py-2.5 px-3 num-col">Stop Loss</th>
+                        <th class="py-2.5 px-3 num-col">Target 1</th>
+                        <th class="py-2.5 px-3 num-col">Live P&amp;L</th>
+                        <th class="py-2.5 px-3 badge-col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>

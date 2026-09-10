@@ -100,36 +100,84 @@
             </div>
         </div>
 
-        <!-- Row 2: Categorized macOS Segmented Navigation (Zero Horizontal Scrolling) -->
-        <div class="max-w-7xl mx-auto py-1">
-            <nav class="flex flex-wrap items-center gap-2">
-                <!-- Group 1: Equities & Screening -->
-                <div class="flex items-center macos-segmented-track shadow-xs">
-                    <button class="nav-tab-btn active" data-tab="stocks" title="Stocks Deep Dive & Charting">📈 Stocks</button>
-                    <button class="nav-tab-btn" data-tab="institutional" title="Institutional Smart Money Radar">🏛️ Institutional</button>
-                    <button class="nav-tab-btn" data-tab="best-picks" title="Top AI & Guru Stock Picks">💡 Picks</button>
-                    <button class="nav-tab-btn" data-tab="screener" title="Multi-Metric Stock Screener">🎯 Screener</button>
-                    <button class="nav-tab-btn" data-tab="scanner" title="SEPA V4 Momentum Alpha Scanner">📡 Scan</button>
+        <!-- Row 2: Master Workspaces Bar + Integrated Execution Strategy & Viewport Controls -->
+        <div class="max-w-7xl mx-auto py-1 flex flex-wrap items-center justify-between gap-2.5">
+            <nav class="flex items-center gap-2">
+                <!-- Master Workspaces (Top Level) -->
+                <div class="workspace-track shadow-xs">
+                    <button class="workspace-btn active" data-workspace="terminal" onclick="switchWorkspace('terminal', 'stocks')" title="Terminal Charting & Deep Dive">
+                        <span>📈</span> <span>Terminal</span>
+                    </button>
+                    <button class="workspace-btn" data-workspace="discovery" onclick="switchWorkspace('discovery', 'scanner')" title="Stock Discovery, SEPA Scanner & Curated Picks">
+                        <span>📡</span> <span>Discovery</span>
+                        <span class="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[9.5px]">New</span>
+                    </button>
+                    <button class="workspace-btn" data-workspace="markets" onclick="switchWorkspace('markets', 'institutional')" title="Institutional Breadth, Sectors, F&O & Commodities">
+                        <span>🏛️</span> <span>Markets &amp; Macro</span>
+                    </button>
+                    <button class="workspace-btn" data-workspace="allocation" onclick="switchWorkspace('allocation', 'bees')" title="ETFs & Systematic Rotation">
+                        <span>⚖️</span> <span>ETFs &amp; Allocation</span>
+                    </button>
+                    <button class="workspace-btn" data-workspace="execution" onclick="switchWorkspace('execution', 'journal')" title="Journal, Risk Radar & Backtester">
+                        <span>📒</span> <span>Execution &amp; Risk</span>
+                    </button>
                 </div>
 
-                <!-- Group 2: Markets & Asset Desks -->
-                <div class="flex items-center macos-segmented-track shadow-xs">
-                    <button class="nav-tab-btn" data-tab="bees" title="NiftyBees vs GoldBees Strategy">⚖️ Bees</button>
-                    <button class="nav-tab-btn" data-tab="sectors" title="Sectoral Heatmap & Rotation">📊 Sectors</button>
-                    <button class="nav-tab-btn" data-tab="etf" title="All-India ETF Screener">📉 ETFs</button>
-                    <button class="nav-tab-btn" data-tab="commodities" title="MCX Gold, Silver & Crude Oil">🥇 Commodities</button>
-                    <button class="nav-tab-btn" data-tab="options" title="F&O Options Chain & Max Pain">📋 F&O</button>
-                </div>
-
-                <!-- Group 3: Analytics & Execution Tools -->
-                <div class="flex items-center macos-segmented-track shadow-xs">
-                    <button class="nav-tab-btn" data-tab="ipo" title="Current & Upcoming IPOs">🚀 IPOs</button>
-                    <button class="nav-tab-btn" data-tab="calendar" title="Economic & RBI Policy Events">📅 Calendar</button>
-                    <button class="nav-tab-btn" data-tab="journal" title="Personal Trading Journal & P&L">📒 Journal</button>
-                    <button class="nav-tab-btn" data-tab="backtest" title="Historical Strategy Backtester">🧪 Backtest</button>
-                    <button class="nav-tab-btn" data-tab="news" title="Live Financial Market News">📰 News</button>
+                <!-- More Desks Dropdown -->
+                <div class="relative inline-block text-left">
+                    <button id="moreDesksDropdownBtn" onclick="toggleMoreDesksDropdown(event)" class="px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#5a5a5f] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                        <span>⋯ More</span>
+                        <svg class="w-3 h-3 text-[#8e8e93]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="moreDesksDropdown" class="hidden absolute left-0 mt-1 w-44 rounded-xl bg-white/95 backdrop-blur-md border border-[rgba(0,0,0,0.12)] shadow-xl z-50 py-1 text-xs">
+                        <button onclick="switchTab('ipo'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
+                            <span>🚀</span> <span>IPOs Tracker</span>
+                        </button>
+                        <button onclick="switchTab('calendar'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
+                            <span>📅</span> <span>Economic Calendar</span>
+                        </button>
+                        <button onclick="switchTab('news'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
+                            <span>📰</span> <span>Live Market News</span>
+                        </button>
+                    </div>
                 </div>
             </nav>
+
+            <!-- Right Controls: Strategy Selector + Density + Ticker Toggle + Position Calc -->
+            <div class="flex items-center gap-2">
+                <!-- Strategy Selector (Integrated!) -->
+                <div class="macos-segmented-track" title="Execution Strategy (Adapts lookbacks, stops & targets)">
+                    <button class="style-btn" data-style="intraday">
+                        <span>⚡</span> <span>Intraday</span>
+                    </button>
+                    <button class="style-btn active" data-style="swing">
+                        <span>🔄</span> <span>Swing</span>
+                    </button>
+                    <button class="style-btn" data-style="positional">
+                        <span>📈</span> <span>Positional</span>
+                    </button>
+                </div>
+
+                <!-- Display Density Toggle -->
+                <div class="hidden sm:inline-flex macos-segmented-track" title="Display Density (Toggle with 'D')">
+                    <button id="densityStandardBtn" onclick="setDisplayDensity('standard')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#1c1c1e] bg-white shadow-xs">
+                        Standard
+                    </button>
+                    <button id="densityCompactBtn" onclick="setDisplayDensity('compact')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#6e6e73]">
+                        Compact
+                    </button>
+                </div>
+
+                <!-- Live Ticker Toggle Button (Reclaims 36px) -->
+                <button onclick="toggleTickerTape()" id="tickerToggleBtn" title="Toggle Live Ticker Strip (T)" class="px-2 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>📉</span> <span class="hidden sm:inline">Ticker</span>
+                </button>
+
+                <!-- Position Calculator Button -->
+                <button onclick="openPositionCalcModal()" class="px-2.5 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#007aff] hover:bg-[#eff6ff] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>🧮</span> <span class="hidden sm:inline">Calculator</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -147,44 +195,19 @@
         </div>
     </div>
 
-
-    <!-- 3. macOS SUB-TOOLBAR (Execution Strategy Strip + Display Density + Position Calculator) -->
-    <section class="bg-[#fafafc] border-b border-[rgba(0,0,0,0.06)] px-4 lg:px-7 py-1.5">
+    <!-- 3. CONTEXTUAL SUB-DESK NAVIGATION TRACK (Adapts dynamically to active workspace) -->
+    <section id="subDeskContainer" class="bg-[#fafafc] border-b border-[rgba(0,0,0,0.06)] px-4 lg:px-7 py-1.5 transition-all">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5 text-xs">
-            <div class="flex items-center space-x-2 text-[#5a5a5f]">
-                <span class="font-semibold text-[#1c1c1e] text-[11.5px]">Execution Strategy:</span>
-                <span class="text-[11px] text-[#8e8e93] hidden sm:inline">(Adapts indicator lookbacks, profit targets & stop-loss rules)</span>
+            <div id="subDeskNavTrack" class="subdesk-track">
+                <!-- Injected dynamically by renderWorkspaceSubDesks() in app.js -->
+                <button class="nav-tab-btn active" data-tab="stocks">📈 Stocks Deep Dive</button>
             </div>
-            
-            <div class="flex items-center space-x-3">
-                <div class="macos-segmented-track">
-                    <button class="style-btn" data-style="intraday">
-                        <span>⚡</span> <span>Intraday</span>
-                    </button>
-                    <button class="style-btn active" data-style="swing">
-                        <span>🔄</span> <span>Swing</span>
-                    </button>
-                    <button class="style-btn" data-style="positional">
-                        <span>📈</span> <span>Positional</span>
-                    </button>
-                </div>
-
-                <!-- Display Density Toggle (Standard vs Compact) -->
-                <div class="hidden sm:inline-flex macos-segmented-track" title="Display Density (Toggle with 'D')">
-                    <button id="densityStandardBtn" onclick="setDisplayDensity('standard')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#1c1c1e] bg-white shadow-xs">
-                        Standard
-                    </button>
-                    <button id="densityCompactBtn" onclick="setDisplayDensity('compact')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#6e6e73]">
-                        Compact
-                    </button>
-                </div>
-
-                <button onclick="openPositionCalcModal()" class="px-2.5 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#007aff] hover:bg-[#eff6ff] font-semibold text-[11px] shadow-sm flex items-center gap-1 transition-all">
-                    <span>🧮</span> <span>Position Calculator</span>
-                </button>
+            <div class="flex items-center gap-2 text-[#8e8e93] text-[11px]">
+                <span id="activeWorkspaceBreadcrumb">Workspace: <strong>Terminal</strong></span>
             </div>
         </div>
     </section>
+
 
 
     <!-- MAIN DASHBOARD CONTENT CANVAS -->
@@ -2062,28 +2085,88 @@
     </div>
 
     <!-- MOBILE BOTTOM FLOATING GLASS DOCK (Visible on <= 768px screens) -->
-    <nav class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-white/85 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
-        <button onclick="switchTab('best-picks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#1c1c1e] active:scale-95 transition-all">
-            <span class="text-lg">🎯</span>
+    <nav class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-white/90 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
+        <button onclick="switchTab('stocks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#1c1c1e] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">📈</span>
+            <span class="text-[9.5px] font-semibold mt-0.5">Terminal</span>
+        </button>
+        <button onclick="switchTab('scanner')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">📡</span>
+            <span class="text-[9.5px] font-semibold mt-0.5">Scan</span>
+        </button>
+        <button onclick="switchTab('best-picks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">💡</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Picks</span>
         </button>
-        <button onclick="switchTab('stocks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all">
-            <span class="text-lg">📈</span>
-            <span class="text-[9.5px] font-semibold mt-0.5">Stocks</span>
-        </button>
-        <button onclick="switchTab('screener')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all">
-            <span class="text-lg">🔍</span>
-            <span class="text-[9.5px] font-semibold mt-0.5">Scanner</span>
-        </button>
-        <button onclick="switchTab('options')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all">
-            <span class="text-lg">📊</span>
+        <button onclick="switchTab('options')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">📋</span>
             <span class="text-[9.5px] font-semibold mt-0.5">F&amp;O</span>
         </button>
-        <button onclick="switchTab('journal')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all">
-            <span class="text-lg">📓</span>
-            <span class="text-[9.5px] font-semibold mt-0.5">Journal</span>
+        <button onclick="toggleMobileMoreSheet()" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">⋯</span>
+            <span class="text-[9.5px] font-semibold mt-0.5">Desks</span>
         </button>
     </nav>
+
+    <!-- MOBILE DESKS SLIDE-UP BOTTOM SHEET -->
+    <div id="mobileMoreSheet" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end justify-center p-0 transition-opacity" onclick="if(event.target === this) toggleMobileMoreSheet()">
+        <div class="w-full max-w-lg bg-white rounded-t-3xl shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto border-t border-[rgba(0,0,0,0.12)]">
+            <div class="w-10 h-1 rounded-full bg-[#d1d1d6] mx-auto"></div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm text-[#1c1c1e]">All Operational Desks</h3>
+                    <p class="text-[10.5px] text-[#6e6e73]">Switch to any analytical workstation</p>
+                </div>
+                <button onclick="toggleMobileMoreSheet()" class="text-xs text-[#007aff] font-semibold px-2.5 py-1 rounded-lg bg-[#eff6ff] cursor-pointer">Done</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="switchTab('screener'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">🎯</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Screener</div><span class="text-[10px] text-[#8e8e93]">Multi-metric filter</span></div>
+                </button>
+                <button onclick="switchTab('institutional'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">🏛️</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Institutional</div><span class="text-[10px] text-[#8e8e93]">Breadth &amp; Smart Money</span></div>
+                </button>
+                <button onclick="switchTab('sectors'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📊</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Sectors</div><span class="text-[10px] text-[#8e8e93]">Rotation heatmap</span></div>
+                </button>
+                <button onclick="switchTab('commodities'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">🥇</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Commodities</div><span class="text-[10px] text-[#8e8e93]">MCX Gold &amp; Crude</span></div>
+                </button>
+                <button onclick="switchTab('bees'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">⚖️</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Bees Rotation</div><span class="text-[10px] text-[#8e8e93]">Donchian ETF Deployer</span></div>
+                </button>
+                <button onclick="switchTab('etf'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📉</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">All ETFs</div><span class="text-[10px] text-[#8e8e93]">Indian ETF screener</span></div>
+                </button>
+                <button onclick="switchTab('journal'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📓</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Journal &amp; Risk</div><span class="text-[10px] text-[#8e8e93]">P&amp;L &amp; risk radar</span></div>
+                </button>
+                <button onclick="switchTab('backtest'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">🧪</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Backtest</div><span class="text-[10px] text-[#8e8e93]">Strategy simulation</span></div>
+                </button>
+                <button onclick="switchTab('ipo'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">🚀</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">IPOs</div><span class="text-[10px] text-[#8e8e93]">Upcoming listings</span></div>
+                </button>
+                <button onclick="switchTab('calendar'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📅</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">Calendar</div><span class="text-[10px] text-[#8e8e93]">Economic &amp; RBI</span></div>
+                </button>
+                <button onclick="switchTab('news'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📰</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">News</div><span class="text-[10px] text-[#8e8e93]">Live market feed</span></div>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Custom Scripts -->
     <script src="/static/js/utils.js?v=20260911_v7"></script>
