@@ -30,7 +30,7 @@ from analysis.sectors import analyze_all_sectors
 from analysis.etf import run_etf_screener
 from analysis.breadth import calculate_market_breadth
 from analysis.journal import add_trade, get_active_trades, close_trade, get_journal_stats, get_journal_analytics
-from data.database import db_get_active_trades
+from data.database import db_get_active_trades, db_get_all_trades
 from analysis.backtest import run_strategy_backtest
 from analysis.screener import run_stock_screener
 from analysis.ipo import get_ipo_tracker_data
@@ -40,10 +40,16 @@ from analysis.relative_strength import calculate_mansfield_rs, evaluate_minervin
 from analysis.options_payoff import calculate_strategy_payoff, calculate_iv_percentile
 from analysis.multitimeframe import evaluate_multitimeframe_confluence
 from analysis.broker_bridge import generate_broker_order_links
+from analysis.portfolio_risk import calculate_portfolio_risk
+from analysis.premarket import generate_premarket_briefing
 from data.market_schedule import get_market_status
 from analysis.intrinsic_valuation import calculate_intrinsic_valuation
 from data.cache_warmer import get_warmed_stock, set_warmed_stock, start_cache_warmer, get_cache_stats
 from data.institutional_flow import get_fii_dii_daily_flow, get_delivery_volume_analysis
+
+import csv
+import io
+from flask import Response
 
 import math
 import concurrent.futures
@@ -831,18 +837,24 @@ def api_options_payoff(symbol: str):
         return jsonify(payoff)
 
 
-@app.route("/api/broker/order-link", methods=["POST"])
+@app.route("/api/broker/order-link", methods=["GET", "POST"])
+@app.route("/api/broker/order-links", methods=["GET", "POST"])
 def api_broker_order_link():
     """Generates 1-click order execution URLs and webhook payloads for Indian brokers."""
     try:
-        data = request.get_json() or {}
+        if request.method == "POST":
+            data = request.get_json() or {}
+        else:
+            data = request.args
+
         symbol = data.get("symbol", "RELIANCE.NS")
-        quantity = int(data.get("quantity", 1))
-        entry_price = float(data.get("entry_price", 0.0))
-        stop_loss = float(data.get("stop_loss", 0.0))
-        target = float(data.get("target", 0.0))
+        quantity = int(data.get("quantity") or data.get("qty") or 1)
+        entry_price = float(data.get("entry_price") or data.get("price") or data.get("entry") or 0.0)
+        stop_loss = float(data.get("stop_loss") or data.get("stop") or data.get("sl") or 0.0)
+        target = float(data.get("target") or data.get("tgt") or 0.0)
         order_type = data.get("order_type", "LIMIT")
         product = data.get("product", "CNC")
+
         result = generate_broker_order_links(
             symbol=symbol,
             quantity=quantity,
@@ -853,6 +865,83 @@ def api_broker_order_link():
             product=product
         )
         return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/export")
+def api_journal_export():
+    """Exports complete tradebook history as a tax-compliant CSV spreadsheet."""
+    try:
+        trades_dict = db_get_all_trades()
+        all_trades = trades_dict.get("active_trades", []) + trades_dict.get("closed_trades", [])
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Trade ID",
+            "Symbol",
+            "Trading Symbol",
+            "Entry Date",
+            "Style",
+            "Status",
+            "Quantity",
+            "Entry Price (INR)",
+            "Stop Loss (INR)",
+            "Target (INR)",
+            "Exit Date",
+            "Exit Price (INR)",
+            "Realized P&L (INR)",
+            "Return %",
+            "Notes"
+        ])
+
+        for t in all_trades:
+            writer.writerow([
+                t.get("id", ""),
+                t.get("symbol", ""),
+                t.get("code", ""),
+                t.get("entry_date", ""),
+                t.get("style", "Swing"),
+                t.get("status", "OPEN"),
+                t.get("quantity", 0),
+                t.get("entry_price", 0.0),
+                t.get("stop_loss", 0.0),
+                t.get("target_1", 0.0),
+                t.get("exit_date", "") or "—",
+                t.get("exit_price", "") if t.get("exit_price") is not None else "—",
+                t.get("pnl", "") if t.get("pnl") is not None else "—",
+                f"{t.get('pnl_pct', 0.0)}%" if t.get("pnl_pct") is not None else "—",
+                t.get("notes", "") or ""
+            ])
+
+        csv_data = output.getvalue()
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=nifty_analyzer_tradebook.csv"}
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/portfolio/risk")
+def api_portfolio_risk():
+    """Calculates active portfolio sector concentration, stock caps, and stop-loss risk."""
+    try:
+        capital = float(request.args.get("capital", 1000000.0))
+        res = calculate_portfolio_risk(total_portfolio_capital=capital)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/macro/premarket")
+def api_macro_premarket():
+    """Synthesizes global market cues, GIFT Nifty proxy, Nifty pivot levels, and opening bias."""
+    try:
+        res = generate_premarket_briefing()
+        return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

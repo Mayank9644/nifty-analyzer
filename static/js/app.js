@@ -36,6 +36,9 @@ async function initApp() {
     // Asynchronously load universe assets & market overview in background
     loadInitialData();
     fetchMarketOverview();
+    if (typeof loadPremarketBriefing === "function") {
+        loadPremarketBriefing();
+    }
 }
 
 
@@ -630,6 +633,14 @@ function renderAllStockComponents(stockData, chartData, newsData) {
         renderStockNews((newsData && newsData.articles) || []);
     } catch (err) {
         console.error("renderStockNews error:", err);
+    }
+
+    try {
+        if (typeof checkPriceAlerts === "function" && stockData && stockData.info) {
+            checkPriceAlerts(stockData.info.symbol, stockData.info.current_price, stockData.info.fifty_two_week_high);
+        }
+    } catch (err) {
+        console.error("checkPriceAlerts error:", err);
     }
 }
 
@@ -1407,7 +1418,15 @@ async function loadBeesStrategy() {
 
 // -------------------------------------------------------------------
 // F&O Options Dashboard
-// -------------------------------------------------------------------
+function selectOptionsUnderlying(btn, symbol) {
+    if (btn && btn.parentElement) {
+        btn.parentElement.querySelectorAll(".macos-segmented-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+    }
+    loadOptionsDashboard(symbol);
+}
+window.selectOptionsUnderlying = selectOptionsUnderlying;
+
 async function loadOptionsDashboard(symbol = "NIFTY") {
     try {
         const res = await fetch(`/api/options/${symbol}`);
@@ -1443,9 +1462,17 @@ async function loadOptionsDashboard(symbol = "NIFTY") {
 
             // Render chain table
             renderOptionsChainTable("optionsChainTableContainer", data);
+
+            // Sync Options Payoff Studio
+            if (typeof setOptionsPayoffSymbol === "function" && typeof loadOptionsPayoff === "function") {
+                setOptionsPayoffSymbol(symbol);
+                const defaultLot = symbol === "NIFTY" ? 25 : (symbol === "BANKNIFTY" ? 15 : 250);
+                const lotInput = document.getElementById("payoffLotSizeInput");
+                if (lotInput) lotInput.value = defaultLot;
+                loadOptionsPayoff(null, defaultLot);
+            }
         }
     } catch (e) {
-
         console.error("Error loading options:", e);
     }
 }
@@ -1605,11 +1632,27 @@ async function calculatePositionModal() {
             document.getElementById("calcRiskAmt").innerText = `₹${data.risk_amount.toLocaleString('en-IN')}`;
             document.getElementById("calcAllocPct").innerText = `${data.capital_allocation_pct}%`;
             document.getElementById("calcNote").innerText = data.rule_note;
+
+            _lastCalculatedPosition = {
+                qty: data.suggested_quantity,
+                price: entry,
+                sl: sl,
+                target: Math.round((entry + (entry - sl) * 2) * 100) / 100
+            };
         }
     } catch(e) {
         console.error("Calc error:", e);
     }
 }
+
+let _lastCalculatedPosition = null;
+
+function executeCalculatedPositionOnBroker() {
+    if (!_lastCalculatedPosition) return;
+    const sym = appState.currentSymbol || "RELIANCE.NS";
+    openBrokerOrderModal(sym, _lastCalculatedPosition.qty, _lastCalculatedPosition.price, _lastCalculatedPosition.sl, _lastCalculatedPosition.target);
+}
+window.executeCalculatedPositionOnBroker = executeCalculatedPositionOnBroker;
 
 // Global click handler to select stock from screener / picks
 function selectSearchedStock(symbol) {
@@ -1978,12 +2021,17 @@ function copyBrokerWebhookPayload() {
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
-            .then(() => alert("Webhook JSON copied to clipboard!"))
-            .catch(() => alert(JSON.stringify(payload, null, 2)));
+            .then(() => showNotification("Webhook JSON copied to clipboard for OpenAlgo / AlgoTest!", "success"))
+            .catch(() => showNotification("Failed to copy webhook payload", "error"));
     } else {
-        alert(JSON.stringify(payload, null, 2));
+        showNotification("Clipboard not supported in this environment", "warning");
     }
 }
+window.openBrokerModal = openBrokerOrderModal;
+window.openBrokerOrderModal = openBrokerOrderModal;
+window.closeBrokerOrderModal = closeBrokerOrderModal;
+window.updateBrokerLinks = updateBrokerLinks;
+window.copyBrokerWebhookPayload = copyBrokerWebhookPayload;
 
 
 // Dynamic Auto-refresh: 25s when Live, 60s when Closed

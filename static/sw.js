@@ -1,13 +1,18 @@
 // Antigravity Service Worker for PWA Offline Caching
-const CACHE_NAME = 'agy-terminal-v6';
+const CACHE_NAME = 'agy-terminal-v7';
 const STATIC_ASSETS = [
   '/',
   '/static/css/style.css',
+  '/static/js/utils.js',
   '/static/js/charts.js',
   '/static/js/recommendations.js',
   '/static/js/journal.js',
   '/static/js/sectors.js',
   '/static/js/backtest.js',
+  '/static/js/institutional.js',
+  '/static/js/broker_bridge.js',
+  '/static/js/alerts.js',
+  '/static/js/premarket.js',
   '/static/js/app.js'
 ];
 

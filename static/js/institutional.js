@@ -16,25 +16,86 @@ async function loadInstitutionalRadar() {
     if (content) content.classList.add("hidden");
 
     try {
-        const res = await fetch("/api/institutional/radar");
-        const data = await res.json();
+        const [radarRes, breadthRes] = await Promise.all([
+            fetch("/api/institutional/radar").then(r => r.json()).catch(() => null),
+            fetch("/api/breadth").then(r => r.json()).catch(() => null)
+        ]);
 
         if (loader) loader.classList.add("hidden");
         if (content) content.classList.remove("hidden");
 
-        if (data.status !== "success") {
-            showToast("Failed to load institutional data", "error");
-            return;
+        if (radarRes && radarRes.status === "success") {
+            renderFiiDiiCashFlows(radarRes.cash_flows, radarRes.summary);
+            renderFuturesPositioning(radarRes.futures_positioning);
+            renderDeliveryAccumulationTable(radarRes.delivery_stocks);
+        } else {
+            showToast("Failed to load institutional radar data", "error");
         }
 
-        renderFiiDiiCashFlows(data.cash_flows, data.summary);
-        renderFuturesPositioning(data.futures_positioning);
-        renderDeliveryAccumulationTable(data.delivery_stocks);
+        if (breadthRes && breadthRes.status === "success") {
+            renderMarketBreadth(breadthRes);
+        }
     } catch (err) {
         console.error("Error loading institutional radar:", err);
         if (loader) loader.classList.add("hidden");
         showToast("Error connecting to institutional radar API", "error");
     }
+}
+
+function renderMarketBreadth(data) {
+    if (!data) return;
+
+    const b = data.breadth || {};
+    const ad = data.advance_decline || {};
+    const hl = data.new_highs_lows || {};
+    const regime = data.market_regime || {};
+
+    const badge = document.getElementById("breadthRegimeBadge");
+    const desc = document.getElementById("breadthRegimeDesc");
+    const sampleSize = document.getElementById("breadthSampleSize");
+
+    if (badge && regime.badge) {
+        badge.textContent = regime.badge;
+        badge.style.backgroundColor = `${regime.color}15`;
+        badge.style.color = regime.color;
+        badge.style.borderColor = `${regime.color}40`;
+    }
+    if (desc && regime.description) desc.textContent = regime.description;
+    if (sampleSize) sampleSize.textContent = data.sample_size || "50";
+
+    const pct20 = b.pct_above_20ema != null ? b.pct_above_20ema : 0;
+    const pct50 = b.pct_above_50ema != null ? b.pct_above_50ema : 0;
+    const pct200 = b.pct_above_200ema != null ? b.pct_above_200ema : 0;
+
+    const el20 = document.getElementById("breadthPct20Val");
+    const bar20 = document.getElementById("breadthBar20");
+    if (el20) el20.textContent = `${pct20}%`;
+    if (bar20) bar20.style.width = `${pct20}%`;
+
+    const el50 = document.getElementById("breadthPct50Val");
+    const bar50 = document.getElementById("breadthBar50");
+    if (el50) el50.textContent = `${pct50}%`;
+    if (bar50) {
+        bar50.style.width = `${pct50}%`;
+        bar50.className = `h-2 rounded-full transition-all duration-500 ${pct50 >= 50 ? "bg-emerald-500" : "bg-red-500"}`;
+    }
+
+    const el200 = document.getElementById("breadthPct200Val");
+    const bar200 = document.getElementById("breadthBar200");
+    if (el200) el200.textContent = `${pct200}%`;
+    if (bar200) bar200.style.width = `${pct200}%`;
+
+    const adRatioEl = document.getElementById("breadthAdRatio");
+    const advEl = document.getElementById("breadthAdvCount");
+    const decEl = document.getElementById("breadthDecCount");
+    const highsEl = document.getElementById("breadth52wHighs");
+    const lowsEl = document.getElementById("breadth52wLows");
+
+    if (adRatioEl) adRatioEl.textContent = `${ad.ratio != null ? ad.ratio : "—"} (Ratio)`;
+    if (advEl) advEl.textContent = ad.advances || 0;
+    if (decEl) decEl.textContent = ad.declines || 0;
+    if (highsEl) highsEl.textContent = hl.highs_52w || 0;
+    if (lowsEl) lowsEl.textContent = hl.lows_52w || 0;
 }
 
 function renderFiiDiiCashFlows(cashFlows, summary) {
@@ -183,7 +244,7 @@ function renderDeliveryAccumulationTable(stocks) {
     if (!tbody) return;
 
     if (!stocks || stocks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-xs text-[#8e8e93]">No high-delivery accumulation data available currently.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-xs text-[#8e8e93]">No high-delivery accumulation data available currently.</td></tr>`;
         return;
     }
 

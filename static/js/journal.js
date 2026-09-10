@@ -7,24 +7,111 @@ let _journalEquityChart = null;
 
 async function loadTradeJournal() {
     try {
-        const [activeRes, analyticsRes] = await Promise.all([
-            fetch("/api/journal/active"),
-            fetch("/api/journal/analytics")
+        const [activeRes, analyticsRes, riskRes] = await Promise.all([
+            fetch("/api/journal/active").then(r => r.json()).catch(() => null),
+            fetch("/api/journal/analytics").then(r => r.json()).catch(() => null),
+            fetch("/api/portfolio/risk").then(r => r.json()).catch(() => null)
         ]);
 
-        const activeData = await activeRes.json();
-        const analyticsData = await analyticsRes.json();
-
-        if (activeData.status === "success") {
-            _lastActiveTrades = activeData.trades || [];
+        if (activeRes && activeRes.status === "success") {
+            _lastActiveTrades = activeRes.trades || [];
             renderActiveTrades(_lastActiveTrades);
         }
 
-        if (analyticsData.status === "success") {
-            renderJournalAnalytics(analyticsData);
+        if (analyticsRes && analyticsRes.status === "success") {
+            renderJournalAnalytics(analyticsRes);
+        }
+
+        if (riskRes && riskRes.status === "success") {
+            renderPortfolioRiskRadar(riskRes);
         }
     } catch (e) {
         console.error("Error loading journal:", e);
+    }
+}
+
+function renderPortfolioRiskRadar(risk) {
+    if (!risk) return;
+
+    const badge = document.getElementById("portfolioRiskRatingBadge");
+    const investedEl = document.getElementById("riskTotalInvested");
+    const riskEl = document.getElementById("riskTotalOpenRisk");
+    const warnContainer = document.getElementById("portfolioRiskWarningsContainer");
+    const sectorContainer = document.getElementById("riskSectorBarsContainer");
+    const stockContainer = document.getElementById("riskStockBarsContainer");
+
+    if (badge) {
+        badge.textContent = risk.risk_badge || risk.risk_rating;
+        badge.style.backgroundColor = `${risk.risk_color}18`;
+        badge.style.color = risk.risk_color;
+        badge.style.borderColor = `${risk.risk_color}40`;
+    }
+
+    if (investedEl) investedEl.textContent = `₹${(risk.total_invested || 0).toLocaleString("en-IN")}`;
+    if (riskEl) riskEl.textContent = `₹${(risk.total_open_risk || 0).toLocaleString("en-IN")} (${risk.portfolio_risk_pct}%)`;
+
+    // Warnings
+    if (warnContainer) {
+        if (risk.warnings && risk.warnings.length > 0) {
+            warnContainer.classList.remove("hidden");
+            warnContainer.innerHTML = risk.warnings.map(w => `
+                <div class="p-2.5 rounded-xl border ${w.severity === 'high' ? 'bg-rose-50/70 border-rose-200 text-rose-800' : 'bg-amber-50/70 border-amber-200 text-amber-800'} text-xs flex items-center gap-2">
+                    <span class="text-sm">${w.severity === 'high' ? '🚨' : '⚠️'}</span>
+                    <span class="font-medium">${w.message}</span>
+                </div>
+            `).join("");
+        } else {
+            warnContainer.classList.add("hidden");
+            warnContainer.innerHTML = "";
+        }
+    }
+
+    // Sector breakdown
+    if (sectorContainer) {
+        if (!risk.sector_breakdown || risk.sector_breakdown.length === 0) {
+            sectorContainer.innerHTML = `<div class="text-[11px] text-[#8e8e93]">No active positions.</div>`;
+        } else {
+            sectorContainer.innerHTML = risk.sector_breakdown.map(s => {
+                const isOver = s.percentage > 25.0;
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#1c1c1e] font-semibold">${s.sector}</span>
+                            <span class="mono font-bold ${isOver ? 'text-rose-600' : 'text-[#007aff]'}">
+                                ${s.percentage}% (₹${s.market_value.toLocaleString('en-IN')})
+                            </span>
+                        </div>
+                        <div class="w-full bg-[#e5e5ea] rounded-full h-1.5 overflow-hidden">
+                            <div class="h-1.5 rounded-full ${isOver ? 'bg-rose-500' : 'bg-[#007aff]'}" style="width: ${Math.min(100, s.percentage)}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+    }
+
+    // Stock allocation
+    if (stockContainer) {
+        if (!risk.stock_allocations || risk.stock_allocations.length === 0) {
+            stockContainer.innerHTML = `<div class="text-[11px] text-[#8e8e93]">No active positions.</div>`;
+        } else {
+            stockContainer.innerHTML = risk.stock_allocations.map(st => {
+                const isOver = st.allocation_pct > 15.0;
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#1c1c1e] font-semibold">${st.code}</span>
+                            <span class="mono font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}">
+                                ${st.allocation_pct}% (₹${st.market_value.toLocaleString('en-IN')})
+                            </span>
+                        </div>
+                        <div class="w-full bg-[#e5e5ea] rounded-full h-1.5 overflow-hidden">
+                            <div class="h-1.5 rounded-full ${isOver ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${Math.min(100, st.allocation_pct)}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
     }
 }
 
@@ -633,41 +720,9 @@ function buildAdviceContent(d) {
     `;
 }
 
-/**
- * Export active and logged journal trades to a downloadable CSV file.
- */
 function exportJournalToCSV() {
-    if (!_lastActiveTrades || _lastActiveTrades.length === 0) {
-        alert("⚠️ No active trades in the journal to export.");
-        return;
-    }
-
-    const headers = ["ID", "Symbol", "Entry_Date", "Entry_Price_INR", "Current_Price_INR", "Quantity", "Stop_Loss_INR", "Target_1_INR", "Target_2_INR", "PNL_INR", "PNL_Pct", "Status", "Notes"];
-    const rows = _lastActiveTrades.map(t => [
-        t.id || "",
-        `"${t.symbol || ''}"`,
-        `"${t.entry_date || ''}"`,
-        t.entry_price || 0,
-        t.current_price || 0,
-        t.quantity || 0,
-        t.stop_loss || 0,
-        t.target_1 || 0,
-        t.target_2 || 0,
-        t.pnl || 0,
-        t.pnl_pct || 0,
-        `"${t.status || 'ACTIVE'}"`,
-        `"${(t.notes || '').replace(/"/g, '""')}"`
-    ]);
-
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    const today = new Date().toISOString().split("T")[0];
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `market_analysis_journal_${today}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    showNotification("Downloading tax-compliant Tradebook CSV spreadsheet...", "info");
+    window.location.href = "/api/journal/export";
 }
 
 /**

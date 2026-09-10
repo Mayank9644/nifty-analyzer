@@ -84,6 +84,11 @@
                     <span class="hidden sm:inline">Watchlist</span>
                     <span id="watchlistCountBadge" class="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[10px]">0</span>
                 </button>
+                <button onclick="openAlertManagerModal()" title="Real-Time Alert Watchdog & Sound Chimes" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span>🔔</span>
+                    <span class="hidden sm:inline">Alerts</span>
+                    <span id="navAlertBadge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 font-bold text-[10px]">0</span>
+                </button>
                 <button onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
                     <span>⌨️</span>
                     <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">?</kbd>
@@ -193,6 +198,9 @@
             </svg>
             <span>Analyzing real-time market data, calculating indicators, and updating models...</span>
         </div>
+
+        <!-- 9:00 AM PRE-MARKET MORNING BRIEFING BANNER -->
+        <div id="premarketSummaryBanner" class="mb-5"></div>
 
         <!-- =================================================================== -->
         <!-- TAB 1: STOCKS VIEW                                                  -->
@@ -746,6 +754,85 @@
             </div>
 
             <div id="institutionalContent" class="space-y-5">
+                <!-- Market Breadth & Internal Health Command Center -->
+                <div class="macos-card p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl p-2 rounded-xl bg-[#007aff]/10 text-[#007aff]">📡</span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-sm font-bold text-[#1c1c1e]">Nifty 50 Market Breadth & Structural Health</h3>
+                                    <span id="breadthRegimeBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                                        Analyzing...
+                                    </span>
+                                </div>
+                                <p id="breadthRegimeDesc" class="text-xs text-[#6e6e73] mt-0.5">Evaluating internal participation across 50 Nifty leaders...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] text-[#8e8e93]">Sample Size: <strong id="breadthSampleSize" class="mono text-[#1c1c1e]">50</strong> Stocks</span>
+                            <button onclick="loadInstitutionalRadar()" class="px-2.5 py-1 rounded-lg text-xs bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#1c1c1e] font-medium transition-colors cursor-pointer">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4 Metric Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        <!-- Metric 1: % Above 20 EMA -->
+                        <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#6e6e73] font-medium">Short-Term (20 EMA)</span>
+                                <span id="breadthPct20Val" class="font-bold mono text-sm text-[#1c1c1e]">--%</span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
+                                <div id="breadthBar20" class="h-2 rounded-full bg-[#007aff] transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Stocks above 20-day moving average</div>
+                        </div>
+
+                        <!-- Metric 2: % Above 50 EMA -->
+                        <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#6e6e73] font-medium">Bull/Bear Line (50 EMA)</span>
+                                <span id="breadthPct50Val" class="font-bold mono text-sm text-[#1c1c1e]">--%</span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
+                                <div id="breadthBar50" class="h-2 rounded-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Primary regime filter (>50% is bullish)</div>
+                        </div>
+
+                        <!-- Metric 3: % Above 200 EMA -->
+                        <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#6e6e73] font-medium">Macro Trend (200 EMA)</span>
+                                <span id="breadthPct200Val" class="font-bold mono text-sm text-[#1c1c1e]">--%</span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
+                                <div id="breadthBar200" class="h-2 rounded-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Structural long-term secular trend</div>
+                        </div>
+
+                        <!-- Metric 4: Advance/Decline & 52W Expansion -->
+                        <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#6e6e73] font-medium">A/D Ratio & 52W Highs</span>
+                                <span id="breadthAdRatio" class="font-bold mono text-sm text-[#1c1c1e]">--</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs font-semibold mono">
+                                <span class="text-emerald-700">▲ <span id="breadthAdvCount">--</span> Adv</span>
+                                <span class="text-red-600">▼ <span id="breadthDecCount">--</span> Dec</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] pt-0.5 border-t border-[rgba(0,0,0,0.05)]">
+                                <span>52W Highs: <strong id="breadth52wHighs" class="text-emerald-700 mono font-bold">0</strong></span>
+                                <span>52W Lows: <strong id="breadth52wLows" class="text-red-600 mono font-bold">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Two Columns: Cash Flow Bar Chart + Futures Positioning Gauge -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                     <!-- FII / DII Cash Flow Chart (7 cols) -->
@@ -992,10 +1079,10 @@
                 </div>
 
                 <!-- Underlyings Switcher -->
-                <div class="macos-segmented-track">
-                    <button onclick="loadOptionsDashboard('NIFTY')" class="macos-segmented-item active">NIFTY 50</button>
-                    <button onclick="loadOptionsDashboard('BANKNIFTY')" class="macos-segmented-item">BANK NIFTY</button>
-                    <button onclick="loadOptionsDashboard('RELIANCE')" class="macos-segmented-item">RELIANCE</button>
+                <div class="macos-segmented-track" id="optionsUnderlyingSelector">
+                    <button onclick="selectOptionsUnderlying(this, 'NIFTY')" class="macos-segmented-item active">NIFTY 50</button>
+                    <button onclick="selectOptionsUnderlying(this, 'BANKNIFTY')" class="macos-segmented-item">BANK NIFTY</button>
+                    <button onclick="selectOptionsUnderlying(this, 'RELIANCE')" class="macos-segmented-item">RELIANCE</button>
                 </div>
             </div>
 
@@ -1345,6 +1432,62 @@
                 </div>
             </div>
 
+            <!-- PORTFOLIO RISK MANAGEMENT & EXPOSURE RADAR -->
+            <div id="portfolioRiskRadarCard" class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl p-2 rounded-xl bg-purple-500/10 text-purple-600">🛡️</span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-[#1c1c1e]">Portfolio Risk Exposure & Sector Concentration Radar</h3>
+                                <span id="portfolioRiskRatingBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    Controlled Risk
+                                </span>
+                            </div>
+                            <p class="text-xs text-[#6e6e73] mt-0.5">Real-time surveillance of single-stock caps, sector concentration (>25%), and total open stop-loss risk</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <div>
+                            <span class="text-[10.5px] text-[#6e6e73] block">Invested Capital:</span>
+                            <span id="riskTotalInvested" class="font-bold mono text-[#1c1c1e]">₹0</span>
+                        </div>
+                        <div>
+                            <span class="text-[10.5px] text-[#6e6e73] block">Open Risk (SL):</span>
+                            <span id="riskTotalOpenRisk" class="font-bold mono text-red-600">₹0 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Concentration Warnings Container (if any) -->
+                <div id="portfolioRiskWarningsContainer" class="space-y-2 hidden"></div>
+
+                <!-- 2 Columns: Sector Allocation & Stock Allocation -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <!-- Sector Allocation -->
+                    <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-[#48484a] uppercase tracking-wider text-[11px]">Sector Concentration (Max 25%)</span>
+                            <span class="text-[10.5px] text-[#8e8e93]">Diversification Metric</span>
+                        </div>
+                        <div id="riskSectorBarsContainer" class="space-y-2">
+                            <div class="text-[11px] text-[#8e8e93]">No active positions to analyze.</div>
+                        </div>
+                    </div>
+
+                    <!-- Single Stock Exposure -->
+                    <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-[#48484a] uppercase tracking-wider text-[11px]">Single-Stock Exposure (Max 15%)</span>
+                            <span class="text-[10.5px] text-[#8e8e93]">Cap Guard</span>
+                        </div>
+                        <div id="riskStockBarsContainer" class="space-y-2">
+                            <div class="text-[11px] text-[#8e8e93]">No active positions to analyze.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Active Open Trades Table -->
             <div class="macos-card p-5 space-y-3">
                 <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
@@ -1676,6 +1819,11 @@
                         </div>
                     </div>
                     <p id="calcNote" class="text-[11px] text-[#0062cc] leading-relaxed pt-1 border-t border-[#bfdbfe]"></p>
+                    <div class="pt-2 border-t border-[#bfdbfe] flex justify-end">
+                        <button onclick="executeCalculatedPositionOnBroker()" class="px-3 py-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                            <span>⚡</span> <span>Execute Calculated Shares on Broker</span>
+                        </button>
+                    </div>
                 </div>
         <!-- =================================================================== -->
         <!-- MODAL: INDIAN BROKER ORDER EXECUTION BRIDGE (ZERODHA & DHAN)         -->
@@ -1938,21 +2086,24 @@
     </nav>
 
     <!-- Custom Scripts -->
-    <script src="/static/js/utils.js?v=20260911_v6"></script>
-    <script src="/static/js/charts.js?v=20260911_v6"></script>
-    <script src="/static/js/options_charts.js?v=20260911_v6"></script>
-    <script src="/static/js/scanner.js?v=20260911_v6"></script>
-    <script src="/static/js/screener.js?v=20260911_v6"></script>
-    <script src="/static/js/ipo.js?v=20260911_v6"></script>
-    <script src="/static/js/calendar.js?v=20260911_v6"></script>
-    <script src="/static/js/sectors.js?v=20260911_v6"></script>
-    <script src="/static/js/etf.js?v=20260911_v6"></script>
-    <script src="/static/js/journal.js?v=20260911_v6"></script>
-    <script src="/static/js/backtest.js?v=20260911_v6"></script>
-    <script src="/static/js/recommendations.js?v=20260911_v6"></script>
-    <script src="/static/js/bees.js?v=20260911_v6"></script>
-    <script src="/static/js/institutional.js?v=20260911_v6"></script>
-    <script src="/static/js/app.js?v=20260911_v6"></script>
+    <script src="/static/js/utils.js?v=20260911_v7"></script>
+    <script src="/static/js/charts.js?v=20260911_v7"></script>
+    <script src="/static/js/options_charts.js?v=20260911_v7"></script>
+    <script src="/static/js/scanner.js?v=20260911_v7"></script>
+    <script src="/static/js/screener.js?v=20260911_v7"></script>
+    <script src="/static/js/ipo.js?v=20260911_v7"></script>
+    <script src="/static/js/calendar.js?v=20260911_v7"></script>
+    <script src="/static/js/sectors.js?v=20260911_v7"></script>
+    <script src="/static/js/etf.js?v=20260911_v7"></script>
+    <script src="/static/js/journal.js?v=20260911_v7"></script>
+    <script src="/static/js/backtest.js?v=20260911_v7"></script>
+    <script src="/static/js/recommendations.js?v=20260911_v7"></script>
+    <script src="/static/js/bees.js?v=20260911_v7"></script>
+    <script src="/static/js/institutional.js?v=20260911_v7"></script>
+    <script src="/static/js/broker_bridge.js?v=20260911_v7"></script>
+    <script src="/static/js/alerts.js?v=20260911_v7"></script>
+    <script src="/static/js/premarket.js?v=20260911_v7"></script>
+    <script src="/static/js/app.js?v=20260911_v7"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

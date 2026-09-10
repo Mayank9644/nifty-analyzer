@@ -99,6 +99,12 @@ let currentPayoffSymbol = "NIFTY";
 let currentPayoffStrategy = "bull_call_spread";
 let currentPayoffLotSize = 25;
 
+function setOptionsPayoffSymbol(sym) {
+    currentPayoffSymbol = sym;
+}
+window.setOptionsPayoffSymbol = setOptionsPayoffSymbol;
+window.loadOptionsPayoff = loadOptionsPayoff;
+
 async function loadOptionsPayoff(strategy, lotSize) {
     if (strategy) currentPayoffStrategy = strategy;
     if (lotSize) currentPayoffLotSize = parseInt(lotSize);
