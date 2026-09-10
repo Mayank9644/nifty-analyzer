@@ -115,8 +115,11 @@ function renderBestPicksUI(data) {
             </div>
     `;
 
+    let renderedSections = 0;
+
     // 0. INTRADAY HIGH-PROBABILITY MOMENTUM DESK
     if (showIntraday && intraday.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -199,6 +202,7 @@ function renderBestPicksUI(data) {
 
     // 1. F&O DERIVATIVES DESK
     if (showFno && fno.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -280,6 +284,7 @@ function renderBestPicksUI(data) {
 
     // 2. SWING BREAKOUT STOCKS DESK
     if (showSwing && breakouts.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -349,8 +354,11 @@ function renderBestPicksUI(data) {
                 </div>
             </div>
         `;
+    }
+
     // 2.5 POSITIONAL MULTI-WEEK TREND DESK
     if (showPositional && positional.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -433,6 +441,7 @@ function renderBestPicksUI(data) {
 
     // 3. LONG-TERM WEALTH COMPOUNDERS DESK
     if (showComp && compounders.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -506,6 +515,7 @@ function renderBestPicksUI(data) {
 
     // 4. BEST ETFS DESK
     if (showEtf && etfs.length > 0) {
+        renderedSections++;
         html += `
             <div class="macos-card p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
@@ -565,6 +575,21 @@ function renderBestPicksUI(data) {
                             </div>
                         </div>
                     `).join("")}
+                </div>
+            </div>
+        `;
+    }
+
+    if (renderedSections === 0) {
+        html += `
+            <div class="macos-card p-12 text-center text-[#86868b] border border-[rgba(0,0,0,0.06)]">
+                <span class="text-3xl mb-2 block">🔍</span>
+                <h4 class="text-sm font-semibold text-[#1c1c1e] mb-1">No picks currently meet criteria for this filter</h4>
+                <p class="text-xs text-[#8e8e93] max-w-md mx-auto">Click "🌟 All Picks" to view all active setups across Intraday, Swing, Positional, F&O, and ETFs.</p>
+                <div class="mt-4">
+                    <button onclick="filterPicksSubTab('all')" class="px-3.5 py-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-xs transition-all shadow-xs">
+                        🌟 View All Picks
+                    </button>
                 </div>
             </div>
         `;

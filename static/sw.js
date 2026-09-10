@@ -1,5 +1,5 @@
 // Antigravity Service Worker for PWA Offline Caching
-const CACHE_NAME = 'agy-terminal-v1';
+const CACHE_NAME = 'agy-terminal-v4';
 const STATIC_ASSETS = [
   '/',
   '/static/css/style.css',
@@ -7,7 +7,8 @@ const STATIC_ASSETS = [
   '/static/js/recommendations.js',
   '/static/js/journal.js',
   '/static/js/sectors.js',
-  '/static/js/backtest.js'
+  '/static/js/backtest.js',
+  '/static/js/app.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -33,15 +34,36 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests that are not API calls
+  // Only handle GET requests and skip API calls
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
 
+  const url = event.request.url;
+  const isScriptOrDoc = url.endsWith('.js') || url.includes('.js?') || event.request.mode === 'navigate';
+
+  if (isScriptOrDoc) {
+    // Network-First for JS scripts and navigation to ensure user always gets fresh code
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache-first with background revalidation for other assets (CSS, images, fonts)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Fetch background update
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
