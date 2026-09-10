@@ -467,3 +467,54 @@ def calculate_anchored_vwap(df: pd.DataFrame, anchor_index: int = None) -> list:
             "value": round(float(val), 2)
         })
     return points
+
+
+def calculate_indicator_series(df: pd.DataFrame) -> dict:
+    """
+    Computes aligned time-series arrays for technical indicators (RSI, MACD)
+    matching the OHLCV candle dates for synchronized sub-chart visualization.
+    """
+    if df.empty or "Close" not in df.columns or len(df) < 14:
+        return {"rsi": [], "macd_line": [], "macd_signal": [], "macd_histogram": []}
+
+    close = df["Close"]
+    rsi_series = calculate_rsi(close, 14)
+    macd_line, macd_signal, macd_hist = calculate_macd(close, 12, 26, 9)
+
+    rsi_points = []
+    macd_line_points = []
+    macd_signal_points = []
+    macd_hist_points = []
+
+    for dt in df.index:
+        date_str = dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt)[:10]
+
+        r_val = rsi_series.get(dt)
+        if r_val is not None and not pd.isna(r_val):
+            rsi_points.append({"time": date_str, "value": round(float(r_val), 2)})
+
+        m_val = macd_line.get(dt)
+        s_val = macd_signal.get(dt)
+        h_val = macd_hist.get(dt)
+
+        if m_val is not None and not pd.isna(m_val):
+            macd_line_points.append({"time": date_str, "value": round(float(m_val), 2)})
+
+        if s_val is not None and not pd.isna(s_val):
+            macd_signal_points.append({"time": date_str, "value": round(float(s_val), 2)})
+
+        if h_val is not None and not pd.isna(h_val):
+            h_float = round(float(h_val), 2)
+            macd_hist_points.append({
+                "time": date_str,
+                "value": h_float,
+                "color": "rgba(52, 199, 89, 0.8)" if h_float >= 0 else "rgba(255, 59, 48, 0.8)"
+            })
+
+    return {
+        "rsi": rsi_points,
+        "macd_line": macd_line_points,
+        "macd_signal": macd_signal_points,
+        "macd_histogram": macd_hist_points
+    }
+

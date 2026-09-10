@@ -15,17 +15,35 @@ let _currentCandleData = [];
 let _chartType = "candle";
 let _overlayVisibility = { sma20: true, sma50: true, sma200: true, volume: true };
 
+let _currentChartEngine = "algo"; // "algo" or "tv_pro"
+let _tvProWidgetInstance = null;
+let rsiChart = null;
+let rsiLineSeries = null;
+let _isRsiSubChartVisible = false;
+
+let macdChart = null;
+let macdLineSeries = null;
+let macdSignalSeries = null;
+let macdHistSeries = null;
+let _isMacdSubChartVisible = false;
+
+let _currentIndicatorSeries = null;
+let _currentPlannedTrade = null;
+
 let shareholdingChart = null;
 let radarStrategyChart = null;
 
 /**
  * Initialize or update the TradingView Lightweight Candlestick Chart.
  */
-function initLightweightChart(containerId, candleData, maData = null) {
+function initLightweightChart(containerId, candleData, maData = null, indicatorSeries = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     _currentCandleData = candleData || [];
+    if (indicatorSeries) {
+        _currentIndicatorSeries = indicatorSeries;
+    }
 
     // Explicitly clean up previous chart instance, memory buffers, and canvas listeners
     if (tvChart) {
@@ -138,6 +156,28 @@ function initLightweightChart(containerId, candleData, maData = null) {
     }
 
     tvChart.timeScale().fitContent();
+
+    // Render Algorithmic Signal Markers on the Candlestick series
+    renderAlgorithmicMarkers(candleData);
+
+    // If RSI sub-chart is toggled on, update it
+    if (_isRsiSubChartVisible) {
+        initRsiSubChart(candleData, _currentIndicatorSeries?.rsi);
+    }
+    // If MACD sub-chart is toggled on, update it
+    if (_isMacdSubChartVisible) {
+        initMacdSubChart(
+            candleData,
+            _currentIndicatorSeries?.macd_line,
+            _currentIndicatorSeries?.macd_signal,
+            _currentIndicatorSeries?.macd_histogram
+        );
+    }
+
+    if (_currentChartEngine === "tv_pro") {
+        const sym = (typeof appState !== "undefined" && appState.currentSymbol) ? appState.currentSymbol : "RELIANCE.NS";
+        initTradingViewProWidget(sym);
+    }
 
     // Responsive resize handler
     window.addEventListener("resize", () => {
@@ -719,3 +759,547 @@ function toggleDualChartSplit() {
         }
     }
 }
+
+/**
+ * ============================================================================
+ * TRADINGVIEW PRO & DUAL-ENGINE CHARTING SYSTEM
+ * ============================================================================
+ */
+
+function setChartEngine(engine) {
+    _currentChartEngine = engine;
+    const algoBtn = document.getElementById("engineAlgoBtn");
+    const tvProBtn = document.getElementById("engineTvProBtn");
+    const algoStyleTrack = document.getElementById("algoStyleTrack");
+    const algoOverlaysTrack = document.getElementById("algoOverlaysTrack");
+    const algoPeriodTrack = document.getElementById("algoPeriodTrack");
+    const algoContainer = document.getElementById("candlestickChartContainer");
+    const tvProContainer = document.getElementById("tradingViewProContainer");
+    const rsiCard = document.getElementById("rsiChartCard");
+    const macdCard = document.getElementById("macdChartCard");
+
+    if (engine === "tv_pro") {
+        if (tvProBtn) {
+            tvProBtn.classList.add("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
+            tvProBtn.classList.remove("text-[#636366]");
+        }
+        if (algoBtn) {
+            algoBtn.classList.remove("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
+            algoBtn.classList.add("text-[#636366]");
+        }
+        if (algoStyleTrack) algoStyleTrack.classList.add("opacity-40", "pointer-events-none");
+        if (algoOverlaysTrack) algoOverlaysTrack.classList.add("opacity-40", "pointer-events-none");
+        if (algoPeriodTrack) algoPeriodTrack.classList.add("opacity-40", "pointer-events-none");
+        if (algoContainer) algoContainer.classList.add("hidden");
+        if (rsiCard) rsiCard.classList.add("hidden");
+        if (macdCard) macdCard.classList.add("hidden");
+        if (tvProContainer) {
+            tvProContainer.classList.remove("hidden");
+            const sym = (typeof appState !== "undefined" && appState.currentSymbol) ? appState.currentSymbol : "RELIANCE.NS";
+            initTradingViewProWidget(sym);
+        }
+    } else {
+        if (algoBtn) {
+            algoBtn.classList.add("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
+            algoBtn.classList.remove("text-[#636366]");
+        }
+        if (tvProBtn) {
+            tvProBtn.classList.remove("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
+            tvProBtn.classList.add("text-[#636366]");
+        }
+        if (algoStyleTrack) algoStyleTrack.classList.remove("opacity-40", "pointer-events-none");
+        if (algoOverlaysTrack) algoOverlaysTrack.classList.remove("opacity-40", "pointer-events-none");
+        if (algoPeriodTrack) algoPeriodTrack.classList.remove("opacity-40", "pointer-events-none");
+        if (tvProContainer) tvProContainer.classList.add("hidden");
+        if (algoContainer) algoContainer.classList.remove("hidden");
+        if (_isRsiSubChartVisible && rsiCard) rsiCard.classList.remove("hidden");
+        if (_isMacdSubChartVisible && macdCard) macdCard.classList.remove("hidden");
+        if (tvChart && algoContainer) {
+            tvChart.applyOptions({ width: algoContainer.clientWidth });
+            tvChart.timeScale().fitContent();
+        }
+    }
+}
+window.setChartEngine = setChartEngine;
+
+function initTradingViewProWidget(symbol) {
+    const container = document.getElementById("tradingViewProContainer");
+    if (!container) return;
+
+    let cleanSym = (symbol || "RELIANCE.NS").replace(".NS", "").replace(".BO", "").trim().toUpperCase();
+    if (cleanSym === "^NSEI") cleanSym = "NIFTY";
+    else if (cleanSym === "^NSEBANK") cleanSym = "BANKNIFTY";
+    const tvSymbol = `NSE:${cleanSym}`;
+
+    container.innerHTML = `<div id="tradingview_advanced_widget" class="w-full h-full" style="min-height:560px;"></div>`;
+
+    if (typeof TradingView === "undefined") {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full p-8 text-center text-[#86868b]">
+                <div class="animate-spin h-6 w-6 text-[#007aff] mb-3">●</div>
+                <span class="text-xs">Loading TradingView Pro Charting Library...</span>
+            </div>
+        `;
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/tv.js";
+        script.onload = () => initTradingViewProWidget(symbol);
+        document.head.appendChild(script);
+        return;
+    }
+
+    try {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        _tvProWidgetInstance = new TradingView.widget({
+            "autosize": true,
+            "symbol": tvSymbol,
+            "interval": "D",
+            "timezone": "Asia/Kolkata",
+            "theme": isDark ? "dark" : "light",
+            "style": "1",
+            "locale": "in",
+            "toolbar_bg": isDark ? "#151722" : "#f5f5f7",
+            "enable_publishing": false,
+            "allow_symbol_change": true,
+            "save_image": true,
+            "container_id": "tradingview_advanced_widget",
+            "studies": [
+                "RSI@tv-basicstudies",
+                "MASimple@tv-basicstudies"
+            ]
+        });
+    } catch (e) {
+        console.error("TradingView widget init error:", e);
+    }
+}
+window.initTradingViewProWidget = initTradingViewProWidget;
+
+/**
+ * ============================================================================
+ * ALGORITHMIC SIGNAL MARKERS ON CANDLESTICKS
+ * ============================================================================
+ */
+
+function renderAlgorithmicMarkers(candleData) {
+    if (!candleSeries || !candleData || candleData.length < 25) return;
+
+    const markers = [];
+    const avgVolPeriod = 20;
+
+    // Scan historical candles for quantitative events
+    for (let i = avgVolPeriod; i < candleData.length; i++) {
+        const d = candleData[i];
+        const prevSlice = candleData.slice(i - avgVolPeriod, i);
+        const avgVol = prevSlice.reduce((sum, c) => sum + c.volume, 0) / avgVolPeriod;
+        const highestHigh20 = Math.max(...prevSlice.map(c => c.high));
+        const lowestLow20 = Math.min(...prevSlice.map(c => c.low));
+
+        // 1. SEPA 20-Day High Breakout + Volume Surge (> 1.8x avg)
+        if (d.close > highestHigh20 && d.volume > 1.8 * avgVol && d.close > d.open) {
+            markers.push({
+                time: d.time,
+                position: 'belowBar',
+                color: '#1e7e34',
+                shape: 'arrowUp',
+                text: 'SEPA Breakout'
+            });
+        }
+        // 2. Support Reversal / Spring (Hammer near 20-day low with volume)
+        else if (d.low <= lowestLow20 && d.close > d.open && (d.close - d.low) > 1.5 * Math.abs(d.close - d.open)) {
+            markers.push({
+                time: d.time,
+                position: 'belowBar',
+                color: '#007aff',
+                shape: 'circle',
+                text: 'Support Bounce'
+            });
+        }
+    }
+
+    // 3. Plot User's Real Executed Trades from Journal if matching symbol
+    if (typeof _lastActiveTrades !== "undefined" && Array.isArray(_lastActiveTrades)) {
+        const currentCode = (typeof appState !== "undefined" && appState.currentSymbol)
+            ? appState.currentSymbol.replace(".NS", "").replace(".BO", "")
+            : "";
+        _lastActiveTrades.forEach(t => {
+            if (t.code === currentCode && t.entry_date) {
+                markers.push({
+                    time: t.entry_date,
+                    position: 'belowBar',
+                    color: '#7e22ce',
+                    shape: 'arrowUp',
+                    text: `JOURNAL BUY @ ₹${t.entry_price}`
+                });
+            }
+        });
+    }
+
+    // Sort markers chronologically (strictly required by Lightweight Charts)
+    markers.sort((a, b) => (a.time > b.time ? 1 : -1));
+
+    try {
+        candleSeries.setMarkers(markers);
+    } catch (e) {
+        console.warn("Error setting chart markers:", e);
+    }
+}
+window.renderAlgorithmicMarkers = renderAlgorithmicMarkers;
+
+/**
+ * ============================================================================
+ * SYNCHRONIZED SUB-CHART INDICATOR PANES (RSI & MACD)
+ * ============================================================================
+ */
+
+function initRsiSubChart(candleData, rsiPoints) {
+    const container = document.getElementById("rsiChartContainer");
+    if (!container) return;
+
+    if (rsiChart) {
+        try { rsiChart.remove(); } catch (e) {}
+        rsiChart = null;
+    }
+    container.innerHTML = "";
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    rsiChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 120,
+        layout: {
+            background: { color: isDark ? "#151722" : "#ffffff" },
+            textColor: isDark ? "#a1a1a6" : "#6e6e73",
+            fontSize: 10,
+            fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif"
+        },
+        grid: {
+            vertLines: { color: isDark ? "rgba(255,255,255,0.04)" : "#f5f5f7" },
+            horzLines: { color: isDark ? "rgba(255,255,255,0.04)" : "#f5f5f7" }
+        },
+        timeScale: {
+            visible: false,
+            borderColor: "#e5e5ea"
+        },
+        rightPriceScale: {
+            borderColor: "#e5e5ea",
+            scaleMargins: { top: 0.1, bottom: 0.1 }
+        }
+    });
+
+    rsiLineSeries = rsiChart.addLineSeries({
+        color: "#0284c7",
+        lineWidth: 2,
+        title: "RSI 14"
+    });
+
+    if (rsiPoints && rsiPoints.length > 0) {
+        rsiLineSeries.setData(rsiPoints);
+        const lastVal = rsiPoints[rsiPoints.length - 1]?.value || 50;
+        const badge = document.getElementById("rsiLiveValBadge");
+        if (badge) badge.innerText = `${lastVal.toFixed(1)} ${lastVal >= 70 ? '(Overbought)' : (lastVal <= 30 ? '(Oversold)' : '')}`;
+    }
+
+    // Overbought 70 reference line
+    rsiLineSeries.createPriceLine({
+        price: 70,
+        color: 'rgba(255, 59, 48, 0.6)',
+        lineWidth: 1,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'OB 70'
+    });
+
+    // Oversold 30 reference line
+    rsiLineSeries.createPriceLine({
+        price: 30,
+        color: 'rgba(52, 199, 89, 0.6)',
+        lineWidth: 1,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'OS 30'
+    });
+
+    // Synchronize visible logical range with main chart
+    if (tvChart) {
+        tvChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+            if (range && rsiChart) rsiChart.timeScale().setVisibleLogicalRange(range);
+        });
+        rsiChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+            if (range && tvChart) tvChart.timeScale().setVisibleLogicalRange(range);
+        });
+        const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+        if (currentRange) rsiChart.timeScale().setVisibleLogicalRange(currentRange);
+        else rsiChart.timeScale().fitContent();
+    }
+}
+window.initRsiSubChart = initRsiSubChart;
+
+function toggleRsiSubChart() {
+    _isRsiSubChartVisible = !_isRsiSubChartVisible;
+    const card = document.getElementById("rsiChartCard");
+    const btn = document.getElementById("rsiToggleBtn");
+
+    if (_isRsiSubChartVisible) {
+        if (card) card.classList.remove("hidden");
+        if (btn) {
+            btn.classList.add("bg-[#0284c7]", "text-white", "font-bold");
+            btn.classList.remove("bg-[#f0f9ff]", "text-[#0369a1]");
+        }
+        initRsiSubChart(_currentCandleData, _currentIndicatorSeries?.rsi);
+    } else {
+        if (card) card.classList.add("hidden");
+        if (btn) {
+            btn.classList.remove("bg-[#0284c7]", "text-white", "font-bold");
+            btn.classList.add("bg-[#f0f9ff]", "text-[#0369a1]");
+        }
+        if (rsiChart) {
+            try { rsiChart.remove(); } catch (e) {}
+            rsiChart = null;
+        }
+    }
+}
+window.toggleRsiSubChart = toggleRsiSubChart;
+
+function initMacdSubChart(candleData, macdLine, signalLine, histData) {
+    const container = document.getElementById("macdChartContainer");
+    if (!container) return;
+
+    if (macdChart) {
+        try { macdChart.remove(); } catch (e) {}
+        macdChart = null;
+    }
+    container.innerHTML = "";
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    macdChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 130,
+        layout: {
+            background: { color: isDark ? "#151722" : "#ffffff" },
+            textColor: isDark ? "#a1a1a6" : "#6e6e73",
+            fontSize: 10,
+            fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif"
+        },
+        grid: {
+            vertLines: { color: isDark ? "rgba(255,255,255,0.04)" : "#f5f5f7" },
+            horzLines: { color: isDark ? "rgba(255,255,255,0.04)" : "#f5f5f7" }
+        },
+        timeScale: {
+            visible: true,
+            borderColor: "#e5e5ea"
+        },
+        rightPriceScale: {
+            borderColor: "#e5e5ea",
+            scaleMargins: { top: 0.1, bottom: 0.1 }
+        }
+    });
+
+    macdHistSeries = macdChart.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        title: "Hist"
+    });
+    if (histData && histData.length > 0) {
+        macdHistSeries.setData(histData);
+    }
+
+    macdLineSeries = macdChart.addLineSeries({
+        color: "#007aff",
+        lineWidth: 1.5,
+        title: "MACD"
+    });
+    if (macdLine && macdLine.length > 0) {
+        macdLineSeries.setData(macdLine);
+    }
+
+    macdSignalSeries = macdChart.addLineSeries({
+        color: "#ff9500",
+        lineWidth: 1.5,
+        title: "Signal"
+    });
+    if (signalLine && signalLine.length > 0) {
+        macdSignalSeries.setData(signalLine);
+    }
+
+    // Synchronize visible logical range with main chart
+    if (tvChart) {
+        tvChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+            if (range && macdChart) macdChart.timeScale().setVisibleLogicalRange(range);
+        });
+        macdChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+            if (range && tvChart) tvChart.timeScale().setVisibleLogicalRange(range);
+        });
+        const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+        if (currentRange) macdChart.timeScale().setVisibleLogicalRange(currentRange);
+        else macdChart.timeScale().fitContent();
+    }
+}
+window.initMacdSubChart = initMacdSubChart;
+
+function toggleMacdSubChart() {
+    _isMacdSubChartVisible = !_isMacdSubChartVisible;
+    const card = document.getElementById("macdChartCard");
+    const btn = document.getElementById("macdToggleBtn");
+
+    if (_isMacdSubChartVisible) {
+        if (card) card.classList.remove("hidden");
+        if (btn) {
+            btn.classList.add("bg-[#059669]", "text-white", "font-bold");
+            btn.classList.remove("bg-[#ecfdf5]", "text-[#047857]");
+        }
+        initMacdSubChart(
+            _currentCandleData,
+            _currentIndicatorSeries?.macd_line,
+            _currentIndicatorSeries?.macd_signal,
+            _currentIndicatorSeries?.macd_histogram
+        );
+    } else {
+        if (card) card.classList.add("hidden");
+        if (btn) {
+            btn.classList.remove("bg-[#059669]", "text-white", "font-bold");
+            btn.classList.add("bg-[#ecfdf5]", "text-[#047857]");
+        }
+        if (macdChart) {
+            try { macdChart.remove(); } catch (e) {}
+            macdChart = null;
+        }
+    }
+}
+window.toggleMacdSubChart = toggleMacdSubChart;
+
+/**
+ * ============================================================================
+ * AUTO-PLOTTED RISK/REWARD & ONE-CLICK JOURNAL LOGGING
+ * ============================================================================
+ */
+
+function applyCustomRiskReward(entry, stopLoss, target1, target2, qty, rationale) {
+    if (!tvChart || !candleSeries) return;
+
+    _isRiskRewardActive = true;
+    const btn = document.getElementById("riskRewardToggleBtn");
+    const bar = document.getElementById("riskRewardBar");
+
+    // Clean up existing price lines
+    if (_riskRewardLines.length > 0) {
+        _riskRewardLines.forEach(line => {
+            try { candleSeries.removePriceLine(line); } catch (e) {}
+        });
+        _riskRewardLines = [];
+    }
+
+    if (btn) {
+        btn.classList.add("bg-[#ff9500]", "text-white", "font-bold");
+        btn.classList.remove("bg-[#fef6ed]", "text-[#b35900]");
+    }
+    if (bar) bar.classList.remove("hidden");
+
+    const riskPerShare = Math.max(entry - stopLoss, 0.1);
+    const riskPct = ((riskPerShare / entry) * 100).toFixed(1);
+
+    const entryLine = candleSeries.createPriceLine({
+        price: entry,
+        color: '#007aff',
+        lineWidth: 2,
+        lineStyle: 0,
+        axisLabelVisible: true,
+        title: 'PICK ENTRY'
+    });
+
+    const stopLine = candleSeries.createPriceLine({
+        price: stopLoss,
+        color: '#ff3b30',
+        lineWidth: 2,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: `SL ₹${stopLoss} (-${riskPct}%)`
+    });
+
+    const t1Pct = (((target1 - entry) / entry) * 100).toFixed(1);
+    const target1Line = candleSeries.createPriceLine({
+        price: target1,
+        color: '#34c759',
+        lineWidth: 2,
+        lineStyle: 1,
+        axisLabelVisible: true,
+        title: `T1 ₹${target1} (+${t1Pct}%)`
+    });
+
+    _riskRewardLines.push(entryLine, stopLine, target1Line);
+
+    if (target2 && target2 > target1) {
+        const t2Pct = (((target2 - entry) / entry) * 100).toFixed(1);
+        const target2Line = candleSeries.createPriceLine({
+            price: target2,
+            color: '#10b981',
+            lineWidth: 1.5,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: `T2 ₹${target2} (+${t2Pct}%)`
+        });
+        _riskRewardLines.push(target2Line);
+    }
+
+    const shares = qty || 50;
+    const totalRisk = Math.round(riskPerShare * shares);
+
+    document.getElementById("rrEntryVal").innerText = `₹${entry.toFixed(2)}`;
+    document.getElementById("rrStopVal").innerText = `₹${stopLoss.toFixed(2)}`;
+    document.getElementById("rrRiskPct").innerText = `${riskPct}%`;
+    document.getElementById("rrTarget1Val").innerText = `₹${target1.toFixed(2)}`;
+    document.getElementById("rrTarget2Val").innerText = target2 ? `₹${target2.toFixed(2)}` : 'N/A';
+    document.getElementById("rrRiskTotal").innerText = `₹${totalRisk.toLocaleString("en-IN")} (${shares} shares)`;
+
+    _currentPlannedTrade = {
+        symbol: (typeof appState !== "undefined" && appState.currentSymbol) ? appState.currentSymbol : "STOCK.NS",
+        entry: entry,
+        stop_loss: stopLoss,
+        target_1: target1,
+        target_2: target2,
+        quantity: shares,
+        rationale: rationale || "Algorithmic Pick Setup"
+    };
+}
+window.applyCustomRiskReward = applyCustomRiskReward;
+
+async function logCurrentRiskRewardToJournal() {
+    if (!_currentPlannedTrade) {
+        if (typeof showNotification === "function") showNotification("Please activate a trade setup on the chart first.", "info");
+        return;
+    }
+
+    const cleanCode = _currentPlannedTrade.symbol.replace(".NS", "").replace(".BO", "");
+    const payload = {
+        symbol: _currentPlannedTrade.symbol,
+        code: cleanCode,
+        entry_price: _currentPlannedTrade.entry,
+        quantity: _currentPlannedTrade.quantity || 50,
+        stop_loss: _currentPlannedTrade.stop_loss,
+        target_1: _currentPlannedTrade.target_1,
+        target_2: _currentPlannedTrade.target_2 || _currentPlannedTrade.target_1 * 1.05,
+        strategy_used: "TradingView Chart Setup",
+        direction: "BUY",
+        notes: _currentPlannedTrade.rationale || "Executed from TradingView Chart Workstation"
+    };
+
+    try {
+        const res = await fetch("/api/journal/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+            if (typeof showNotification === "function") {
+                showNotification(`✅ Added ${cleanCode} (${payload.quantity} shares @ ₹${payload.entry_price}) to Trading Journal!`, "success");
+            } else {
+                alert(`Added ${cleanCode} to Trading Journal!`);
+            }
+            if (typeof loadTradeJournal === "function") loadTradeJournal();
+        } else {
+            alert(data.message || "Failed to log trade to journal.");
+        }
+    } catch (err) {
+        console.error("Error logging trade:", err);
+        alert("Failed to log trade to journal.");
+    }
+}
+window.logCurrentRiskRewardToJournal = logCurrentRiskRewardToJournal;
+

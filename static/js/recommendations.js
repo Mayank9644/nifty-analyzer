@@ -189,8 +189,8 @@ function renderBestPicksUI(data) {
                                 <button onclick="openFormulaInspectionModal('intraday', ${idx})" class="text-[11px] text-[#ea580c] hover:underline font-semibold flex items-center gap-1">
                                     <span>📐</span> View Math & VWAP
                                 </button>
-                                <button onclick="switchTab('stocks'); loadStock('${item.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
-                                    Inspect Chart
+                                <button onclick="inspectPickOnChart(_activeRecommendationsData.best_intraday_picks[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <span>📈</span> <span>Chart & R:R</span>
                                 </button>
                             </div>
                         </div>
@@ -345,8 +345,8 @@ function renderBestPicksUI(data) {
                                 <button onclick="openFormulaInspectionModal('swing', ${idx})" class="text-[11px] text-[#007aff] hover:underline font-semibold flex items-center gap-1">
                                     <span>📐</span> View Math & ATR
                                 </button>
-                                <button onclick="switchTab('stocks'); loadStock('${b.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
-                                    Inspect Chart
+                                <button onclick="inspectPickOnChart(_activeRecommendationsData.best_swing_shares[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <span>📈</span> <span>Chart & R:R</span>
                                 </button>
                             </div>
                         </div>
@@ -428,8 +428,8 @@ function renderBestPicksUI(data) {
                                 <button onclick="openFormulaInspectionModal('positional', ${idx})" class="text-[11px] text-[#7e22ce] hover:underline font-semibold flex items-center gap-1">
                                     <span>📐</span> View Math & 50 SMA
                                 </button>
-                                <button onclick="switchTab('stocks'); loadStock('${item.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
-                                    Inspect Chart
+                                <button onclick="inspectPickOnChart(_activeRecommendationsData.best_positional_picks[${idx}])" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
+                                    <span>📈</span> <span>Chart & R:R</span>
                                 </button>
                             </div>
                         </div>

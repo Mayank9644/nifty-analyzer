@@ -17,7 +17,7 @@ from data.commodity_fetcher import (
     get_usd_inr_rate
 )
 from data.options_fetcher import get_option_chain_data
-from analysis.technical import analyze_technicals
+from analysis.technical import analyze_technicals, calculate_indicator_series
 from analysis.fundamental import evaluate_fundamentals
 from analysis.strategies import score_expert_strategies
 from analysis.signals import generate_signals, calculate_position_size
@@ -252,6 +252,9 @@ def fetch_stock_bundle_data(symbol: str, style: str = "swing", period: str = "1y
     # 8. NSE Delivery Volume & Institutional Accumulation
     delivery = get_delivery_volume_analysis(symbol, history_df, info)
 
+    # 9. Indicator Time-Series for Synchronized Sub-Charts (RSI, MACD)
+    indicator_series = calculate_indicator_series(history_df)
+
     response_payload = {
         "status": "success",
         "info": info,
@@ -266,7 +269,8 @@ def fetch_stock_bundle_data(symbol: str, style: str = "swing", period: str = "1y
         "minervini": minervini,
         "vcp": vcp,
         "mtf": mtf,
-        "delivery": delivery
+        "delivery": delivery,
+        "indicator_series": indicator_series
     }
 
     # Optional single-roundtrip bundle for high-efficiency client loading
@@ -276,7 +280,8 @@ def fetch_stock_bundle_data(symbol: str, style: str = "swing", period: str = "1y
             "symbol": symbol,
             "period": period,
             "interval": interval,
-            "candles": format_chart_data(history_df)
+            "candles": format_chart_data(history_df),
+            "indicator_series": indicator_series
         }
         response_payload["news"] = {
             "status": "success",
@@ -409,12 +414,14 @@ def api_stock_chart(symbol: str):
     try:
         df = get_stock_history(symbol, period=period, interval=interval)
         chart_data = format_chart_data(df)
+        indicator_series = calculate_indicator_series(df)
         return jsonify({
             "status": "success",
             "symbol": symbol,
             "period": period,
             "interval": interval,
-            "candles": chart_data
+            "candles": chart_data,
+            "indicator_series": indicator_series
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

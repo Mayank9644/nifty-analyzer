@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- TradingView Lightweight Charts -->
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- TradingView Advanced Charting Widget API -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <!-- Chart.js for Radar and Doughnut charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- macOS Design System CSS -->
@@ -261,32 +263,36 @@
             <div class="macos-card p-5 space-y-3.5">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
                     <div class="flex items-center space-x-2">
-                        <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-1.5">
-                            <span>📊</span> Price Action & Moving Averages
-                        </h3>
+                        <!-- Dual-Engine Switcher: Algo Chart vs TradingView Pro -->
+                        <div class="macos-segmented-track">
+                            <button id="engineAlgoBtn" class="chart-engine-btn active text-[11px] px-2.5 py-0.5 font-bold" onclick="setChartEngine('algo')">⚡ Algo Chart</button>
+                            <button id="engineTvProBtn" class="chart-engine-btn text-[11px] px-2.5 py-0.5 text-[#636366]" onclick="setChartEngine('tv_pro')">📈 TradingView Pro</button>
+                        </div>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- Chart Style: Candles vs Line -->
-                        <div class="macos-segmented-track">
+                        <!-- Chart Style: Candles vs Line (Algo Engine) -->
+                        <div id="algoStyleTrack" class="macos-segmented-track">
                             <button class="chart-type-btn active text-[11px] px-2 py-0.5" data-type="candle" onclick="setChartType('candle')">🕯️ Candle</button>
                             <button class="chart-type-btn text-[11px] px-2 py-0.5" data-type="area" onclick="setChartType('area')">📈 Line</button>
                         </div>
 
-                        <!-- Technical Overlays Toggles -->
-                        <div class="flex items-center space-x-1 text-[10.5px]">
+                        <!-- Technical Overlays & Sub-Chart Toggles -->
+                        <div id="algoOverlaysTrack" class="flex items-center space-x-1 text-[10.5px]">
                             <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma20" onclick="toggleChartOverlay('sma20')">SMA 20</button>
                             <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma50" onclick="toggleChartOverlay('sma50')">SMA 50</button>
                             <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="sma200" onclick="toggleChartOverlay('sma200')">SMA 200</button>
                             <button class="overlay-toggle-btn px-2 py-0.5 rounded-md font-medium border border-[#007aff]/30 bg-[#eff6ff] text-[#007aff] transition-all cursor-pointer" data-overlay="volume" onclick="toggleChartOverlay('volume')">Vol</button>
                             <button id="riskRewardToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#ff9500]/40 bg-[#fef6ed] text-[#b35900] hover:bg-[#fcdcb8] transition-all cursor-pointer" onclick="toggleRiskRewardPlanner()" title="Toggle Interactive Risk-Reward Projection">🎯 R:R Plan</button>
+                            <button id="rsiToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#3b82f6]/40 bg-[#f0f9ff] text-[#0369a1] hover:bg-[#e0f2fe] transition-all cursor-pointer" onclick="toggleRsiSubChart()" title="Toggle RSI (14) Sub-Chart Pane">⚡ RSI</button>
+                            <button id="macdToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#10b981]/40 bg-[#ecfdf5] text-[#047857] hover:bg-[#d1fae5] transition-all cursor-pointer" onclick="toggleMacdSubChart()" title="Toggle MACD (12, 26, 9) Sub-Chart Pane">📊 MACD</button>
                             <button id="vpToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#af52de]/40 bg-[#fbf5fd] text-[#7828c8] hover:bg-[#f3e6fa] transition-all cursor-pointer" onclick="toggleVolumeProfile()" title="Volume Profile (POC / VAH / VAL)">📊 VPVR</button>
                             <button id="avwapToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#5856d6]/40 bg-[#f4f4fe] text-[#4338ca] hover:bg-[#e8e7fc] transition-all cursor-pointer" onclick="toggleAnchoredVwap()" title="Anchored VWAP from key swing low">⚓ AVWAP</button>
                             <button id="dualSplitToggleBtn" class="px-2 py-0.5 rounded-md font-medium border border-[#10b981]/40 bg-[#ecfdf5] text-[#047857] hover:bg-[#d1fae5] transition-all cursor-pointer" onclick="toggleDualChartSplit()" title="Dual Chart Split View">⚡ Split</button>
                         </div>
 
                         <!-- Period Buttons (macOS Segmented Control) -->
-                        <div class="macos-segmented-track">
+                        <div id="algoPeriodTrack" class="macos-segmented-track">
                             <button class="period-btn" data-period="5d" data-interval="15m">5D</button>
                             <button class="period-btn" data-period="1mo" data-interval="1d">1M</button>
                             <button class="period-btn" data-period="6mo" data-interval="1d">6M</button>
@@ -296,8 +302,29 @@
                     </div>
                 </div>
 
-                <!-- Candlestick Chart Render Target -->
-                <div id="candlestickChartContainer" class="w-full h-[400px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                <!-- Engine A: Proprietary Algorithmic Candlestick Chart -->
+                <div id="candlestickChartContainer" class="w-full h-[420px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+
+                <!-- Engine B: TradingView Advanced Charting Pro Widget Container (Hidden by default) -->
+                <div id="tradingViewProContainer" class="hidden w-full h-[560px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+
+                <!-- Sub-Chart 1: Synchronized RSI(14) Indicator Pane (Hidden by default) -->
+                <div id="rsiChartCard" class="hidden space-y-1">
+                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#0369a1] font-semibold">
+                        <span>⚡ RSI (14) Momentum Oscillator — Overbought (70) / Oversold (30)</span>
+                        <span id="rsiLiveValBadge" class="mono font-bold">50.0</span>
+                    </div>
+                    <div id="rsiChartContainer" class="w-full h-[120px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                </div>
+
+                <!-- Sub-Chart 2: Synchronized MACD(12, 26, 9) Indicator Pane (Hidden by default) -->
+                <div id="macdChartCard" class="hidden space-y-1">
+                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#047857] font-semibold">
+                        <span>📊 MACD (12, 26, 9) & Momentum Histogram</span>
+                        <span id="macdLiveValBadge" class="mono font-bold">Signal</span>
+                    </div>
+                    <div id="macdChartContainer" class="w-full h-[130px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                </div>
 
                 <!-- Secondary Split Chart Container (shown when Dual Split is active) -->
                 <div id="secondaryChartContainer" class="hidden w-full h-[380px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
@@ -313,6 +340,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-[11px] text-[#6e6e73]">Risk per 100 shares: <strong id="rrRiskTotal" class="mono text-[#d9383a]">₹0</strong></span>
+                        <button onclick="logCurrentRiskRewardToJournal()" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] flex items-center gap-1 transition-all shadow-xs cursor-pointer ml-2">
+                            <span>➕</span> <span>Log to Journal</span>
+                        </button>
                     </div>
                 </div>
 
@@ -434,6 +464,19 @@
                             <div class="flex justify-between items-center text-xs mt-2 text-[#6e6e73] pt-2 border-t border-[rgba(0,0,0,0.06)]">
                                 <span>50 SMA: <strong id="valSma50" class="text-[#007aff] mono">₹0</strong></span>
                                 <span>200 SMA: <strong id="valSma200" class="text-[#8944ab] mono">₹0</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- TradingView Speedometer Technical Analysis Consensus Gauge -->
+                        <div class="macos-box p-3 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-semibold flex items-center gap-1.5">
+                                    <span>🧭</span> TradingView Technical Analysis Gauge:
+                                </span>
+                                <span class="text-[10px] text-[#007aff] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] border border-[#bfdbfe]">26 Technicals Consensus</span>
+                            </div>
+                            <div id="tvTechnicalGaugeContainer" class="w-full flex justify-center overflow-hidden min-h-[310px] rounded-lg bg-white">
+                                <div class="text-[11px] text-[#8e8e93] flex items-center justify-center py-12">Loading TradingView Consensus Gauge...</div>
                             </div>
                         </div>
                     </div>
@@ -1895,21 +1938,21 @@
     </nav>
 
     <!-- Custom Scripts -->
-    <script src="/static/js/utils.js?v=20260911_v4"></script>
-    <script src="/static/js/charts.js?v=20260911_v4"></script>
-    <script src="/static/js/options_charts.js?v=20260911_v4"></script>
-    <script src="/static/js/scanner.js?v=20260911_v4"></script>
-    <script src="/static/js/screener.js?v=20260911_v4"></script>
-    <script src="/static/js/ipo.js?v=20260911_v4"></script>
-    <script src="/static/js/calendar.js?v=20260911_v4"></script>
-    <script src="/static/js/sectors.js?v=20260911_v4"></script>
-    <script src="/static/js/etf.js?v=20260911_v4"></script>
-    <script src="/static/js/journal.js?v=20260911_v4"></script>
-    <script src="/static/js/backtest.js?v=20260911_v4"></script>
-    <script src="/static/js/recommendations.js?v=20260911_v4"></script>
-    <script src="/static/js/bees.js?v=20260911_v4"></script>
-    <script src="/static/js/institutional.js?v=20260911_v4"></script>
-    <script src="/static/js/app.js?v=20260911_v4"></script>
+    <script src="/static/js/utils.js?v=20260911_v5"></script>
+    <script src="/static/js/charts.js?v=20260911_v5"></script>
+    <script src="/static/js/options_charts.js?v=20260911_v5"></script>
+    <script src="/static/js/scanner.js?v=20260911_v5"></script>
+    <script src="/static/js/screener.js?v=20260911_v5"></script>
+    <script src="/static/js/ipo.js?v=20260911_v5"></script>
+    <script src="/static/js/calendar.js?v=20260911_v5"></script>
+    <script src="/static/js/sectors.js?v=20260911_v5"></script>
+    <script src="/static/js/etf.js?v=20260911_v5"></script>
+    <script src="/static/js/journal.js?v=20260911_v5"></script>
+    <script src="/static/js/backtest.js?v=20260911_v5"></script>
+    <script src="/static/js/recommendations.js?v=20260911_v5"></script>
+    <script src="/static/js/bees.js?v=20260911_v5"></script>
+    <script src="/static/js/institutional.js?v=20260911_v5"></script>
+    <script src="/static/js/app.js?v=20260911_v5"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

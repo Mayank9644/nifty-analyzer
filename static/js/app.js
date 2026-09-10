@@ -562,7 +562,8 @@ function renderAllStockComponents(stockData, chartData, newsData) {
     const chartContainer = document.getElementById("candlestickChartContainer");
     if (chartData && chartData.candles && chartData.candles.length > 0) {
         try {
-            initLightweightChart("candlestickChartContainer", chartData.candles);
+            const indSeries = stockData.indicator_series || chartData.indicator_series;
+            initLightweightChart("candlestickChartContainer", chartData.candles, null, indSeries);
         } catch (err) {
             console.error("initLightweightChart error:", err);
         }
@@ -574,6 +575,24 @@ function renderAllStockComponents(stockData, chartData, newsData) {
                 <div class="text-xs text-[#86868b] mt-1.5 max-w-sm leading-relaxed">Exchange candlestick data is synchronizing with market feeds. Technical metrics and fundamental health below are active.</div>
             </div>
         `;
+    }
+
+    // Render TradingView Speedometer Technical Analysis Gauge
+    try {
+        renderTradingViewTechnicalGauge(stockData?.info?.symbol || appState.currentSymbol);
+    } catch (err) {
+        console.error("renderTradingViewTechnicalGauge error:", err);
+    }
+
+    // If an algorithmic pick was clicked, pre-plot its exact Entry, Stop-Loss, and Targets
+    if (appState.pendingPick) {
+        const p = appState.pendingPick;
+        setTimeout(() => {
+            if (typeof applyCustomRiskReward === "function") {
+                applyCustomRiskReward(p.cmp, p.stop_loss, p.target, p.target_2, p.shares_qty, p.rationale);
+            }
+            appState.pendingPick = null;
+        }, 120);
     }
 
     try {
@@ -588,12 +607,63 @@ async function loadChart(symbol, period, interval) {
         const res = await fetch(`/api/stock/${symbol}/chart?period=${period}&interval=${interval}`);
         const data = await res.json();
         if (data.status === "success" && data.candles) {
-            initLightweightChart("candlestickChartContainer", data.candles);
+            initLightweightChart("candlestickChartContainer", data.candles, null, data.indicator_series);
         }
     } catch (e) {
         console.error("Error refreshing chart:", e);
     }
 }
+
+function renderTradingViewTechnicalGauge(symbol) {
+    const container = document.getElementById("tvTechnicalGaugeContainer");
+    if (!container) return;
+
+    let cleanSym = (symbol || "RELIANCE.NS").replace(".NS", "").replace(".BO", "").trim().toUpperCase();
+    if (cleanSym === "^NSEI") cleanSym = "NIFTY";
+    else if (cleanSym === "^NSEBANK") cleanSym = "BANKNIFTY";
+    const tvSymbol = `NSE:${cleanSym}`;
+
+    container.innerHTML = "";
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const widgetWrapper = document.createElement("div");
+    widgetWrapper.className = "tradingview-widget-container";
+    widgetWrapper.style.width = "100%";
+    widgetWrapper.style.height = "100%";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetWrapper.appendChild(widgetDiv);
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+        "interval": "1D",
+        "width": "100%",
+        "isTransparent": true,
+        "height": "310",
+        "symbol": tvSymbol,
+        "showIntervalTabs": true,
+        "displayMode": "single",
+        "locale": "in",
+        "colorTheme": isDark ? "dark" : "light"
+    });
+
+    widgetWrapper.appendChild(script);
+    container.appendChild(widgetWrapper);
+}
+window.renderTradingViewTechnicalGauge = renderTradingViewTechnicalGauge;
+
+function inspectPickOnChart(pick) {
+    if (!pick) return;
+    appState.pendingPick = pick;
+    switchTab("stocks");
+    const sym = pick.symbol || (pick.code ? (pick.code + ".NS") : "RELIANCE.NS");
+    loadStock(sym);
+}
+window.inspectPickOnChart = inspectPickOnChart;
 
 function renderStockHeader(info, rs, minervini, mtf) {
     const isUp = info.day_change >= 0;
