@@ -66,7 +66,7 @@ def _eval_single_stock(stock, max_risk_amount, capital):
         if cond5: score += 10
         if vol_ratio >= 1.2: score += 10
 
-        if score >= 55:
+        if score >= 40:
             entry_price = round(latest_close, 2)
             stop_loss = round(max(entry_price - (1.5 * atr_val), entry_price * 0.94), 2)
             risk_per_share = max(entry_price - stop_loss, entry_price * 0.015)
@@ -118,10 +118,12 @@ def _eval_single_stock(stock, max_risk_amount, capital):
     return None
 
 
-def scan_alpha_momentum(capital: float = 1000000.0, risk_pct: float = 2.0, top_n: int = 15) -> dict:
+def scan_alpha_momentum(capital: float = 1000000.0, risk_pct: float = 2.0, top_n: int = 15, force_refresh: bool = False) -> dict:
     cache_key = f"scan_{capital}_{risk_pct}"
-    if cache_key in _scanner_cache:
-        return _scanner_cache[cache_key].copy()
+    if not force_refresh and cache_key in _scanner_cache:
+        cached = _scanner_cache[cache_key]
+        if cached.get("results") and len(cached["results"]) > 0:
+            return cached.copy()
 
     max_risk_amount = capital * (risk_pct / 100.0)
     universe = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS[:8]
@@ -147,5 +149,8 @@ def scan_alpha_momentum(capital: float = 1000000.0, risk_pct: float = 2.0, top_n
         "results": top_candidates
     }
 
-    _scanner_cache[cache_key] = result
+    # Only cache if we got positive qualified candidates (never cache empty runs)
+    if candidates:
+        _scanner_cache[cache_key] = result
+
     return result

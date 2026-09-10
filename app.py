@@ -611,7 +611,8 @@ def api_scanner():
     try:
         capital = float(request.args.get("capital", 1000000.0))
         risk_pct = float(request.args.get("risk_pct", 2.0))
-        res = scan_alpha_momentum(capital=capital, risk_pct=risk_pct)
+        force = request.args.get("refresh", "false").lower() in ("true", "1")
+        res = scan_alpha_momentum(capital=capital, risk_pct=risk_pct, force_refresh=force)
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
