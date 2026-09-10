@@ -34,7 +34,7 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
             if roe < roe_min:
                 return None
 
-        if near_52w_high and dist_52w_high > 8.0:
+        if near_52w_high and dist_52w_high > 15.0:
             return None
 
         df = get_stock_history(sym, period="6mo", interval="1d")
@@ -61,7 +61,7 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
         if rsi_max is not None and rsi > rsi_max:
             return None
 
-        if volume_surge and vol_ratio < 1.3:
+        if volume_surge and vol_ratio < 1.15:
             return None
 
         if golden_cross_only and not is_golden:
@@ -135,10 +135,10 @@ def run_stock_screener(
     if sector and sector != "All":
         universe = [s for s in universe if s.get("sector") == sector]
 
-    candidates = universe[:40]
+    candidates = universe
     matched_stocks = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
         futures = {
             executor.submit(
                 _eval_stock,
@@ -146,9 +146,12 @@ def run_stock_screener(
             ): item for item in candidates
         }
         for future in concurrent.futures.as_completed(futures):
-            res = future.result()
-            if res:
-                matched_stocks.append(res)
+            try:
+                res = future.result(timeout=2.5)
+                if res:
+                    matched_stocks.append(res)
+            except Exception:
+                pass
 
     matched_stocks.sort(key=lambda x: x["setup_score"], reverse=True)
     result = {

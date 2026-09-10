@@ -4,7 +4,7 @@
  */
 
 async function initScreener() {
-    loadScreenerPresets("breakout");
+    loadScreenerPresets("all_active");
 }
 
 function loadScreenerPresets(preset) {
@@ -16,27 +16,35 @@ function loadScreenerPresets(preset) {
     const volSurgeCheck = document.getElementById("screenerVolSurgeCheck");
     const goldenCrossCheck = document.getElementById("screenerGoldenCheck");
 
-    if (preset === "breakout") {
+    if (preset === "all_active" || preset === "all") {
         if (peInput) peInput.value = "";
         if (roeInput) roeInput.value = "10";
-        if (rsiMinInput) rsiMinInput.value = "50";
-        if (rsiMaxInput) rsiMaxInput.value = "75";
+        if (rsiMinInput) rsiMinInput.value = "35";
+        if (rsiMaxInput) rsiMaxInput.value = "80";
+        if (near52wCheck) near52wCheck.checked = false;
+        if (volSurgeCheck) volSurgeCheck.checked = false;
+        if (goldenCrossCheck) goldenCrossCheck.checked = true;
+    } else if (preset === "breakout") {
+        if (peInput) peInput.value = "";
+        if (roeInput) roeInput.value = "";
+        if (rsiMinInput) rsiMinInput.value = "45";
+        if (rsiMaxInput) rsiMaxInput.value = "78";
         if (near52wCheck) near52wCheck.checked = true;
-        if (volSurgeCheck) volSurgeCheck.checked = true;
+        if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = true;
     } else if (preset === "compounder") {
-        if (peInput) peInput.value = "30";
-        if (roeInput) roeInput.value = "18";
-        if (rsiMinInput) rsiMinInput.value = "40";
-        if (rsiMaxInput) rsiMaxInput.value = "70";
+        if (peInput) peInput.value = "45";
+        if (roeInput) roeInput.value = "15";
+        if (rsiMinInput) rsiMinInput.value = "35";
+        if (rsiMaxInput) rsiMaxInput.value = "75";
         if (near52wCheck) near52wCheck.checked = false;
         if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = true;
     } else if (preset === "oversold") {
-        if (peInput) peInput.value = "35";
-        if (roeInput) roeInput.value = "12";
+        if (peInput) peInput.value = "";
+        if (roeInput) roeInput.value = "";
         if (rsiMinInput) rsiMinInput.value = "20";
-        if (rsiMaxInput) rsiMaxInput.value = "45";
+        if (rsiMaxInput) rsiMaxInput.value = "50";
         if (near52wCheck) near52wCheck.checked = false;
         if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = false;
@@ -94,7 +102,11 @@ async function runScreenerQuery() {
             container.innerHTML = `
                 <tr>
                     <td colspan="8" class="text-center py-10 text-xs text-[#6e6e73]">
-                        No stocks matched all active filter criteria. Try relaxing the P/E or RSI constraints.
+                        <div class="font-medium text-sm text-[#1c1c1e] mb-1">No stocks matched all active filter criteria</div>
+                        <div class="text-[#8e8e93] mb-3">Try widening P/E, RSI ranges or unchecking strict volume/52W high conditions.</div>
+                        <button onclick="loadScreenerPresets('all_active')" class="px-3 py-1.5 rounded-lg bg-[#007aff] text-white font-medium text-xs shadow-xs hover:bg-[#0062cc] transition-all cursor-pointer">
+                            Reset to All Leaders
+                        </button>
                     </td>
                 </tr>
             `;

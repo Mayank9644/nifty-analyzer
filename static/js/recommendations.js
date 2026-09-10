@@ -6,9 +6,14 @@
 let _currentPicksFilter = "all";
 let _activeRecommendationsData = null;
 
-async function loadBestRecommendations() {
+async function loadBestRecommendations(forceRefresh = false) {
     const container = document.getElementById("bestPicksContainer");
     if (!container) return;
+
+    if (!forceRefresh && _activeRecommendationsData) {
+        renderBestPicksUI(_activeRecommendationsData);
+        return;
+    }
 
     container.innerHTML = `
         <div class="p-12 text-center text-[#86868b] text-xs">
@@ -22,17 +27,28 @@ async function loadBestRecommendations() {
     `;
 
     try {
-        const res = await fetch("/api/recommendations");
+        const url = forceRefresh ? "/api/recommendations?refresh=1" : "/api/recommendations";
+        const res = await fetch(url);
         const data = await res.json();
 
         if (data.status === "success") {
             _activeRecommendationsData = data;
             renderBestPicksUI(data);
+        } else {
+            throw new Error(data.message || "Failed to load");
         }
     } catch (e) {
         console.error("Error loading recommendations:", e);
         if (container) {
-            container.innerHTML = `<div class="p-8 text-center text-rose-600 text-xs">Failed to load recommendations. Please refresh.</div>`;
+            container.innerHTML = `
+                <div class="p-8 text-center text-[#8e8e93] text-xs macos-card">
+                    <div class="text-sm font-semibold text-[#b32020] mb-1">Unable to Load Live Recommendations</div>
+                    <p class="text-xs text-[#6e6e73] mb-3">Live market data feed experienced a momentary connection pause.</p>
+                    <button onclick="loadBestRecommendations(true)" class="btn-primary px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 cursor-pointer">
+                        <span>🔄</span> <span>Retry Calculation</span>
+                    </button>
+                </div>
+            `;
         }
     }
 }

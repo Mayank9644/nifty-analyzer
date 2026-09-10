@@ -733,9 +733,12 @@ def api_recommendations():
     try:
         from analysis.recommendations import get_best_recommendations
         capital = float(request.args.get("capital", 1000000.0))
-        res = get_best_recommendations(capital=capital)
+        refresh = request.args.get("refresh", "0").lower() in ("1", "true", "yes")
+        res = get_best_recommendations(capital=capital, force_refresh=refresh)
         return jsonify(res)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 

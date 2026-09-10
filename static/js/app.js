@@ -471,6 +471,17 @@ function switchTab(tab) {
     const activeView = document.getElementById(`tab-view-${tab}`);
     if (activeView) activeView.classList.remove("hidden");
 
+    // Update Mobile Bottom Floating Dock highlighting
+    document.querySelectorAll(".mobile-dock-btn").forEach(btn => {
+        if (btn.dataset.tab === tab) {
+            btn.classList.add("text-[#007aff]");
+            btn.classList.remove("text-[#6e6e73]");
+        } else {
+            btn.classList.remove("text-[#007aff]");
+            btn.classList.add("text-[#6e6e73]");
+        }
+    });
+
     if (tab === "stocks") {
         setTimeout(() => {
             const algoContainer = document.getElementById("candlestickChartContainer");

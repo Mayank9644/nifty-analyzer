@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Market Analysis — Equities, ETFs, Bonds & Derivatives</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -74,8 +74,8 @@
                 <button id="themeToggleBtn" onclick="toggleAppTheme()" title="Toggle Dark / Light Mode" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
                     <span id="themeToggleIcon">🌙</span>
                 </button>
-                <!-- Command Palette Launcher -->
-                <button onclick="openCommandPalette()" title="Spotlight Command Palette (Cmd + K / Ctrl + K)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                <!-- Command Palette Launcher (Desktop) -->
+                <button onclick="openCommandPalette()" title="Spotlight Command Palette (Cmd + K / Ctrl + K)" class="hidden md:flex px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs items-center gap-1.5 transition-all cursor-pointer">
                     <span>⌘</span>
                     <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">K</kbd>
                 </button>
@@ -89,7 +89,8 @@
                     <span class="hidden sm:inline">Alerts</span>
                     <span id="navAlertBadge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 font-bold text-[10px]">0</span>
                 </button>
-                <button onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                <!-- Shortcuts Launcher (Desktop) -->
+                <button onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)" class="hidden md:flex px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs items-center gap-1 transition-all cursor-pointer">
                     <span>⌨️</span>
                     <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">?</kbd>
                 </button>
@@ -982,7 +983,7 @@
                     </h2>
                     <p class="text-xs text-[#6e6e73]">Intraday MIS momentum, swing breakouts, positional trends, wealth compounders & F&O spreads</p>
                 </div>
-                <button onclick="loadBestRecommendations()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                <button onclick="loadBestRecommendations(true)" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
                     <span>🔄</span> <span>Refresh Picks</span>
                 </button>
             </div>
@@ -1628,6 +1629,9 @@
                     <!-- Quick Preset Pills & Export -->
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <span class="text-[11px] text-[#8e8e93] font-medium mr-1">Presets:</span>
+                        <button onclick="loadScreenerPresets('all_active')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f2f2f7] text-[#1c1c1e] border border-[rgba(0,0,0,0.12)] hover:bg-[#e5e5ea] transition-all">
+                            ⚡ All Leaders
+                        </button>
                         <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all">
                             🔥 52W Breakouts
                         </button>
@@ -2085,24 +2089,24 @@
     </div>
 
     <!-- MOBILE BOTTOM FLOATING GLASS DOCK (Visible on <= 768px screens) -->
-    <nav class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-white/90 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
-        <button onclick="switchTab('stocks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#1c1c1e] active:scale-95 transition-all cursor-pointer">
+    <nav class="mobile-dock-nav md:hidden fixed z-40 bg-white/95 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
+        <button onclick="switchTab('stocks')" data-tab="stocks" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#007aff] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">📈</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Terminal</span>
         </button>
-        <button onclick="switchTab('scanner')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+        <button onclick="switchTab('scanner')" data-tab="scanner" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">📡</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Scan</span>
         </button>
-        <button onclick="switchTab('best-picks')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+        <button onclick="switchTab('best-picks')" data-tab="best-picks" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">💡</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Picks</span>
         </button>
-        <button onclick="switchTab('options')" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+        <button onclick="switchTab('options')" data-tab="options" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">📋</span>
             <span class="text-[9.5px] font-semibold mt-0.5">F&amp;O</span>
         </button>
-        <button onclick="toggleMobileMoreSheet()" class="flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+        <button onclick="toggleMobileMoreSheet()" data-tab="desks" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">⋯</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Desks</span>
         </button>
