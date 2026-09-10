@@ -206,6 +206,9 @@ function setupEventListeners() {
                     selectCommodity(sym);
                 } else {
                     switchTab("stocks");
+                    if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
+                        updateTradingViewProSymbol(sym);
+                    }
                     loadStock(sym);
                 }
             });
@@ -469,6 +472,11 @@ async function loadStock(symbol, forceRefresh = false) {
     appState.currentSymbol = symbol;
     addRecentSymbol(symbol);
 
+    // Instant TradingView Pro sync (0ms latency without waiting for API roundtrip)
+    if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
+        updateTradingViewProSymbol(symbol);
+    }
+
     const cacheKey = `${symbol}_${appState.currentStyle}_${appState.currentPeriod}_${appState.currentInterval}`;
     const now = Date.now();
     const cachedEntry = clientStockCache.get(cacheKey);
@@ -578,10 +586,16 @@ function renderAllStockComponents(stockData, chartData, newsData) {
     }
 
     // Render TradingView Speedometer Technical Analysis Gauge
+    const activeSymbol = stockData?.info?.symbol || appState.currentSymbol;
     try {
-        renderTradingViewTechnicalGauge(stockData?.info?.symbol || appState.currentSymbol);
+        renderTradingViewTechnicalGauge(activeSymbol);
     } catch (err) {
         console.error("renderTradingViewTechnicalGauge error:", err);
+    }
+
+    // Ensure TradingView Pro widget displays active stock if selected as current chart engine
+    if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
+        updateTradingViewProSymbol(activeSymbol);
     }
 
     // If an algorithmic pick was clicked, pre-plot its exact Entry, Stop-Loss, and Targets
@@ -1591,6 +1605,9 @@ function selectSearchedStock(symbol) {
         }
     } else {
         switchTab("stocks");
+        if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
+            updateTradingViewProSymbol(sym);
+        }
         loadStock(sym);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2295,7 +2312,13 @@ function renderCommandPaletteResults(query) {
                     title: `${s.symbol.replace('.NS', '')} — ${s.name}`,
                     group: "Stocks & Securities",
                     icon: "📊",
-                    action: () => loadStock(s.symbol)
+                    action: () => {
+                        switchTab("stocks");
+                        if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
+                            updateTradingViewProSymbol(s.symbol);
+                        }
+                        loadStock(s.symbol);
+                    }
                 });
             }
         });

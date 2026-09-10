@@ -779,6 +779,7 @@ function setChartEngine(engine) {
     const macdCard = document.getElementById("macdChartCard");
 
     if (engine === "tv_pro") {
+        _currentChartEngine = "tv_pro";
         if (tvProBtn) {
             tvProBtn.classList.add("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
             tvProBtn.classList.remove("text-[#636366]");
@@ -796,9 +797,10 @@ function setChartEngine(engine) {
         if (tvProContainer) {
             tvProContainer.classList.remove("hidden");
             const sym = (typeof appState !== "undefined" && appState.currentSymbol) ? appState.currentSymbol : "RELIANCE.NS";
-            initTradingViewProWidget(sym);
+            updateTradingViewProSymbol(sym);
         }
     } else {
+        _currentChartEngine = "algo";
         if (algoBtn) {
             algoBtn.classList.add("active", "font-bold", "bg-white", "text-[#1d1d1f]", "shadow-sm");
             algoBtn.classList.remove("text-[#636366]");
@@ -822,16 +824,55 @@ function setChartEngine(engine) {
 }
 window.setChartEngine = setChartEngine;
 
-function initTradingViewProWidget(symbol) {
+let _currentTvProSymbol = null;
+
+/**
+ * Format any application stock/index/commodity symbol into TradingView ticker format.
+ */
+function formatTradingViewSymbol(symbol) {
+    if (!symbol) return "NSE:RELIANCE";
+    let s = symbol.toString().trim().toUpperCase();
+
+    // Strip exchange suffixes
+    s = s.replace(/\.NS$/i, "").replace(/\.BO$/i, "");
+
+    // Index mappings
+    if (s === "^NSEI" || s === "NIFTY" || s === "NIFTY 50" || s === "NIFTY50") return "NSE:NIFTY";
+    if (s === "^NSEBANK" || s === "BANKNIFTY" || s === "NIFTY BANK" || s === "BANK NIFTY") return "NSE:BANKNIFTY";
+    if (s === "^CNXIT" || s === "NIFTYIT") return "NSE:CNXIT";
+    if (s === "^CNXAUTO" || s === "NIFTYAUTO") return "NSE:CNXAUTO";
+    if (s === "^CNXFMCG" || s === "NIFTYFMCG") return "NSE:CNXFMCG";
+    if (s === "^CNXMETAL" || s === "NIFTYMETAL") return "NSE:CNXMETAL";
+    if (s === "^CNXPHARMA" || s === "NIFTYPHARMA") return "NSE:CNXPHARMA";
+
+    // Commodity mappings
+    if (s === "GC=F" || s === "GOLD") return "MCX:GOLD";
+    if (s === "SI=F" || s === "SILVER") return "MCX:SILVER";
+    if (s === "CL=F" || s === "CRUDEOIL" || s === "CRUDE OIL") return "MCX:CRUDEOIL";
+
+    // If exchange is already prefixed (e.g. BSE:RELIANCE or NSE:RELIANCE)
+    if (s.includes(":")) return s;
+
+    // Default to NSE
+    return `NSE:${s}`;
+}
+window.formatTradingViewSymbol = formatTradingViewSymbol;
+
+/**
+ * Dynamically updates the TradingView Pro widget with the newly searched/selected symbol.
+ */
+function updateTradingViewProSymbol(symbol, force = false) {
     const container = document.getElementById("tradingViewProContainer");
     if (!container) return;
 
-    let cleanSym = (symbol || "RELIANCE.NS").replace(".NS", "").replace(".BO", "").trim().toUpperCase();
-    if (cleanSym === "^NSEI") cleanSym = "NIFTY";
-    else if (cleanSym === "^NSEBANK") cleanSym = "BANKNIFTY";
-    const tvSymbol = `NSE:${cleanSym}`;
+    const tvSymbol = formatTradingViewSymbol(symbol);
+    if (!force && _currentTvProSymbol === tvSymbol && container.querySelector("iframe")) {
+        return; // Already showing this symbol
+    }
+    _currentTvProSymbol = tvSymbol;
 
-    container.innerHTML = `<div id="tradingview_advanced_widget" class="w-full h-full" style="min-height:560px;"></div>`;
+    const uniqueId = `tv_widget_${Date.now()}`;
+    container.innerHTML = `<div id="${uniqueId}" class="w-full h-full" style="min-height:560px;"></div>`;
 
     if (typeof TradingView === "undefined") {
         container.innerHTML = `
@@ -842,12 +883,17 @@ function initTradingViewProWidget(symbol) {
         `;
         const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/tv.js";
-        script.onload = () => initTradingViewProWidget(symbol);
+        script.onload = () => updateTradingViewProSymbol(symbol, true);
         document.head.appendChild(script);
         return;
     }
 
     try {
+        if (_tvProWidgetInstance && typeof _tvProWidgetInstance.remove === "function") {
+            try { _tvProWidgetInstance.remove(); } catch (err) {}
+            _tvProWidgetInstance = null;
+        }
+
         const isDark = document.documentElement.getAttribute("data-theme") === "dark";
         _tvProWidgetInstance = new TradingView.widget({
             "autosize": true,
@@ -861,15 +907,20 @@ function initTradingViewProWidget(symbol) {
             "enable_publishing": false,
             "allow_symbol_change": true,
             "save_image": true,
-            "container_id": "tradingview_advanced_widget",
+            "container_id": uniqueId,
             "studies": [
                 "RSI@tv-basicstudies",
                 "MASimple@tv-basicstudies"
             ]
         });
     } catch (e) {
-        console.error("TradingView widget init error:", e);
+        console.error("TradingView widget update error:", e);
     }
+}
+window.updateTradingViewProSymbol = updateTradingViewProSymbol;
+
+function initTradingViewProWidget(symbol) {
+    updateTradingViewProSymbol(symbol);
 }
 window.initTradingViewProWidget = initTradingViewProWidget;
 
