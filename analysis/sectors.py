@@ -213,12 +213,24 @@ def analyze_all_sectors() -> dict:
         score = int(min(100, max(10, (rs_ratio * 40) + (50 if quadrant == "Leading" else (35 if quadrant == "Improving" else 20)))))
 
         top_stocks = [c.replace(".NS", "") for c in s["constituents"][:4]]
+        change_pct = round(((latest_close - float(close.iloc[-2])) / float(close.iloc[-2])) * 100, 2) if len(close) >= 2 else 0.0
+
+        # Weights mapping
+        weights_map = {
+            "NIFTY_BANK": 23.5, "NIFTY_IT": 14.2, "NIFTY_ENERGY": 12.0, "NIFTY_FINSERV": 9.8,
+            "NIFTY_FMCG": 8.0, "NIFTY_AUTO": 7.2, "NIFTY_PHARMA": 4.5, "NIFTY_INFRA": 4.2,
+            "NIFTY_PSU_BANK": 3.8, "NIFTY_METAL": 3.5, "NIFTY_UTILITIES": 3.2, "NIFTY_TELECOM": 2.8,
+            "NIFTY_CONSUMER_SERV": 2.5, "NIFTY_DEFENSE": 2.3, "NIFTY_REALTY": 1.5
+        }
+        mc_weight = weights_map.get(s["code"], 3.0)
 
         sector_results.append({
             "name": s["name"],
             "code": s["code"],
             "icon": s["icon"],
             "current_price": round(latest_close, 2),
+            "change_pct": change_pct,
+            "market_cap_weight": mc_weight,
             "quadrant": quadrant,
             "quadrant_color": quadrant_color,
             "rs_ratio": rs_ratio,

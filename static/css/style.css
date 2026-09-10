@@ -864,5 +864,23 @@ kbd.macos-kbd {
     border-color: var(--macos-blue) !important;
 }
 
+/* Mobile Safe Bottom Padding */
+@media (max-width: 768px) {
+    main {
+        padding-bottom: 84px !important;
+    }
+}
+
+/* Dark Theme Overrides for Mobile Dock & Formula Modal */
+[data-theme="dark"] nav.md\:hidden {
+    background-color: rgba(27, 30, 43, 0.88) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] #formulaInspectionModal .macos-card {
+    background: #1b1e2b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
 
 

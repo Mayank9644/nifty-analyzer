@@ -60,6 +60,13 @@ def init_db():
         """)
         conn.commit()
 
+        # Add tags column if not exists
+        try:
+            conn.execute("ALTER TABLE trade_journal ADD COLUMN tags TEXT DEFAULT '';")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+
     _migrate_legacy_json_if_needed()
 
 
@@ -161,8 +168,8 @@ def db_add_trade(trade: dict) -> dict:
     with get_connection() as conn:
         conn.execute("""
             INSERT INTO trade_journal
-            (id, symbol, code, entry_date, entry_price, quantity, stop_loss, target_1, target_2, style, status, notes, is_manual)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)
+            (id, symbol, code, entry_date, entry_price, quantity, stop_loss, target_1, target_2, style, status, notes, tags, is_manual)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?)
         """, (
             trade_id,
             trade.get("symbol"),
@@ -175,6 +182,7 @@ def db_add_trade(trade: dict) -> dict:
             float(trade.get("target_2", 0.0)) if trade.get("target_2") else None,
             trade.get("style", "Swing"),
             trade.get("notes", ""),
+            trade.get("tags", ""),
             1 if trade.get("is_manual") else 0
         ))
         conn.commit()
@@ -184,7 +192,7 @@ def db_add_trade(trade: dict) -> dict:
     return trade
 
 
-def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> dict:
+def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None, exit_tags: str = None) -> dict:
     """Closes an open trade and calculates final realized P&L."""
     if not exit_date:
         exit_date = datetime.now().strftime("%Y-%m-%d")
@@ -201,11 +209,14 @@ def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> d
         realized_pnl = round((exit_price - entry_price) * qty, 2)
         realized_pct = round(((exit_price - entry_price) / entry_price) * 100, 2) if entry_price > 0 else 0.0
 
+        existing_tags = trade.get("tags") or ""
+        final_tags = f"{existing_tags}, {exit_tags}".strip(", ") if exit_tags else existing_tags
+
         conn.execute("""
             UPDATE trade_journal
-            SET status = 'CLOSED', exit_date = ?, exit_price = ?, pnl = ?, pnl_pct = ?
+            SET status = 'CLOSED', exit_date = ?, exit_price = ?, pnl = ?, pnl_pct = ?, tags = ?
             WHERE id = ?
-        """, (exit_date, exit_price, realized_pnl, realized_pct, trade_id))
+        """, (exit_date, exit_price, realized_pnl, realized_pct, final_tags, trade_id))
         conn.commit()
 
         trade["status"] = "CLOSED"
@@ -213,6 +224,7 @@ def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> d
         trade["exit_price"] = exit_price
         trade["pnl"] = realized_pnl
         trade["pnl_pct"] = realized_pct
+        trade["tags"] = final_tags
         return {"status": "success", "trade": trade}
 
 

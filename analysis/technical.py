@@ -256,6 +256,12 @@ def analyze_technicals(df: pd.DataFrame) -> dict:
     r2 = pivot + (float(df["High"].iloc[-1]) - float(df["Low"].iloc[-1]))
     s2 = pivot - (float(df["High"].iloc[-1]) - float(df["Low"].iloc[-1]))
 
+    # Volume Profile (VPVR with POC, VAH, VAL)
+    volume_profile = calculate_volume_profile(df, bins=24)
+
+    # Anchored VWAP
+    anchored_vwap = calculate_anchored_vwap(df)
+
     return {
         "status": "success",
         "current_price": round(latest_close, 2),
@@ -302,6 +308,8 @@ def analyze_technicals(df: pd.DataFrame) -> dict:
             "status": vol_status,
             "explanation": vol_text
         },
+        "volume_profile": volume_profile,
+        "anchored_vwap": anchored_vwap,
         "adx": {
             "value": round(val_adx, 1),
             "strength": adx_strength,
@@ -326,3 +334,136 @@ def analyze_technicals(df: pd.DataFrame) -> dict:
             "pivot": round(pivot, 2)
         }
     }
+
+
+def calculate_volume_profile(df: pd.DataFrame, bins: int = 24) -> dict:
+    """
+    Computes Volume Profile Visible Range (VPVR) with:
+    - POC (Point of Control): Price bin with peak transacted volume
+    - VAH (Value Area High): Upper threshold enclosing 70% of volume
+    - VAL (Value Area Low): Lower threshold enclosing 70% of volume
+    - Histogram distribution buckets for chart rendering
+    """
+    if df.empty or len(df) < 5 or "Volume" not in df.columns:
+        return {"poc": 0.0, "vah": 0.0, "val": 0.0, "bins": []}
+
+    subset = df.tail(120).copy()
+    min_price = float(subset["Low"].min())
+    max_price = float(subset["High"].max())
+
+    if max_price <= min_price:
+        return {"poc": round(min_price, 2), "vah": round(min_price, 2), "val": round(min_price, 2), "bins": []}
+
+    bin_size = (max_price - min_price) / bins
+    bin_volumes = [0.0] * bins
+    bin_lows = [min_price + i * bin_size for i in range(bins)]
+    bin_highs = [min_price + (i + 1) * bin_size for i in range(bins)]
+    bin_mids = [(bin_lows[i] + bin_highs[i]) / 2 for i in range(bins)]
+
+    for _, row in subset.iterrows():
+        vol = float(row["Volume"])
+        low = float(row["Low"])
+        high = float(row["High"])
+        if high <= low or vol <= 0:
+            continue
+
+        start_bin = max(0, min(bins - 1, int((low - min_price) / bin_size)))
+        end_bin = max(0, min(bins - 1, int((high - min_price) / bin_size)))
+        num_inter = max(1, end_bin - start_bin + 1)
+        vol_per_bin = vol / num_inter
+
+        for b in range(start_bin, end_bin + 1):
+            bin_volumes[b] += vol_per_bin
+
+    total_vol = sum(bin_volumes)
+    if total_vol <= 0:
+        return {"poc": round(min_price, 2), "vah": round(max_price, 2), "val": round(min_price, 2), "bins": []}
+
+    poc_idx = int(np.argmax(bin_volumes))
+    poc_price = round(bin_mids[poc_idx], 2)
+
+    # 70% Value Area expansion from POC
+    target_va_vol = total_vol * 0.70
+    va_indices = {poc_idx}
+    accumulated_vol = bin_volumes[poc_idx]
+
+    left = poc_idx - 1
+    right = poc_idx + 1
+
+    while accumulated_vol < target_va_vol and (left >= 0 or right < bins):
+        left_vol = bin_volumes[left] if left >= 0 else -1.0
+        right_vol = bin_volumes[right] if right < bins else -1.0
+
+        if left_vol >= right_vol and left >= 0:
+            va_indices.add(left)
+            accumulated_vol += left_vol
+            left -= 1
+        elif right < bins:
+            va_indices.add(right)
+            accumulated_vol += right_vol
+            right += 1
+        elif left >= 0:
+            va_indices.add(left)
+            accumulated_vol += left_vol
+            left -= 1
+        else:
+            break
+
+    val_idx = min(va_indices)
+    vah_idx = max(va_indices)
+    val_price = round(bin_lows[val_idx], 2)
+    vah_price = round(bin_highs[vah_idx], 2)
+
+    result_bins = []
+    for i in range(bins):
+        result_bins.append({
+            "price_low": round(bin_lows[i], 2),
+            "price_high": round(bin_highs[i], 2),
+            "price_mid": round(bin_mids[i], 2),
+            "volume": round(bin_volumes[i]),
+            "is_poc": bool(i == poc_idx),
+            "in_va": bool(i in va_indices)
+        })
+
+    return {
+        "poc": poc_price,
+        "vah": vah_price,
+        "val": val_price,
+        "total_volume": round(total_vol),
+        "bins": result_bins
+    }
+
+
+def calculate_anchored_vwap(df: pd.DataFrame, anchor_index: int = None) -> list:
+    """
+    Computes Anchored VWAP starting from a significant swing low or specified anchor index.
+    Returns array of {time: timestamp_or_date, value: vwap} suitable for charts.
+    """
+    if df.empty or "Volume" not in df.columns or "Close" not in df.columns:
+        return []
+
+    if anchor_index is None or anchor_index < 0 or anchor_index >= len(df):
+        lookback = min(len(df), 60)
+        recent_subset = df.tail(lookback)
+        min_idx = recent_subset["Low"].idxmin()
+        try:
+            anchor_index = df.index.get_loc(min_idx)
+        except Exception:
+            anchor_index = max(0, len(df) - 60)
+
+    sub_df = df.iloc[anchor_index:].copy()
+    typical_price = (sub_df["High"] + sub_df["Low"] + sub_df["Close"]) / 3
+    tp_vol = typical_price * sub_df["Volume"]
+    cum_tp_vol = tp_vol.cumsum()
+    cum_vol = sub_df["Volume"].cumsum().replace(0, np.nan)
+    avwap_series = cum_tp_vol / cum_vol
+    avwap_series = avwap_series.fillna(sub_df["Close"])
+
+    points = []
+    for dt, val in avwap_series.items():
+        date_str = dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt)[:10]
+        points.append({
+            "time": date_str,
+            "value": round(float(val), 2)
+        })
+    return points

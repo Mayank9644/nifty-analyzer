@@ -427,3 +427,295 @@ function renderExpertRadarChart(canvasId, radarData) {
         }
     });
 }
+
+// ===== ADVANCED INSTITUTIONAL CHARTING OVERLAYS =====
+let _volumeProfileLines = [];
+let _isVolumeProfileActive = false;
+let _anchoredVwapSeries = null;
+let _isAnchoredVwapActive = false;
+let _isDualSplitActive = false;
+let _splitTvChart = null;
+
+/**
+ * Toggle Volume Profile Visible Range (VPVR) with POC, VAH, and VAL horizontal price levels.
+ */
+function toggleVolumeProfile() {
+    if (!tvChart || !candleSeries || !_currentCandleData || _currentCandleData.length === 0) return;
+    _isVolumeProfileActive = !_isVolumeProfileActive;
+
+    const btn = document.getElementById("vpToggleBtn");
+    const bar = document.getElementById("volumeProfileBar");
+
+    // Clean up existing price lines
+    if (_volumeProfileLines.length > 0) {
+        _volumeProfileLines.forEach(line => {
+            try { candleSeries.removePriceLine(line); } catch (e) {}
+        });
+        _volumeProfileLines = [];
+    }
+
+    if (!_isVolumeProfileActive) {
+        if (btn) {
+            btn.classList.remove("bg-[#af52de]", "text-white", "font-bold");
+            btn.classList.add("bg-[#fbf5fd]", "text-[#7828c8]");
+        }
+        if (bar) bar.classList.add("hidden");
+        return;
+    }
+
+    if (btn) {
+        btn.classList.add("bg-[#af52de]", "text-white", "font-bold");
+        btn.classList.remove("bg-[#fbf5fd]", "text-[#7828c8]");
+    }
+    if (bar) bar.classList.remove("hidden");
+
+    // Compute VPVR client-side over current candle dataset
+    const lookback = Math.min(_currentCandleData.length, 120);
+    const subset = _currentCandleData.slice(_currentCandleData.length - lookback);
+
+    let minPrice = Infinity;
+    let maxPrice = -Infinity;
+    subset.forEach(c => {
+        if (c.low < minPrice) minPrice = c.low;
+        if (c.high > maxPrice) maxPrice = c.high;
+    });
+
+    if (maxPrice <= minPrice) return;
+
+    const bins = 24;
+    const binSize = (maxPrice - minPrice) / bins;
+    const binVolumes = new Array(bins).fill(0);
+    const binLows = [];
+    const binMids = [];
+    const binHighs = [];
+
+    for (let i = 0; i < bins; i++) {
+        const bLow = minPrice + (i * binSize);
+        const bHigh = minPrice + ((i + 1) * binSize);
+        binLows.push(bLow);
+        binHighs.push(bHigh);
+        binMids.push((bLow + bHigh) / 2);
+    }
+
+    subset.forEach(c => {
+        const vol = c.volume || 1;
+        const startBin = Math.max(0, Math.min(bins - 1, Math.floor((c.low - minPrice) / binSize)));
+        const endBin = Math.max(0, Math.min(bins - 1, Math.floor((c.high - minPrice) / binSize)));
+        const numInter = Math.max(1, endBin - startBin + 1);
+        const volPerBin = vol / numInter;
+        for (let b = startBin; b <= endBin; b++) {
+            binVolumes[b] += volPerBin;
+        }
+    });
+
+    let pocIdx = 0;
+    let maxVol = -1;
+    let totalVol = 0;
+    for (let i = 0; i < bins; i++) {
+        totalVol += binVolumes[i];
+        if (binVolumes[i] > maxVol) {
+            maxVol = binVolumes[i];
+            pocIdx = i;
+        }
+    }
+
+    const pocPrice = binMids[pocIdx];
+
+    // Value area: 70% of total volume
+    const targetVaVol = totalVol * 0.70;
+    let accumulatedVol = binVolumes[pocIdx];
+    let left = pocIdx - 1;
+    let right = pocIdx + 1;
+    const vaIndices = new Set([pocIdx]);
+
+    while (accumulatedVol < targetVaVol && (left >= 0 || right < bins)) {
+        const leftVol = left >= 0 ? binVolumes[left] : -1;
+        const rightVol = right < bins ? binVolumes[right] : -1;
+        if (leftVol >= rightVol && left >= 0) {
+            vaIndices.add(left);
+            accumulatedVol += leftVol;
+            left--;
+        } else if (right < bins) {
+            vaIndices.add(right);
+            accumulatedVol += rightVol;
+            right++;
+        } else if (left >= 0) {
+            vaIndices.add(left);
+            accumulatedVol += leftVol;
+            left--;
+        } else {
+            break;
+        }
+    }
+
+    const vaArr = Array.from(vaIndices);
+    const valIdx = Math.min(...vaArr);
+    const vahIdx = Math.max(...vaArr);
+    const valPrice = binLows[valIdx];
+    const vahPrice = binHighs[vahIdx];
+
+    // Draw lines
+    const pocLine = candleSeries.createPriceLine({
+        price: pocPrice,
+        color: '#e11d48',
+        lineWidth: 2,
+        lineStyle: 0,
+        axisLabelVisible: true,
+        title: `POC ₹${pocPrice.toFixed(2)}`
+    });
+
+    const vahLine = candleSeries.createPriceLine({
+        price: vahPrice,
+        color: '#0284c7',
+        lineWidth: 1.5,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: `VAH ₹${vahPrice.toFixed(2)}`
+    });
+
+    const valLine = candleSeries.createPriceLine({
+        price: valPrice,
+        color: '#0284c7',
+        lineWidth: 1.5,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: `VAL ₹${valPrice.toFixed(2)}`
+    });
+
+    _volumeProfileLines = [pocLine, vahLine, valLine];
+
+    if (document.getElementById("vpPocVal")) document.getElementById("vpPocVal").textContent = `₹${pocPrice.toFixed(2)}`;
+    if (document.getElementById("vpVahVal")) document.getElementById("vpVahVal").textContent = `₹${vahPrice.toFixed(2)}`;
+    if (document.getElementById("vpValVal")) document.getElementById("vpValVal").textContent = `₹${valPrice.toFixed(2)}`;
+}
+
+/**
+ * Toggle Anchored VWAP (AVWAP) anchored from the key swing low of the past 60 sessions.
+ */
+function toggleAnchoredVwap() {
+    if (!tvChart || !_currentCandleData || _currentCandleData.length === 0) return;
+    _isAnchoredVwapActive = !_isAnchoredVwapActive;
+
+    const btn = document.getElementById("avwapToggleBtn");
+
+    if (!_isAnchoredVwapActive) {
+        if (_anchoredVwapSeries) {
+            try { tvChart.removeSeries(_anchoredVwapSeries); } catch (e) {}
+            _anchoredVwapSeries = null;
+        }
+        if (btn) {
+            btn.classList.remove("bg-[#5856d6]", "text-white", "font-bold");
+            btn.classList.add("bg-[#f4f4fe]", "text-[#4338ca]");
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.classList.add("bg-[#5856d6]", "text-white", "font-bold");
+        btn.classList.remove("bg-[#f4f4fe]", "text-[#4338ca]");
+    }
+
+    // Find anchor index: lowest low of last 60 candles
+    const lookback = Math.min(_currentCandleData.length, 60);
+    const startIdx = _currentCandleData.length - lookback;
+    let minLow = Infinity;
+    let anchorIdx = startIdx;
+
+    for (let i = startIdx; i < _currentCandleData.length; i++) {
+        if (_currentCandleData[i].low < minLow) {
+            minLow = _currentCandleData[i].low;
+            anchorIdx = i;
+        }
+    }
+
+    const avwapData = [];
+    let cumTpVol = 0;
+    let cumVol = 0;
+
+    for (let i = anchorIdx; i < _currentCandleData.length; i++) {
+        const c = _currentCandleData[i];
+        const tp = (c.high + c.low + c.close) / 3;
+        const vol = c.volume || 1;
+        cumTpVol += (tp * vol);
+        cumVol += vol;
+        const avwap = cumVol > 0 ? (cumTpVol / cumVol) : c.close;
+        avwapData.push({
+            time: c.time,
+            value: parseFloat(avwap.toFixed(2))
+        });
+    }
+
+    _anchoredVwapSeries = tvChart.addLineSeries({
+        color: "#5856d6",
+        lineWidth: 2,
+        title: "AVWAP",
+        lineStyle: 0
+    });
+    _anchoredVwapSeries.setData(avwapData);
+}
+
+/**
+ * Toggle Dual-Chart Split View (Side-by-side / benchmark comparison view).
+ */
+function toggleDualChartSplit() {
+    _isDualSplitActive = !_isDualSplitActive;
+    const btn = document.getElementById("dualSplitToggleBtn");
+    const secondaryContainer = document.getElementById("secondaryChartContainer");
+
+    if (!_isDualSplitActive) {
+        if (secondaryContainer) secondaryContainer.classList.add("hidden");
+        if (btn) {
+            btn.classList.remove("bg-[#10b981]", "text-white", "font-bold");
+            btn.classList.add("bg-[#ecfdf5]", "text-[#047857]");
+        }
+        if (_splitTvChart) {
+            try { _splitTvChart.remove(); } catch (e) {}
+            _splitTvChart = null;
+        }
+        if (tvChart) {
+            const mainContainer = document.getElementById("candlestickChartContainer");
+            if (mainContainer) tvChart.applyOptions({ width: mainContainer.clientWidth });
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.classList.add("bg-[#10b981]", "text-white", "font-bold");
+        btn.classList.remove("bg-[#ecfdf5]", "text-[#047857]");
+    }
+    if (secondaryContainer) {
+        secondaryContainer.classList.remove("hidden");
+        secondaryContainer.innerHTML = "";
+
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        _splitTvChart = LightweightCharts.createChart(secondaryContainer, {
+            width: secondaryContainer.clientWidth,
+            height: 380,
+            layout: {
+                background: { color: isDark ? "#151722" : "#ffffff" },
+                textColor: isDark ? "#a1a1a6" : "#6e6e73",
+                fontSize: 11
+            },
+            grid: {
+                vertLines: { color: isDark ? "rgba(255, 255, 255, 0.05)" : "#f2f2f7" },
+                horzLines: { color: isDark ? "rgba(255, 255, 255, 0.05)" : "#f2f2f7" }
+            },
+            timeScale: { borderColor: "#e5e5ea", timeVisible: true }
+        });
+
+        // Add benchmark comparative line or candle series
+        const splitLineSeries = _splitTvChart.addAreaSeries({
+            topColor: "rgba(16, 185, 129, 0.3)",
+            bottomColor: "rgba(16, 185, 129, 0.02)",
+            lineColor: "#10b981",
+            lineWidth: 2,
+            title: "Comparative Benchmark"
+        });
+
+        if (_currentCandleData && _currentCandleData.length > 0) {
+            const splitData = _currentCandleData.map(d => ({ time: d.time, value: d.close }));
+            splitLineSeries.setData(splitData);
+            _splitTvChart.timeScale().fitContent();
+        }
+    }
+}

@@ -3,24 +3,25 @@
  */
 
 let _lastActiveTrades = [];
+let _journalEquityChart = null;
 
 async function loadTradeJournal() {
     try {
-        const [activeRes, statsRes] = await Promise.all([
+        const [activeRes, analyticsRes] = await Promise.all([
             fetch("/api/journal/active"),
-            fetch("/api/journal/stats")
+            fetch("/api/journal/analytics")
         ]);
 
         const activeData = await activeRes.json();
-        const statsData = await statsRes.json();
+        const analyticsData = await analyticsRes.json();
 
         if (activeData.status === "success") {
             _lastActiveTrades = activeData.trades || [];
             renderActiveTrades(_lastActiveTrades);
         }
 
-        if (statsData.status === "success") {
-            renderJournalStats(statsData.stats);
+        if (analyticsData.status === "success") {
+            renderJournalAnalytics(analyticsData);
         }
     } catch (e) {
         console.error("Error loading journal:", e);
@@ -63,7 +64,7 @@ function renderActiveTrades(trades) {
                             class="px-2.5 py-1.5 rounded-lg bg-[#eef5fd] text-[#007aff] border border-[#b9d7fb] hover:bg-[#007aff] hover:text-white transition-all text-[11px] font-semibold whitespace-nowrap">
                             🧠 Advice
                         </button>
-                        <button onclick="closeJournalTrade('${t.id}', ${t.current_price})"
+                        <button onclick="closeJournalTradePrompt('${t.id}', ${t.current_price})"
                             class="px-2.5 py-1.5 rounded-lg bg-[#fdf0f0] text-[#b32020] border border-[#f5c6cb] hover:bg-[#b32020] hover:text-white transition-all text-[11px] font-semibold whitespace-nowrap">
                             Close
                         </button>
@@ -97,45 +98,149 @@ function renderActiveTrades(trades) {
     `;
 }
 
-function renderJournalStats(stats) {
-    if (!stats) return;
+function renderJournalAnalytics(analytics) {
+    if (!analytics || !analytics.summary) return;
+    const s = analytics.summary;
 
-    document.getElementById("statsWinRate").innerText = `${stats.win_rate}%`;
-    document.getElementById("statsProfitFactor").innerText = stats.profit_factor;
-    document.getElementById("statsTotalTrades").innerText = stats.total_trades;
+    if (document.getElementById("statsWinRate")) document.getElementById("statsWinRate").innerText = `${s.win_rate}%`;
+    if (document.getElementById("statsProfitFactor")) document.getElementById("statsProfitFactor").innerText = s.profit_factor;
+    if (document.getElementById("statsTotalTrades")) document.getElementById("statsTotalTrades").innerText = s.total_trades;
     
     const netPnlEl = document.getElementById("statsNetPnl");
-    netPnlEl.innerText = `${stats.net_pnl_inr > 0 ? '+' : ''}₹${formatNumber(stats.net_pnl_inr, 2)}`;
-    netPnlEl.className = `text-xl font-bold mono ${stats.net_pnl_inr >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}`;
-
-    // Closed Trades History
-    const historyContainer = document.getElementById("closedTradesHistoryContainer");
-    if (historyContainer && stats.closed_history) {
-        historyContainer.innerHTML = stats.closed_history.map(c => `
-            <div class="p-3 rounded-xl macos-box flex justify-between items-center text-xs">
-                <div>
-                    <span class="font-bold text-[#1c1c1e]">${c.code}</span>
-                    <span class="text-[#86868b] text-[10px] block">Exited on ${c.exit_date} (${c.reason || 'Closed'})</span>
-                </div>
-                <div class="text-right">
-                    <span class="font-bold mono ${c.pnl >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
-                        ${c.pnl > 0 ? '+' : ''}₹${formatNumber(c.pnl, 2)} (${c.pnl_pct > 0 ? '+' : ''}${c.pnl_pct}%)
-                    </span>
-                    <span class="text-[#86868b] text-[10px] block">${c.quantity} Shares @ ₹${c.entry_price} → ₹${c.exit_price}</span>
-                </div>
-            </div>
-        `).join("");
+    if (netPnlEl) {
+        netPnlEl.innerText = `${s.net_pnl_inr > 0 ? '+' : ''}₹${formatNumber(s.net_pnl_inr, 2)}`;
+        netPnlEl.className = `text-xl font-bold mono ${s.net_pnl_inr >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}`;
     }
+
+    if (document.getElementById("statsExpectancy")) {
+        document.getElementById("statsExpectancy").innerText = `${s.expectancy_inr > 0 ? '+' : ''}₹${formatNumber(s.expectancy_inr, 0)}/tr`;
+    }
+    if (document.getElementById("statsMaxDrawdown")) {
+        document.getElementById("statsMaxDrawdown").innerText = `-₹${formatNumber(s.max_drawdown_inr, 0)}`;
+    }
+
+    // Render Equity Curve
+    renderJournalEquityCurve(analytics.equity_curve);
+
+    // Render Calendar Heatmap
+    renderJournalCalendarHeatmap(analytics.daily_calendar);
+
+    // Render Discipline Tags
+    renderJournalDisciplineTags(analytics.tag_breakdown);
 }
 
-async function closeJournalTrade(tradeId, currentPrice) {
-    if (!confirm("Are you sure you want to close this trade at current market price?")) return;
+function renderJournalEquityCurve(curveData) {
+    const canvas = document.getElementById("journalEquityCurveCanvas");
+    if (!canvas || !curveData || curveData.length === 0) return;
+
+    if (_journalEquityChart) {
+        try { _journalEquityChart.destroy(); } catch (e) {}
+        _journalEquityChart = null;
+    }
+
+    const labels = curveData.map(d => d.date);
+    const dataPoints = curveData.map(d => d.cum_pnl);
+
+    const ctx = canvas.getContext("2d");
+    _journalEquityChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Cumulative Realized P&L (₹)",
+                data: dataPoints,
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.08)",
+                fill: true,
+                tension: 0.15,
+                pointRadius: 3,
+                pointBackgroundColor: "#10b981"
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ` Cumulative P&L: ₹${formatNumber(ctx.raw, 2)}`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+                y: { grid: { color: "#f2f2f7" }, ticks: { font: { size: 10 }, callback: (v) => `₹${formatNumber(v, 0)}` } }
+            }
+        }
+    });
+}
+
+function renderJournalCalendarHeatmap(calendar) {
+    const container = document.getElementById("journalCalendarHeatmap");
+    if (!container || !calendar) return;
+
+    const dates = Object.keys(calendar).sort();
+    if (dates.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-[#86868b] text-xs">No closed trades recorded yet. Close a position to see your daily P&L calendar heatmap!</div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            ${dates.slice(-24).map(d => {
+                const day = calendar[d];
+                const isWin = day.pnl >= 0;
+                const bg = isWin ? "bg-[#edf7ee] border-[#c3e6cb]" : "bg-[#fdf0f0] border-[#f5c6cb]";
+                const text = isWin ? "text-[#1e7e34]" : "text-[#b32020]";
+
+                return `
+                    <div class="p-2.5 rounded-xl border ${bg} text-center space-y-0.5">
+                        <span class="text-[10px] text-[#86868b] block font-medium">${d.slice(5)}</span>
+                        <span class="font-bold text-xs mono ${text} block">
+                            ${isWin ? '+' : ''}₹${formatNumber(day.pnl, 0)}
+                        </span>
+                        <span class="text-[9px] text-[#6e6e73] block">${day.trades} trade${day.trades > 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function renderJournalDisciplineTags(tags) {
+    const container = document.getElementById("journalDisciplineTags");
+    if (!container || !tags || tags.length === 0) return;
+
+    container.innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            ${tags.map(t => {
+                const isPos = t.pnl >= 0;
+                return `
+                    <div class="p-2.5 rounded-xl macos-box flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-semibold text-[#1c1c1e]">${t.tag}</span>
+                            <span class="text-[10px] text-[#86868b] block">${t.trades} trades · ${t.win_rate}% win</span>
+                        </div>
+                        <span class="font-bold mono ${isPos ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
+                            ${isPos ? '+' : ''}₹${formatNumber(t.pnl, 0)}
+                        </span>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+async function closeJournalTradePrompt(tradeId, currentPrice) {
+    const tag = prompt("Enter tag or exit reason (e.g., Followed Plan, Target Hit, FOMO Exit, Cut Loser Quick):", "Followed Plan");
+    if (tag === null) return; // User cancelled
 
     try {
         const res = await fetch(`/api/journal/close/${tradeId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ exit_price: currentPrice, reason: "Manual Target/Stop Close" })
+            body: JSON.stringify({ exit_price: currentPrice, reason: tag, exit_tags: tag })
         });
         const data = await res.json();
         if (data.status === "success") {
@@ -222,11 +327,25 @@ function openManualTradeModal() {
                     </div>
                 </div>
 
-                <!-- Notes -->
-                <div>
-                    <label class="text-[10px] text-[#6e6e73] uppercase tracking-wider block mb-1 font-semibold">Notes / Reason for Trade</label>
-                    <input id="mt_notes" type="text" placeholder="e.g. Breakout above 200 DMA on high volume"
-                        class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-2 text-sm text-[#1c1c1e] outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                <!-- Discipline Tag & Notes -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-[#6e6e73] uppercase tracking-wider block mb-1 font-semibold">Discipline / Setup Tag</label>
+                        <select id="mt_tags" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-2 text-sm text-[#1c1c1e] outline-none focus:border-[#007aff] focus:bg-white transition-all">
+                            <option value="Followed Plan">Followed Plan</option>
+                            <option value="Breakout Entry">Breakout Entry</option>
+                            <option value="Pullback Entry">Pullback Entry</option>
+                            <option value="FOMO Entry">FOMO Entry</option>
+                            <option value="Chased Breakout">Chased Breakout</option>
+                            <option value="Revenge Trade">Revenge Trade</option>
+                            <option value="Hesitation">Hesitation</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-[#6e6e73] uppercase tracking-wider block mb-1 font-semibold">Notes / Rationale</label>
+                        <input id="mt_notes" type="text" placeholder="e.g. Breakout above 200 DMA"
+                            class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-2 text-sm text-[#1c1c1e] outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                    </div>
                 </div>
 
                 <!-- Auto-Calculate hint -->
@@ -264,6 +383,7 @@ async function submitManualTrade() {
     const target_2 = parseFloat(document.getElementById("mt_t2")?.value) || 0;
     const style = document.getElementById("mt_style")?.value || "Manual";
     const notes = document.getElementById("mt_notes")?.value || "";
+    const tags = document.getElementById("mt_tags")?.value || "Followed Plan";
     const entry_date = document.getElementById("mt_date")?.value || "";
 
     if (!symbol || !entry_price || !quantity) {
@@ -281,7 +401,7 @@ async function submitManualTrade() {
         const res = await fetch("/api/journal/manual", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ symbol: finalSymbol, entry_price, quantity, stop_loss, target_1, target_2, style, notes, entry_date })
+            body: JSON.stringify({ symbol: finalSymbol, entry_price, quantity, stop_loss, target_1, target_2, style, notes, tags, entry_date })
         });
         const data = await res.json();
         if (data.status === "success") {

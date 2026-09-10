@@ -3,7 +3,7 @@ Nifty Stock Market & Commodities Analyzer — Flask Application Server.
 Provides RESTful APIs for Indian Stocks, Commodities, F&O, and Expert Trading Strategies.
 """
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import pandas as pd
 import yfinance as yf
 
@@ -29,7 +29,8 @@ from analysis.scanner import scan_alpha_momentum
 from analysis.sectors import analyze_all_sectors
 from analysis.etf import run_etf_screener
 from analysis.breadth import calculate_market_breadth
-from analysis.journal import add_trade, get_active_trades, close_trade, get_journal_stats
+from analysis.journal import add_trade, get_active_trades, close_trade, get_journal_stats, get_journal_analytics
+from data.database import db_get_active_trades
 from analysis.backtest import run_strategy_backtest
 from analysis.screener import run_stock_screener
 from analysis.ipo import get_ipo_tracker_data
@@ -671,7 +672,8 @@ def api_journal_close(trade_id: str):
         data = request.get_json() or {}
         exit_price = data.get("exit_price")
         reason = data.get("reason", "Manual Close")
-        success = close_trade(trade_id, exit_price=exit_price, reason=reason)
+        exit_tags = data.get("exit_tags")
+        success = close_trade(trade_id, exit_price=exit_price, reason=reason, exit_tags=exit_tags)
         return jsonify({"status": "success" if success else "error"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -687,13 +689,25 @@ def api_journal_stats():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/api/journal/analytics")
+def api_journal_analytics():
+    """Institutional journal analytics: equity curve, calendar heatmap, mistake tags."""
+    try:
+        analytics = get_journal_analytics()
+        return jsonify(analytics)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route("/api/backtest")
 def api_backtest():
-    """Run SEPA historical strategy backtest."""
+    """Run multi-strategy historical backtest with friction model."""
     try:
         symbol = request.args.get("symbol", "RELIANCE.NS")
         period = request.args.get("period", "3y")
-        res = run_strategy_backtest(symbol=symbol, period=period)
+        strategy = request.args.get("strategy", "sepa")
+        capital = float(request.args.get("capital", 100000.0))
+        res = run_strategy_backtest(symbol=symbol, period=period, strategy=strategy, capital=capital)
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -739,26 +753,21 @@ def api_journal_manual():
             target_2=float(data.get("target_2", 0)),
             style=data.get("style", "Manual"),
             notes=data.get("notes", "Manually added position"),
-            entry_date=data.get("entry_date", None)
+            entry_date=data.get("entry_date", None),
+            tags=data.get("tags", "Followed Plan")
         )
         return jsonify({"status": "success", "trade": trade})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-
 @app.route("/api/journal/<trade_id>/advice")
 def api_journal_advice(trade_id):
     """Deep multi-factor position analysis — BUY MORE / HOLD / PARTIAL EXIT / SELL."""
     try:
-        from analysis.journal import _load_journal
         from analysis.position_advisor import analyze_position
-
-        journal = _load_journal()
-        trade = next(
-            (t for t in journal.get("active_trades", []) if t["id"] == trade_id),
-            None
-        )
+        trades = db_get_active_trades()
+        trade = next((t for t in trades if t["id"] == trade_id), None)
         if not trade:
             return jsonify({"status": "error", "message": "Trade not found"}), 404
 
@@ -768,6 +777,18 @@ def api_journal_advice(trade_id):
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/manifest.json")
+def serve_manifest():
+    """Serve PWA Web App Manifest."""
+    return send_from_directory("static", "manifest.json", mimetype="application/manifest+json")
+
+
+@app.route("/sw.js")
+def serve_sw():
+    """Serve PWA Service Worker."""
+    return send_from_directory("static", "sw.js", mimetype="application/javascript")
 
 
 @app.route("/api/institutional/radar")
