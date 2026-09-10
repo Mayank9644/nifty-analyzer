@@ -104,7 +104,9 @@ async function runScreenerQuery() {
         _lastScreenerResults = results;
 
         container.innerHTML = results.map(s => {
-            const isGreen = s.day_change_pct >= 0;
+            const priceVal = Number(s.current_price) || 0;
+            const chgVal = Number(s.day_change_pct) || 0;
+            const isGreen = chgVal >= 0;
             return `
                 <tr class="hover:bg-[#f8f8fa] transition-colors border-b border-[rgba(0,0,0,0.05)] cursor-pointer" onclick="selectSearchedStock('${s.symbol}')">
                     <td class="px-4 py-3">
@@ -115,9 +117,9 @@ async function runScreenerQuery() {
                         <span class="badge-stock">${s.sector}</span>
                     </td>
                     <td class="px-4 py-3 text-right">
-                        <div class="text-xs font-semibold mono text-[#1c1c1e]">₹${s.current_price.toLocaleString('en-IN')}</div>
+                        <div class="text-xs font-semibold mono text-[#1c1c1e]">${priceVal > 0 ? '₹' + priceVal.toLocaleString('en-IN') : '—'}</div>
                         <div class="text-[10.5px] font-medium mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
-                            ${isGreen ? '▲ +' : '▼ '}${s.day_change_pct}%
+                            ${s.day_change_pct != null ? (isGreen ? '▲ +' : '▼ ') + chgVal + '%' : '—'}
                         </div>
                     </td>
                     <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e]">

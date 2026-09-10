@@ -318,6 +318,7 @@ function renderMarketTicker(data) {
 }
 
 function switchTab(tab) {
+    if (tab === "recommendations") tab = "best-picks";
     appState.currentTab = tab;
     document.querySelectorAll(".nav-tab-btn").forEach(btn => {
         if (btn.dataset.tab === tab) {
@@ -332,6 +333,22 @@ function switchTab(tab) {
     document.querySelectorAll(".tab-view").forEach(view => view.classList.add("hidden"));
     const activeView = document.getElementById(`tab-view-${tab}`);
     if (activeView) activeView.classList.remove("hidden");
+
+    if (tab === "stocks") {
+        setTimeout(() => {
+            const algoContainer = document.getElementById("candlestickChartContainer");
+            if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "algo") {
+                if (typeof tvChart !== "undefined" && tvChart && algoContainer && algoContainer.clientWidth > 0) {
+                    tvChart.applyOptions({ width: algoContainer.clientWidth });
+                    tvChart.timeScale().fitContent();
+                }
+            } else if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro") {
+                if (typeof updateTradingViewProSymbol === "function" && appState.currentSymbol) {
+                    updateTradingViewProSymbol(appState.currentSymbol);
+                }
+            }
+        }, 60);
+    }
 
     if (tab === "institutional") {
         loadInstitutionalRadar();

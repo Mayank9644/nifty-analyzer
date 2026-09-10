@@ -69,3 +69,50 @@ function renderJargonTooltip(term) {
         </span>
     `;
 }
+
+/**
+ * Universal Floating Toast Notification (macOS Native Design)
+ */
+function showNotification(message, type = "info") {
+    let toastContainer = document.getElementById("macosToastContainer");
+    if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "macosToastContainer";
+        toastContainer.className = "fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none";
+        document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement("div");
+    const isError = type === "error" || type === "danger";
+    const isSuccess = type === "success";
+    const isWarning = type === "warning";
+
+    const bgClass = isError
+        ? "bg-rose-600 text-white border-rose-700"
+        : isSuccess
+        ? "bg-[#1e7e34] text-white border-[#155724]"
+        : isWarning
+        ? "bg-amber-500 text-white border-amber-600"
+        : "bg-[#1c1c1e] text-white border-[rgba(255,255,255,0.15)]";
+
+    const icon = isError ? "✕" : isSuccess ? "✓" : isWarning ? "⚠️" : "ℹ️";
+
+    toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl flex items-center gap-2 border transition-all duration-200 transform translate-y-2 opacity-0 ${bgClass}`;
+    toast.innerHTML = `<span class="text-sm font-bold">${icon}</span> <span class="leading-tight">${message}</span>`;
+
+    toastContainer.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+        toast.classList.add("translate-y-0", "opacity-100");
+    });
+
+    setTimeout(() => {
+        toast.classList.remove("opacity-100");
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 250);
+    }, 3500);
+}
+window.showNotification = showNotification;
+window.showToast = showNotification;
+

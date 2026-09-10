@@ -15,16 +15,18 @@ function renderOptionsChainTable(containerId, optionsData) {
         return;
     }
 
-    // Find max open interest for proportional heatmap bar widths
-    const maxCallOi = Math.max(...chain.map(r => r.ce_oi), 1);
-    const maxPutOi = Math.max(...chain.map(r => r.pe_oi), 1);
+    // Find max open interest for proportional heatmap bar widths safely
+    const maxCallOi = Math.max(...chain.map(r => Number(r.ce_oi) || 0), 1);
+    const maxPutOi = Math.max(...chain.map(r => Number(r.pe_oi) || 0), 1);
 
     let rowsHtml = "";
     chain.forEach(row => {
         const isATM = Math.abs(row.strike - spot) < 50;
         const isMaxPain = row.strike === maxPain;
-        const callWidth = Math.min((row.ce_oi / maxCallOi) * 100, 100);
-        const putWidth = Math.min((row.pe_oi / maxPutOi) * 100, 100);
+        const ceOiNum = Number(row.ce_oi) || 0;
+        const peOiNum = Number(row.pe_oi) || 0;
+        const callWidth = maxCallOi > 0 ? Math.min((ceOiNum / maxCallOi) * 100, 100) : 0;
+        const putWidth = maxPutOi > 0 ? Math.min((peOiNum / maxPutOi) * 100, 100) : 0;
 
         rowsHtml += `
             <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors text-xs ${isATM ? 'bg-[#eef5fd]/70' : ''}">

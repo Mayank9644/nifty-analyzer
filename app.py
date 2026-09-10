@@ -538,13 +538,13 @@ def api_calculator_position_size():
             data = request.get_json() or {}
             capital = float(data.get("capital", 1000000.0))
             risk_pct = float(data.get("risk_pct", 1.5))
-            entry = float(data.get("entry_price", 0.0))
-            stop = float(data.get("stop_loss", 0.0))
+            entry = float(data.get("entry_price") or data.get("entry") or 0.0)
+            stop = float(data.get("stop_loss") or data.get("stop") or data.get("sl") or 0.0)
         else:
             capital = float(request.args.get("capital", 1000000.0))
             risk_pct = float(request.args.get("risk_pct", 1.5))
-            entry = float(request.args.get("entry_price", 0.0))
-            stop = float(request.args.get("stop_loss", 0.0))
+            entry = float(request.args.get("entry_price") or request.args.get("entry") or 0.0)
+            stop = float(request.args.get("stop_loss") or request.args.get("stop") or request.args.get("sl") or 0.0)
 
         result = calculate_position_size(capital=capital, risk_pct=risk_pct, entry_price=entry, stop_loss=stop)
         return jsonify(result)
