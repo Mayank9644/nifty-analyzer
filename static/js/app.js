@@ -334,6 +334,9 @@ function switchTab(tab) {
         loadInstitutionalRadar();
     } else if (tab === "best-picks") {
         loadBestRecommendations();
+        if (typeof filterPicksSubTab === "function" && appState.currentStyle) {
+            setTimeout(() => filterPicksSubTab(appState.currentStyle), 80);
+        }
     } else if (tab === "screener") {
         initScreener();
     } else if (tab === "bees") {
@@ -390,8 +393,15 @@ function switchTradingStyle(style) {
         appState.currentInterval = "1d";
     }
 
-    // Refresh stock signals and chart with new style
-    loadStock(appState.currentSymbol);
+    // Sync with Best Picks desk
+    if (typeof filterPicksSubTab === "function") {
+        filterPicksSubTab(style);
+    }
+
+    // Refresh stock signals and chart with new style if on stocks tab
+    if (appState.currentTab === "stocks" || !appState.currentTab) {
+        loadStock(appState.currentSymbol);
+    }
 }
 
 function addRecentSymbol(sym) {

@@ -49,6 +49,22 @@ function filterPicksSubTab(filter) {
         }
     });
 
+    // If filter matches a trading style, sync with the global app execution style buttons
+    if (["intraday", "swing", "positional"].includes(filter)) {
+        if (typeof window.appState !== "undefined") {
+            window.appState.currentStyle = filter;
+        }
+        document.querySelectorAll(".style-btn").forEach(btn => {
+            if (btn.dataset.style === filter) {
+                btn.classList.add("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
+                btn.classList.remove("text-[#636366]");
+            } else {
+                btn.classList.remove("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
+                btn.classList.add("text-[#636366]");
+            }
+        });
+    }
+
     if (_activeRecommendationsData) {
         renderBestPicksUI(_activeRecommendationsData);
     }
@@ -59,27 +75,33 @@ function renderBestPicksUI(data) {
     const container = document.getElementById("bestPicksContainer");
     if (!container) return;
 
-    const fno = data.best_fno_strategies || [];
+    const intraday = data.best_intraday_picks || [];
     const breakouts = data.best_swing_shares || [];
+    const positional = data.best_positional_picks || [];
     const compounders = data.best_long_term_compounders || [];
+    const fno = data.best_fno_strategies || [];
     const etfs = data.best_etfs || [];
     const allocation = data.portfolio_allocation || {};
 
-    const showFno = _currentPicksFilter === "all" || _currentPicksFilter === "fno";
+    const showIntraday = _currentPicksFilter === "all" || _currentPicksFilter === "intraday";
     const showSwing = _currentPicksFilter === "all" || _currentPicksFilter === "swing";
+    const showPositional = _currentPicksFilter === "all" || _currentPicksFilter === "positional";
     const showComp = _currentPicksFilter === "all" || _currentPicksFilter === "compounder";
+    const showFno = _currentPicksFilter === "all" || _currentPicksFilter === "fno";
     const showEtf = _currentPicksFilter === "all" || _currentPicksFilter === "etf";
 
     let html = `
         <div class="space-y-6">
             <!-- PICKS SUB-TOOLBAR (Filter Pills + Capital Allocation Strip) -->
             <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-[rgba(0,0,0,0.06)] shadow-xs">
-                <div class="flex items-center macos-segmented-track">
+                <div class="flex items-center macos-segmented-track flex-wrap gap-1">
                     <button class="picks-filter-btn ${_currentPicksFilter === 'all' ? 'active' : ''}" data-filter="all" onclick="filterPicksSubTab('all')">🌟 All Picks</button>
-                    <button class="picks-filter-btn ${_currentPicksFilter === 'fno' ? 'active' : ''}" data-filter="fno" onclick="filterPicksSubTab('fno')">📋 F&O Spreads (${fno.length})</button>
-                    <button class="picks-filter-btn ${_currentPicksFilter === 'swing' ? 'active' : ''}" data-filter="swing" onclick="filterPicksSubTab('swing')">🚀 Swing Breakouts (${breakouts.length})</button>
-                    <button class="picks-filter-btn ${_currentPicksFilter === 'compounder' ? 'active' : ''}" data-filter="compounder" onclick="filterPicksSubTab('compounder')">💎 Wealth Compounders (${compounders.length})</button>
-                    <button class="picks-filter-btn ${_currentPicksFilter === 'etf' ? 'active' : ''}" data-filter="etf" onclick="filterPicksSubTab('etf')">📉 ETF Allocator (${etfs.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'intraday' ? 'active' : ''}" data-filter="intraday" onclick="filterPicksSubTab('intraday')">⚡ Intraday (${intraday.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'swing' ? 'active' : ''}" data-filter="swing" onclick="filterPicksSubTab('swing')">🚀 Swing (${breakouts.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'positional' ? 'active' : ''}" data-filter="positional" onclick="filterPicksSubTab('positional')">📈 Positional (${positional.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'compounder' ? 'active' : ''}" data-filter="compounder" onclick="filterPicksSubTab('compounder')">💎 Compounders (${compounders.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'fno' ? 'active' : ''}" data-filter="fno" onclick="filterPicksSubTab('fno')">📋 F&O (${fno.length})</button>
+                    <button class="picks-filter-btn ${_currentPicksFilter === 'etf' ? 'active' : ''}" data-filter="etf" onclick="filterPicksSubTab('etf')">📉 ETFs (${etfs.length})</button>
                 </div>
 
                 <div class="flex items-center gap-3 text-xs text-[#6e6e73]">
@@ -92,6 +114,88 @@ function renderBestPicksUI(data) {
                 </div>
             </div>
     `;
+
+    // 0. INTRADAY HIGH-PROBABILITY MOMENTUM DESK
+    if (showIntraday && intraday.length > 0) {
+        html += `
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>⚡</span> Top Intraday Picks (Same-Day MIS Momentum)
+                        </h3>
+                        <p class="text-xs text-[#6e6e73] mt-0.5">Calculated using 15-Minute VWAP confluence, opening range expansion, tight 0.8× ATR_15m stops, and 1:2 / 1:3 intraday targets. Auto square-off before 15:15 IST.</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-[#fff7ed] text-[#ea580c] font-semibold border border-[#fed7aa] flex items-center gap-1">
+                        <span>⚡</span> Same-Day MIS (Exit by 15:15 IST)
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${intraday.map((item, idx) => `
+                        <div class="macos-box p-4 hover:shadow-sm transition-all flex flex-col justify-between border border-[rgba(0,0,0,0.06)]">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h4 class="text-sm font-bold text-[#1c1c1e]">${item.code}</h4>
+                                            <span class="text-[9.5px] px-1.5 py-0.2 rounded font-bold bg-[#edf7ee] text-[#1e7e34]">${item.bias}</span>
+                                        </div>
+                                        <span class="text-[10px] text-[#86868b] block">${item.name}</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#fff7ed] text-[#ea580c] font-medium mt-1 inline-block">${item.pattern}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[10px] text-[#8e8e93] block">Intraday Score</span>
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#fff7ed] text-[#ea580c] mono border border-[#fed7aa]">
+                                            ${item.score} / 100
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="p-1.5 rounded bg-[#f5f5f7] border border-[rgba(0,0,0,0.05)] text-[10.5px] flex items-center justify-between text-[#555] mb-2">
+                                    <span>VWAP: <strong class="text-[#007aff] mono">₹${item.vwap}</strong></span>
+                                    <span>Status: <strong class="text-[#1e7e34]">Price > VWAP</strong></span>
+                                    <span>Square-Off: <strong class="text-[#ea580c]">15:15</strong></span>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2 my-2 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
+                                    <div>
+                                        <span class="text-[9.5px] text-[#86868b] block font-medium">Buy Price</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${item.cmp}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[9.5px] text-[#b32020] block font-medium">Stop-Loss (0.8x ATR)</span>
+                                        <span class="font-bold text-[#b32020] mono">₹${item.stop_loss}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[9.5px] text-[#1e7e34] block font-medium">Target 1 (1:2 R:R)</span>
+                                        <span class="font-bold text-[#1e7e34] mono">₹${item.target} (+${item.target_pct}%)</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
+                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${item.target_2} (+${item.target_2_pct}%)</strong></span>
+                                    <span>Vol Surge: <strong class="text-[#1c1c1e] mono">${item.vol_surge}x</strong></span>
+                                    <span>Qty: <strong class="text-[#007aff] mono">${item.shares_qty} shares</strong></span>
+                                </div>
+
+                                <p class="text-[11px] text-[#48484a] leading-relaxed">${item.rationale}</p>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between">
+                                <button onclick="openFormulaInspectionModal('intraday', ${idx})" class="text-[11px] text-[#ea580c] hover:underline font-semibold flex items-center gap-1">
+                                    <span>📐</span> View Math & VWAP
+                                </button>
+                                <button onclick="switchTab('stocks'); loadStock('${item.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
+                                    Inspect Chart
+                                </button>
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        `;
+    }
 
     // 1. F&O DERIVATIVES DESK
     if (showFno && fno.length > 0) {
@@ -237,6 +341,86 @@ function renderBestPicksUI(data) {
                                     <span>📐</span> View Math & ATR
                                 </button>
                                 <button onclick="switchTab('stocks'); loadStock('${b.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
+                                    Inspect Chart
+                                </button>
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        `;
+    // 2.5 POSITIONAL MULTI-WEEK TREND DESK
+    if (showPositional && positional.length > 0) {
+        html += `
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1c1c1e] flex items-center gap-2">
+                            <span>📈</span> Top Positional Trend Setters (CNC / Delivery, 3–8 Weeks)
+                        </h3>
+                        <p class="text-xs text-[#6e6e73] mt-0.5">Calculated using Minervini Stage-2 trend template (Price > 50 SMA > 200 SMA), >55% institutional delivery accumulation, and 1:2 to 1:3.5 risk-adjusted targets.</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-[#f3e8ff] text-[#7e22ce] font-semibold border border-[#e9d5ff] flex items-center gap-1">
+                        <span>📈</span> Positional (3 to 8 Weeks)
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${positional.map((item, idx) => `
+                        <div class="macos-box p-4 hover:shadow-sm transition-all flex flex-col justify-between border border-[rgba(0,0,0,0.06)]">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h4 class="text-sm font-bold text-[#1c1c1e]">${item.code}</h4>
+                                            <span class="text-[9.5px] px-1.5 py-0.2 rounded font-bold bg-[#f3e8ff] text-[#7e22ce]">${item.product}</span>
+                                        </div>
+                                        <span class="text-[10px] text-[#86868b] block">${item.name}</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#f3e8ff] text-[#7e22ce] font-medium mt-1 inline-block">${item.pattern}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[10px] text-[#8e8e93] block">RS Rating</span>
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] mono border border-[#c6e8cc]">
+                                            ${item.rs_rating} / 99
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="p-1.5 rounded bg-[#f5f5f7] border border-[rgba(0,0,0,0.05)] text-[10.5px] flex items-center justify-between text-[#555] mb-2">
+                                    <span>50 SMA: <strong class="text-[#007aff] mono">₹${item.sma_50}</strong></span>
+                                    <span>200 SMA: <strong class="text-[#48484a] mono">₹${item.sma_200}</strong></span>
+                                    <span>Horizon: <strong class="text-[#7e22ce]">${item.holding_time}</strong></span>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2 my-2 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
+                                    <div>
+                                        <span class="text-[9.5px] text-[#86868b] block font-medium">Buy Zone</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${item.cmp}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[9.5px] text-[#b32020] block font-medium">Trailing SL (50 SMA)</span>
+                                        <span class="font-bold text-[#b32020] mono">₹${item.stop_loss}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[9.5px] text-[#1e7e34] block font-medium">Target 1 (1:2 R:R)</span>
+                                        <span class="font-bold text-[#1e7e34] mono">₹${item.target} (+${item.target_pct}%)</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
+                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${item.target_2} (+${item.target_2_pct}%)</strong></span>
+                                    <span>Delivery: <strong class="text-[#1e7e34] mono">${item.delivery_pct}%</strong></span>
+                                    <span>Qty: <strong class="text-[#007aff] mono">${item.shares_qty} shares</strong></span>
+                                </div>
+
+                                <p class="text-[11px] text-[#48484a] leading-relaxed">${item.rationale}</p>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between">
+                                <button onclick="openFormulaInspectionModal('positional', ${idx})" class="text-[11px] text-[#7e22ce] hover:underline font-semibold flex items-center gap-1">
+                                    <span>📐</span> View Math & 50 SMA
+                                </button>
+                                <button onclick="switchTab('stocks'); loadStock('${item.symbol}')" class="px-2.5 py-1 rounded-md bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] transition-all">
                                     Inspect Chart
                                 </button>
                             </div>
@@ -397,7 +581,9 @@ function openFormulaInspectionModal(category, index) {
     if (!_activeRecommendationsData) return;
 
     let item = null;
-    if (category === "fno") item = (_activeRecommendationsData.best_fno_strategies || [])[index];
+    if (category === "intraday") item = (_activeRecommendationsData.best_intraday_picks || [])[index];
+    else if (category === "positional") item = (_activeRecommendationsData.best_positional_picks || [])[index];
+    else if (category === "fno") item = (_activeRecommendationsData.best_fno_strategies || [])[index];
     else if (category === "swing") item = (_activeRecommendationsData.best_swing_shares || [])[index];
     else if (category === "compounder") item = (_activeRecommendationsData.best_long_term_compounders || [])[index];
     else if (category === "etf") item = (_activeRecommendationsData.best_etfs || [])[index];
