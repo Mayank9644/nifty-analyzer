@@ -10,7 +10,7 @@ from data.fetcher import get_stock_info, get_stock_history
 from analysis.technical import calculate_sma, calculate_rsi
 from cachetools import TTLCache
 
-_screener_cache = TTLCache(maxsize=50, ttl=180)
+_screener_cache = TTLCache(maxsize=100, ttl=900)
 
 
 def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_surge, golden_cross_only):
@@ -126,19 +126,22 @@ def run_stock_screener(
 ) -> dict:
     """
     Filter Indian stocks using concurrent thread execution.
+    Prioritizes liquid index leaders and returns high-conviction matches.
     """
     cache_key = f"scr_{pe_max}_{roe_min}_{rsi_min}_{rsi_max}_{near_52w_high}_{volume_surge}_{golden_cross_only}_{sector}"
     if cache_key in _screener_cache:
         return _screener_cache[cache_key]
 
-    universe = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS
     if sector and sector != "All":
-        universe = [s for s in universe if s.get("sector") == sector]
+        universe = [s for s in (NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS) if s.get("sector") == sector]
+    else:
+        # Prioritize Nifty 50 followed by popular liquid names
+        universe = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS[:25]
 
     candidates = universe
     matched_stocks = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=18) as executor:
         futures = {
             executor.submit(
                 _eval_stock,
@@ -147,7 +150,7 @@ def run_stock_screener(
         }
         for future in concurrent.futures.as_completed(futures):
             try:
-                res = future.result(timeout=2.5)
+                res = future.result(timeout=2.0)
                 if res:
                     matched_stocks.append(res)
             except Exception:

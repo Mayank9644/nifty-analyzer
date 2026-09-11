@@ -974,6 +974,30 @@ def api_cache_stats():
 start_cache_warmer(fetch_stock_bundle_data)
 
 
+def _prewarm_recommendations_and_screener():
+    import time
+    time.sleep(1.5)
+    try:
+        from analysis.recommendations import get_best_recommendations
+        get_best_recommendations()
+    except Exception:
+        pass
+    try:
+        from analysis.screener import run_stock_screener
+        run_stock_screener(golden_cross_only=True, rsi_min=35, rsi_max=80, roe_min=10)
+    except Exception:
+        pass
+    try:
+        from analysis.etf import run_etf_screener
+        run_etf_screener()
+    except Exception:
+        pass
+
+
+import threading
+threading.Thread(target=_prewarm_recommendations_and_screener, daemon=True).start()
+
+
 if __name__ == "__main__":
     print(f"🚀 Nifty Stock & Commodity Analyzer starting on http://localhost:{PORT}")
     app.run(host=HOST, port=PORT, debug=True)

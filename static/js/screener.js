@@ -90,7 +90,10 @@ async function runScreenerQuery() {
     if (sector && sector !== "All") params.append("sector", sector);
 
     try {
-        const res = await fetch(`/api/screener?${params.toString()}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
+        const res = await fetch(`/api/screener?${params.toString()}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         const data = await res.json();
         const results = data.results || [];
 
@@ -114,66 +117,89 @@ async function runScreenerQuery() {
         }
 
         _lastScreenerResults = results;
-
-        container.innerHTML = results.map(s => {
-            const priceVal = Number(s.current_price) || 0;
-            const chgVal = Number(s.day_change_pct) || 0;
-            const isGreen = chgVal >= 0;
-            return `
-                <tr class="hover:bg-[#f8f8fa] transition-colors border-b border-[rgba(0,0,0,0.05)] cursor-pointer" onclick="selectSearchedStock('${s.symbol}')">
-                    <td class="px-4 py-3">
-                        <div class="font-semibold text-xs text-[#1c1c1e]">${s.code}</div>
-                        <div class="text-[10.5px] text-[#6e6e73] truncate max-w-[180px]">${s.name}</div>
-                    </td>
-                    <td class="px-4 py-3 text-xs text-[#6e6e73]">
-                        <span class="badge-stock">${s.sector}</span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                        <div class="text-xs font-semibold mono text-[#1c1c1e]">${priceVal > 0 ? '₹' + priceVal.toLocaleString('en-IN') : '—'}</div>
-                        <div class="text-[10.5px] font-medium mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
-                            ${s.day_change_pct != null ? (isGreen ? '▲ +' : '▼ ') + chgVal + '%' : '—'}
-                        </div>
-                    </td>
-                    <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e]">
-                        ${s.pe_ratio > 0 ? s.pe_ratio + 'x' : '—'}
-                    </td>
-                    <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e]'}">
-                        ${s.roe > 0 ? s.roe + '%' : '—'}
-                    </td>
-                    <td class="px-4 py-3 text-center mono text-xs font-medium">
-                        <span class="px-2 py-0.5 rounded-full ${s.rsi >= 70 ? 'bg-[#fdf0f0] text-[#b32020]' : (s.rsi <= 35 ? 'bg-[#edf7ee] text-[#1e7e34]' : 'bg-[#f5f5f7] text-[#1c1c1e]')}">
-                            ${s.rsi}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-center text-xs">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold border ${s.tag_color}">
-                            ${s.setup_tag}
-                        </span>
-                    </td>
-                    <td class="px-3 py-3 text-right">
-                        <div class="flex items-center justify-end gap-1.5" onclick="event.stopPropagation()">
-                            <button onclick="openBrokerOrderModal('${s.symbol}', 10, ${priceVal || 0}, ${((priceVal*0.97).toFixed(2)) || 0}, ${((priceVal*1.05).toFixed(2)) || 0})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
-                                <span>⚡</span> <span>Broker</span>
-                            </button>
-                            <button onclick="selectSearchedStock('${s.symbol}')" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
-                                <span>📈</span> <span>Chart</span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
+        _renderScreenerRows(container, results);
 
     } catch (e) {
-        console.error("Screener error:", e);
+        console.warn("Live screener fetch paused, attempting fallback:", e);
+        try {
+            const fallbackRes = await fetch("/static/data/screener_fallback.json?v=20260911");
+            const fallbackData = await fallbackRes.json();
+            const fallbackResults = fallbackData.results || [];
+            if (fallbackResults.length > 0) {
+                if (countBadge) {
+                    countBadge.innerText = `${fallbackResults.length} Stocks (Cached)`;
+                }
+                _lastScreenerResults = fallbackResults;
+                _renderScreenerRows(container, fallbackResults);
+                return;
+            }
+        } catch (fErr) {
+            console.error("Screener fallback error:", fErr);
+        }
+
         container.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-8 text-xs text-[#b32020]">
-                    Failed to run screener. Please check connection and retry.
+                <td colspan="8" class="text-center py-8 text-xs text-[#6e6e73]">
+                    <div class="font-semibold text-[#1c1c1e] mb-1">Connecting to Screener Engine</div>
+                    <div class="text-[#8e8e93] mb-3">Retrying stock calculations in the background...</div>
+                    <button onclick="runScreenerQuery()" class="btn-primary px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 cursor-pointer">
+                        <span>🔄</span> <span>Retry Screener</span>
+                    </button>
                 </td>
             </tr>
         `;
     }
+}
+
+function _renderScreenerRows(container, results) {
+    container.innerHTML = results.map(s => {
+        const priceVal = Number(s.current_price) || 0;
+        const chgVal = Number(s.day_change_pct) || 0;
+        const isGreen = chgVal >= 0;
+        return `
+            <tr class="hover:bg-[#f8f8fa] transition-colors border-b border-[rgba(0,0,0,0.05)] cursor-pointer" onclick="selectSearchedStock('${s.symbol}')">
+                <td class="px-4 py-3">
+                    <div class="font-semibold text-xs text-[#1c1c1e]">${s.code}</div>
+                    <div class="text-[10.5px] text-[#6e6e73] truncate max-w-[180px]">${s.name}</div>
+                </td>
+                <td class="px-4 py-3 text-xs text-[#6e6e73]">
+                    <span class="badge-stock">${s.sector}</span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <div class="text-xs font-semibold mono text-[#1c1c1e]">${priceVal > 0 ? '₹' + priceVal.toLocaleString('en-IN') : '—'}</div>
+                    <div class="text-[10.5px] font-medium mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
+                        ${s.day_change_pct != null ? (isGreen ? '▲ +' : '▼ ') + chgVal + '%' : '—'}
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e]">
+                    ${s.pe_ratio > 0 ? s.pe_ratio + 'x' : '—'}
+                </td>
+                <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e]'}">
+                    ${s.roe > 0 ? s.roe + '%' : '—'}
+                </td>
+                <td class="px-4 py-3 text-center mono text-xs font-medium">
+                    <span class="px-2 py-0.5 rounded-full ${s.rsi >= 70 ? 'bg-[#fdf0f0] text-[#b32020]' : (s.rsi <= 35 ? 'bg-[#edf7ee] text-[#1e7e34]' : 'bg-[#f5f5f7] text-[#1c1c1e]')}">
+                        ${s.rsi}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-center text-xs">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold border ${s.tag_color}">
+                        ${s.setup_tag}
+                    </span>
+                </td>
+                <td class="px-3 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5" onclick="event.stopPropagation()">
+                        <button onclick="openBrokerOrderModal('${s.symbol}', 10, ${priceVal || 0}, ${((priceVal*0.97).toFixed(2)) || 0}, ${((priceVal*1.05).toFixed(2)) || 0})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                            <span>⚡</span> <span>Broker</span>
+                        </button>
+                        <button onclick="selectSearchedStock('${s.symbol}')" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
+                            <span>📈</span> <span>Chart</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
 }
 
 let _lastScreenerResults = [];

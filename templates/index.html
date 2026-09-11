@@ -13,7 +13,7 @@
     <!-- Chart.js for Radar and Doughnut charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- macOS Design System CSS -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260911_v8">
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#007aff">
@@ -1687,7 +1687,7 @@
 
                 <!-- Checkbox Filters & Run Button -->
                 <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[rgba(0,0,0,0.06)]">
-                    <div class="flex items-center space-x-4 text-xs">
+                    <div class="flex flex-wrap items-center gap-3 text-xs">
                         <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
                             <input type="checkbox" id="screener52wCheck" class="rounded text-[#007aff]">
                             <span>Near 52W High (&lt; 8%)</span>
@@ -1704,7 +1704,7 @@
 
                     <div class="flex items-center space-x-2.5">
                         <span id="screenerMatchCount" class="text-xs font-semibold text-[#007aff] px-2.5 py-1 rounded-full bg-[#eff6ff] border border-[#bfdbfe]">Ready to Scan</span>
-                        <button onclick="runScreenerQuery()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                        <button onclick="runScreenerQuery()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
                             <span>🔍</span> <span>Run Screener</span>
                         </button>
                     </div>
@@ -1713,8 +1713,8 @@
 
             <!-- Screener Results Table -->
             <div class="macos-card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
+                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full text-left min-w-[720px]">
                         <thead>
                             <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa]">
                                 <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Stock / Company</th>
@@ -2102,9 +2102,9 @@
             <span class="text-lg">💡</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Picks</span>
         </button>
-        <button onclick="switchTab('options')" data-tab="options" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
-            <span class="text-lg">📋</span>
-            <span class="text-[9.5px] font-semibold mt-0.5">F&amp;O</span>
+        <button onclick="switchTab('screener')" data-tab="screener" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
+            <span class="text-lg">🎯</span>
+            <span class="text-[9.5px] font-semibold mt-0.5">Screener</span>
         </button>
         <button onclick="toggleMobileMoreSheet()" data-tab="desks" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#6e6e73] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">⋯</span>
@@ -2124,6 +2124,10 @@
                 <button onclick="toggleMobileMoreSheet()" class="text-xs text-[#007aff] font-semibold px-2.5 py-1 rounded-lg bg-[#eff6ff] cursor-pointer">Done</button>
             </div>
             <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="switchTab('options'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
+                    <span class="text-base">📋</span>
+                    <div><div class="font-semibold text-[#1c1c1e]">F&amp;O Options</div><span class="text-[10px] text-[#8e8e93]">Spreads &amp; Greeks</span></div>
+                </button>
                 <button onclick="switchTab('screener'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
                     <span class="text-base">🎯</span>
                     <div><div class="font-semibold text-[#1c1c1e]">Screener</div><span class="text-[10px] text-[#8e8e93]">Multi-metric filter</span></div>
@@ -2173,24 +2177,24 @@
     </div>
 
     <!-- Custom Scripts -->
-    <script src="/static/js/utils.js?v=20260911_v7"></script>
-    <script src="/static/js/charts.js?v=20260911_v7"></script>
-    <script src="/static/js/options_charts.js?v=20260911_v7"></script>
-    <script src="/static/js/scanner.js?v=20260911_v7"></script>
-    <script src="/static/js/screener.js?v=20260911_v7"></script>
-    <script src="/static/js/ipo.js?v=20260911_v7"></script>
-    <script src="/static/js/calendar.js?v=20260911_v7"></script>
-    <script src="/static/js/sectors.js?v=20260911_v7"></script>
-    <script src="/static/js/etf.js?v=20260911_v7"></script>
-    <script src="/static/js/journal.js?v=20260911_v7"></script>
-    <script src="/static/js/backtest.js?v=20260911_v7"></script>
-    <script src="/static/js/recommendations.js?v=20260911_v7"></script>
-    <script src="/static/js/bees.js?v=20260911_v7"></script>
-    <script src="/static/js/institutional.js?v=20260911_v7"></script>
-    <script src="/static/js/broker_bridge.js?v=20260911_v7"></script>
-    <script src="/static/js/alerts.js?v=20260911_v7"></script>
-    <script src="/static/js/premarket.js?v=20260911_v7"></script>
-    <script src="/static/js/app.js?v=20260911_v7"></script>
+    <script src="/static/js/utils.js?v=20260911_v8"></script>
+    <script src="/static/js/charts.js?v=20260911_v8"></script>
+    <script src="/static/js/options_charts.js?v=20260911_v8"></script>
+    <script src="/static/js/scanner.js?v=20260911_v8"></script>
+    <script src="/static/js/screener.js?v=20260911_v8"></script>
+    <script src="/static/js/ipo.js?v=20260911_v8"></script>
+    <script src="/static/js/calendar.js?v=20260911_v8"></script>
+    <script src="/static/js/sectors.js?v=20260911_v8"></script>
+    <script src="/static/js/etf.js?v=20260911_v8"></script>
+    <script src="/static/js/journal.js?v=20260911_v8"></script>
+    <script src="/static/js/backtest.js?v=20260911_v8"></script>
+    <script src="/static/js/recommendations.js?v=20260911_v8"></script>
+    <script src="/static/js/bees.js?v=20260911_v8"></script>
+    <script src="/static/js/institutional.js?v=20260911_v8"></script>
+    <script src="/static/js/broker_bridge.js?v=20260911_v8"></script>
+    <script src="/static/js/alerts.js?v=20260911_v8"></script>
+    <script src="/static/js/premarket.js?v=20260911_v8"></script>
+    <script src="/static/js/app.js?v=20260911_v8"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

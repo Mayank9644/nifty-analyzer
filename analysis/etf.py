@@ -3,8 +3,12 @@ ETF Mean-Reversion Screener — FRESH Variant.
 Core 8 ETFs, 20 Chunks Allocation (5% per bullet), -5% Average-Down, +30% Target / 10% Trailing Stop.
 """
 
+import concurrent.futures
+from cachetools import TTLCache
 from data.fetcher import get_stock_history, get_stock_info
 from analysis.technical import calculate_sma, calculate_rsi
+
+_etf_cache = TTLCache(maxsize=10, ttl=600)
 
 CORE_ETFS = [
     {"symbol": "NIFTYBEES.NS", "code": "NIFTYBEES", "name": "Nippon India Nifty 50 ETF", "category": "Large Cap", "icon": "🇮🇳"},
@@ -24,10 +28,79 @@ CORE_ETFS = [
 ]
 
 
+def _eval_single_etf(etf, macro_green, chunk_size):
+    sym = etf["symbol"]
+    try:
+        df = get_stock_history(sym, period="1y", interval="1d")
+        if df.empty or len(df) < 20:
+            return None
+
+        df = df.dropna(subset=["Close"])
+        if len(df) < 20:
+            return None
+
+        close = df["Close"]
+        latest_price = round(float(close.iloc[-1]), 2)
+        if latest_price <= 0:
+            return None
+
+        sma20 = float(calculate_sma(close, 20).iloc[-1])
+        sma50 = float(calculate_sma(close, 50).iloc[-1]) if len(df) >= 50 else sma20
+        rsi_series = calculate_rsi(close, 14)
+        rsi = float(rsi_series.iloc[-1]) if not rsi_series.empty else 50.0
+
+        dist_20dma = round(((latest_price - sma20) / sma20) * 100, 2)
+        high_val = float(df['High'].max())
+        dist_52h = round(((high_val - latest_price) / high_val) * 100, 1) if high_val > 0 else 0.0
+
+        is_hedge = etf.get("category") == "Precious Metal"
+        entry_triggered = (macro_green or is_hedge) and (rsi <= 48 or latest_price <= sma20)
+
+        action = "WAIT / MONITOR"
+        action_color = "#94A3B8"
+
+        new_entry = None
+        if entry_triggered:
+            action = "TRIGGERED: BUY 1 CHUNK (5%)"
+            action_color = "#10B981"
+            shares_qty = int(chunk_size / latest_price) if latest_price > 0 else 0
+            new_entry = {
+                "code": etf["code"],
+                "name": etf["name"],
+                "price": latest_price,
+                "shares": shares_qty,
+                "allocation_rupees": round(shares_qty * latest_price, 2),
+                "reason": f"RSI is {round(rsi, 1)} with pullback ({dist_20dma}% vs 20 DMA). Macro green."
+            }
+        elif rsi > 70:
+            action = "TAKE PROFIT / TIGHTEN STOP"
+            action_color = "#EF4444"
+
+        status_item = {
+            "code": etf["code"],
+            "name": etf["name"],
+            "category": etf["category"],
+            "icon": etf["icon"],
+            "current_price": latest_price,
+            "rsi": round(rsi, 1),
+            "dist_20dma": dist_20dma,
+            "dist_52h": dist_52h,
+            "action": action,
+            "action_color": action_color
+        }
+        return {"status_item": status_item, "new_entry": new_entry}
+    except Exception:
+        return None
+
+
 def run_etf_screener(total_capital: float = 1000000.0) -> dict:
     """
-    Evaluate FRESH rules across 14 Core Indian ETFs.
+    Evaluate FRESH rules across Core Indian ETFs using ThreadPoolExecutor and TTLCache.
     """
+    cache_key = f"etf_{total_capital}"
+    if cache_key in _etf_cache:
+        return _etf_cache[cache_key].copy()
+
     chunk_size = total_capital * 0.05  # 5% per bullet (20 chunks)
 
     # 1. Macro Filter Check (NIFTY 50 > 100 DMA)
@@ -44,62 +117,17 @@ def run_etf_screener(total_capital: float = 1000000.0) -> dict:
     new_entries = []
     etf_statuses = []
 
-    for etf in CORE_ETFS:
-        sym = etf["symbol"]
-        df = get_stock_history(sym, period="1y", interval="1d")
-        if df.empty or len(df) < 20:
-            continue
-
-        df = df.dropna(subset=["Close"])
-        if len(df) < 20:
-            continue
-
-        close = df["Close"]
-        latest_price = round(float(close.iloc[-1]), 2)
-        sma20 = float(calculate_sma(close, 20).iloc[-1])
-        sma50 = float(calculate_sma(close, 50).iloc[-1]) if len(df) >= 50 else sma20
-        rsi = float(calculate_rsi(close, 14).iloc[-1])
-
-        # Distance from 20 DMA
-        dist_20dma = round(((latest_price - sma20) / sma20) * 100, 2)
-        dist_52h = round(((float(df['High'].max()) - latest_price) / float(df['High'].max())) * 100, 1)
-
-        # Entry Trigger in FRESH:
-        # Macro is green (or commodity hedge), and ETF pulled back (RSI <= 48 or price at/below 20 DMA)
-        is_hedge = etf.get("category") == "Precious Metal"
-        entry_triggered = (macro_green or is_hedge) and (rsi <= 48 or latest_price <= sma20)
-
-        action = "WAIT / MONITOR"
-        action_color = "#94A3B8"
-
-        if entry_triggered:
-            action = "TRIGGERED: BUY 1 CHUNK (5%)"
-            action_color = "#10B981"
-            shares_qty = int(chunk_size / latest_price) if latest_price > 0 else 0
-            new_entries.append({
-                "code": etf["code"],
-                "name": etf["name"],
-                "price": latest_price,
-                "shares": shares_qty,
-                "allocation_rupees": round(shares_qty * latest_price, 2),
-                "reason": f"RSI is {round(rsi, 1)} with pullback ({dist_20dma}% vs 20 DMA). Macro green."
-            })
-        elif rsi > 70:
-            action = "TAKE PROFIT / TIGHTEN STOP"
-            action_color = "#EF4444"
-
-        etf_statuses.append({
-            "code": etf["code"],
-            "name": etf["name"],
-            "category": etf["category"],
-            "icon": etf["icon"],
-            "current_price": latest_price,
-            "rsi": round(rsi, 1),
-            "dist_20dma": dist_20dma,
-            "dist_52h": dist_52h,
-            "action": action,
-            "action_color": action_color
-        })
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        futures = [executor.submit(_eval_single_etf, etf, macro_green, chunk_size) for etf in CORE_ETFS]
+        for f in concurrent.futures.as_completed(futures):
+            try:
+                res = f.result(timeout=2.5)
+                if res:
+                    etf_statuses.append(res["status_item"])
+                    if res.get("new_entry"):
+                        new_entries.append(res["new_entry"])
+            except Exception:
+                pass
 
     if not etf_statuses:
         # Fallback benchmark data for 14 Core Liquid Indian ETFs
@@ -144,7 +172,7 @@ def run_etf_screener(total_capital: float = 1000000.0) -> dict:
                 "action_color": act_col
             })
 
-    return {
+    result = {
         "status": "success",
         "macro_filter": {
             "is_green": macro_green,
@@ -161,3 +189,5 @@ def run_etf_screener(total_capital: float = 1000000.0) -> dict:
         "new_entries": new_entries,
         "etfs": etf_statuses
     }
+    _etf_cache[cache_key] = result
+    return result

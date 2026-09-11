@@ -1229,11 +1229,13 @@ kbd.macos-kbd {
         overscroll-behavior-x: contain;
     }
 
-    /* Prevent auto-zooming inputs on iOS focus */
+    /* Prevent auto-zooming inputs on iOS Safari (Safari automatically zooms if font-size < 16px) */
     input[type="text"],
     input[type="number"],
-    select {
-        font-size: 14px;
+    input[type="search"],
+    select,
+    textarea {
+        font-size: 16px !important;
     }
 
     /* Touch buttons minimum hit-area */
@@ -1241,5 +1243,21 @@ kbd.macos-kbd {
         min-width: 48px;
         min-height: 44px;
         justify-content: center;
+    }
+
+    /* Prevent mobile tap gray flash */
+    button, a, input, select {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Compact padding for cards on iPhone */
+    .macos-card {
+        padding: 14px !important;
+        border-radius: 16px !important;
+    }
+
+    .macos-box {
+        padding: 12px !important;
+        border-radius: 12px !important;
     }
 }
