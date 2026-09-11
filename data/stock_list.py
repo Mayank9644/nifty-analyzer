@@ -79,7 +79,7 @@ POPULAR_ADDITIONAL_STOCKS = [
     {"symbol": "PERSISTENT.NS", "code": "PERSISTENT", "name": "Persistent Systems Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
     {"symbol": "COFORGE.NS", "code": "COFORGE", "name": "Coforge Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
     {"symbol": "KPITTECH.NS", "code": "KPITTECH", "name": "KPIT Technologies Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
-    {"symbol": "LTIM.NS", "code": "LTIM", "name": "LTIMindtree Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "OFSS.NS", "code": "OFSS", "name": "Oracle Financial Services Software", "sector": "Information Technology", "category": "Stock", "fno": True},
     {"symbol": "MPHASIS.NS", "code": "MPHASIS", "name": "Mphasis Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
     {"symbol": "ABB.NS", "code": "ABB", "name": "ABB India Ltd", "sector": "Capital Goods", "category": "Stock", "fno": True},
     {"symbol": "SIEMENS.NS", "code": "SIEMENS", "name": "Siemens Ltd", "sector": "Capital Goods", "category": "Stock", "fno": True},

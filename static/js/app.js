@@ -243,7 +243,6 @@ async function loadInitialData() {
         appState.stocksList = data.stocks || [];
         appState.allAssets = data.all_assets || data.stocks || [];
         appState.commoditiesList = data.commodities || [];
-        renderCommoditiesTicker(appState.commoditiesList);
     } catch (e) {
         console.error("Error loading initial data:", e);
     }

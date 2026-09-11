@@ -513,10 +513,10 @@ function renderBestPicksUI(data, isFallback = false) {
                                     <span>📐</span> View Math & 50 SMA
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${p.symbol}', ${p.shares_qty || 10}, ${p.cmp}, ${p.stop_loss}, ${p.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${item.cmp}, ${item.stop_loss}, ${item.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="logPickToJournal('${p.symbol}', ${p.cmp}, ${p.shares_qty || 10}, ${p.stop_loss}, ${p.target}, 'Positional')" class="btn-log" title="Log trade in personal journal">
+                                    <button onclick="logPickToJournal('${item.symbol}', ${item.cmp}, ${item.shares_qty || 10}, ${item.stop_loss}, ${item.target}, 'Positional')" class="btn-log" title="Log trade in personal journal">
                                         <span>🎯</span> <span>Log</span>
                                     </button>
                                     <button onclick="inspectPickOnChart(_activeRecommendationsData.best_positional_picks[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">

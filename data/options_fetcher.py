@@ -203,6 +203,10 @@ def get_option_chain_data(symbol: str) -> dict:
     Get clean parsed option chain data with caching and Max Pain analysis.
     """
     clean_sym = symbol.replace(".NS", "").replace("^", "").strip().upper()
+    if clean_sym in ("NSEI", "NIFTY50"):
+        clean_sym = "NIFTY"
+    elif clean_sym in ("NSEBANK", "BANK"):
+        clean_sym = "BANKNIFTY"
     cache_key = f"opt_{clean_sym}"
     if cache_key in _options_cache:
         return _options_cache[cache_key].copy()

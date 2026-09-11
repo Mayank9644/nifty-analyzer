@@ -91,7 +91,7 @@ async function runScreenerQuery() {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 9000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const res = await fetch(`/api/screener?${params.toString()}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         const data = await res.json();
