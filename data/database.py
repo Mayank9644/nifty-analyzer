@@ -10,7 +10,7 @@ import json
 import uuid
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trading_platform.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "trading_platform.db"))
 LEGACY_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trade_journal.json")
 
 
