@@ -179,11 +179,11 @@ def evaluate_single_etf_strategy(investment_amount: float = 100000.0, current_ho
         # Backtest calculation with statutory frictions from config.py
         combined_df["nifty_ret"] = combined_df["nifty"].pct_change().fillna(0)
         combined_df["gold_ret"] = combined_df["gold"].pct_change().fillna(0)
-        strat_ret = np.where(combined_df["pos"].shift(1) == "NIFTYBEES", combined_df["nifty_ret"], combined_df["gold_ret"])
+        strat_ret = np.where(combined_df["pos"].shift(1) == "NIFTYBEES", combined_df["nifty_ret"], combined_df["gold_ret"]).copy()
         strat_ret[0] = 0
 
         # Deduct transaction friction on switch days
-        switch_mask = (combined_df["pos"] != combined_df["pos"].shift(1)).to_numpy()
+        switch_mask = (combined_df["pos"] != combined_df["pos"].shift(1)).to_numpy(copy=True)
         switch_mask[0] = False
         stt_rate = getattr(config, "STT_DELIVERY_BPS", 10.0) / 10000.0
         slippage_rate = getattr(config, "SLIPPAGE_BPS", 5.0) / 10000.0
