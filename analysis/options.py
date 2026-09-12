@@ -1,40 +1,43 @@
 """
 Options analytics engine: PCR, Max Pain, Black-Scholes Greeks, IV, and Strategy Suggestions.
+Synchronized with config.py institutional rates and vectorized Max Pain computation.
 """
 
 import math
 import numpy as np
 from scipy.stats import norm
+from config import RISK_FREE_RATE
 
 
 def calculate_black_scholes_greeks(
     spot: float, strike: float, time_to_expiry_years: float,
-    volatility: float, risk_free_rate: float = 0.07, option_type: str = "CE"
+    volatility: float, risk_free_rate: float = None, option_type: str = "CE"
 ) -> dict:
     """
     Compute Delta, Gamma, Theta, and Vega using standard Black-Scholes formulas.
     """
+    r = float(RISK_FREE_RATE) if risk_free_rate is None else float(risk_free_rate)
+
     if spot <= 0 or strike <= 0 or time_to_expiry_years <= 0 or volatility <= 0:
         return {"delta": 0.5 if option_type == "CE" else -0.5, "gamma": 0.0, "theta": 0.0, "vega": 0.0}
 
-    d1 = (math.log(spot / strike) + (risk_free_rate + 0.5 * volatility ** 2) * time_to_expiry_years) / (volatility * math.sqrt(time_to_expiry_years))
+    d1 = (math.log(spot / strike) + (r + 0.5 * volatility ** 2) * time_to_expiry_years) / (volatility * math.sqrt(time_to_expiry_years))
     d2 = d1 - volatility * math.sqrt(time_to_expiry_years)
 
-    # Normal PDF and CDF
     pdf_d1 = norm.pdf(d1)
     cdf_d1 = norm.cdf(d1)
     cdf_d2 = norm.cdf(d2)
 
     if option_type == "CE":
         delta = cdf_d1
-        theta = -(spot * pdf_d1 * volatility) / (2 * math.sqrt(time_to_expiry_years)) - risk_free_rate * strike * math.exp(-risk_free_rate * time_to_expiry_years) * cdf_d2
+        theta = -(spot * pdf_d1 * volatility) / (2 * math.sqrt(time_to_expiry_years)) - r * strike * math.exp(-r * time_to_expiry_years) * cdf_d2
     else:
         delta = cdf_d1 - 1.0
-        theta = -(spot * pdf_d1 * volatility) / (2 * math.sqrt(time_to_expiry_years)) + risk_free_rate * strike * math.exp(-risk_free_rate * time_to_expiry_years) * norm.cdf(-d2)
+        theta = -(spot * pdf_d1 * volatility) / (2 * math.sqrt(time_to_expiry_years)) + r * strike * math.exp(-r * time_to_expiry_years) * norm.cdf(-d2)
 
     gamma = pdf_d1 / (spot * volatility * math.sqrt(time_to_expiry_years))
     vega = (spot * math.sqrt(time_to_expiry_years) * pdf_d1) / 100.0  # per 1% change in vol
-    theta_per_day = theta / 365.0  # daily decay in ₹
+    theta_per_day = theta / 365.0  # daily decay in INR
 
     return {
         "delta": round(float(delta), 3),
@@ -48,13 +51,13 @@ def analyze_option_chain(chain_data: dict) -> dict:
     """
     Parse option chain records to extract:
     - PCR (Put Call Ratio)
-    - Max Pain Strike
+    - Vector-calculated Max Pain Strike
     - Major Call & Put OI Resistance and Support
     - Greeks per strike
     - Suggested Options Strategy
     """
     records = chain_data.get("chain", [])
-    spot = chain_data.get("underlying_price", 0.0)
+    spot = float(chain_data.get("underlying_price", 0.0) or 0.0)
     symbol = chain_data.get("symbol", "NIFTY")
 
     if not records or spot <= 0:
@@ -66,33 +69,35 @@ def analyze_option_chain(chain_data: dict) -> dict:
     total_pe_vol = 0
 
     strikes = []
-    pain_map = {}
+    ce_ois = []
+    pe_ois = []
 
     processed_chain = []
+    time_to_exp = 7 / 365.0
 
     for item in records:
-        strike = item.get("strikePrice", 0)
-        ce = item.get("CE", {})
-        pe = item.get("PE", {})
+        strike = float(item.get("strikePrice", 0) or 0)
+        ce = item.get("CE", {}) or {}
+        pe = item.get("PE", {}) or {}
 
-        ce_oi = ce.get("openInterest", 0) or 0
-        pe_oi = pe.get("openInterest", 0) or 0
-        ce_ltp = ce.get("lastPrice", 0.0) or 0.0
-        pe_ltp = pe.get("lastPrice", 0.0) or 0.0
-        ce_iv = (ce.get("impliedVolatility", 13.0) or 13.0) / 100.0
-        pe_iv = (pe.get("impliedVolatility", 13.0) or 13.0) / 100.0
+        ce_oi = int(ce.get("openInterest", 0) or 0)
+        pe_oi = int(pe.get("openInterest", 0) or 0)
+        ce_ltp = float(ce.get("lastPrice", 0.0) or 0.0)
+        pe_ltp = float(pe.get("lastPrice", 0.0) or 0.0)
+        ce_iv = float(ce.get("impliedVolatility", 13.0) or 13.0) / 100.0
+        pe_iv = float(pe.get("impliedVolatility", 13.0) or 13.0) / 100.0
 
         total_ce_oi += ce_oi
         total_pe_oi += pe_oi
-        total_ce_vol += ce.get("totalTradedVolume", 0) or 0
-        total_pe_vol += pe.get("totalTradedVolume", 0) or 0
+        total_ce_vol += int(ce.get("totalTradedVolume", 0) or 0)
+        total_pe_vol += int(pe.get("totalTradedVolume", 0) or 0)
 
         strikes.append(strike)
+        ce_ois.append(ce_oi)
+        pe_ois.append(pe_oi)
 
-        # Greeks (assuming 7 days to expiry)
-        time_to_exp = 7 / 365.0
-        ce_greeks = calculate_black_scholes_greeks(spot, strike, time_to_exp, ce_iv, 0.07, "CE")
-        pe_greeks = calculate_black_scholes_greeks(spot, strike, time_to_exp, pe_iv, 0.07, "PE")
+        ce_greeks = calculate_black_scholes_greeks(spot, strike, time_to_exp, ce_iv, option_type="CE")
+        pe_greeks = calculate_black_scholes_greeks(spot, strike, time_to_exp, pe_iv, option_type="PE")
 
         processed_chain.append({
             "strike": strike,
@@ -108,31 +113,22 @@ def analyze_option_chain(chain_data: dict) -> dict:
             "pe_delta": pe_greeks["delta"],
         })
 
-    # Calculate Max Pain
-    # For every strike X, calculate sum of losses option writers would have to pay
-    sorted_strikes = sorted(list(set(strikes)))
-    min_loss = float("inf")
-    max_pain_strike = spot
+    # 100% Vectorized Max Pain Calculation via NumPy broadcasting
+    strikes_arr = np.array(strikes, dtype="float64")
+    ce_oi_arr = np.array(ce_ois, dtype="float64")
+    pe_oi_arr = np.array(pe_ois, dtype="float64")
 
-    for target_strike in sorted_strikes:
-        total_writer_payout = 0
-        for item in records:
-            k = item.get("strikePrice", 0)
-            ce_oi = (item.get("CE", {}).get("openInterest", 0) or 0)
-            pe_oi = (item.get("PE", {}).get("openInterest", 0) or 0)
+    # Shape: (num_strikes, num_strikes)
+    # diff[i, j] = candidate_strike[i] - strike[j]
+    diffs = strikes_arr[:, np.newaxis] - strikes_arr[np.newaxis, :]
+    ce_losses = np.maximum(0.0, diffs) * ce_oi_arr[np.newaxis, :]
+    pe_losses = np.maximum(0.0, -diffs) * pe_oi_arr[np.newaxis, :]
+    total_writer_losses = np.sum(ce_losses + pe_losses, axis=1)
 
-            # In the money calls payoff
-            if target_strike > k:
-                total_writer_payout += (target_strike - k) * ce_oi
-            # In the money puts payoff
-            if target_strike < k:
-                total_writer_payout += (k - target_strike) * pe_oi
+    min_idx = int(np.argmin(total_writer_losses))
+    max_pain_strike = float(strikes_arr[min_idx])
 
-        if total_writer_payout < min_loss:
-            min_loss = total_writer_payout
-            max_pain_strike = target_strike
-
-    # Put Call Ratio
+    # Put Call Ratio with zero-division protection
     pcr_oi = round(total_pe_oi / total_ce_oi, 2) if total_ce_oi > 0 else 1.0
     pcr_vol = round(total_pe_vol / total_ce_vol, 2) if total_ce_vol > 0 else 1.0
 
@@ -166,7 +162,7 @@ def analyze_option_chain(chain_data: dict) -> dict:
 
     # Strategy Suggestion Engine based on PCR, Max Pain, and Volatility
     diff_pain = max_pain_strike - spot
-    diff_pct = (diff_pain / spot) * 100
+    diff_pct = (diff_pain / spot) * 100.0 if spot > 0 else 0.0
 
     if pcr_oi > 1.1 and diff_pct >= -0.5:
         strategy_name = "Bull Call Spread"

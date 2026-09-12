@@ -5,9 +5,49 @@ and Delivery % accumulation across Indian equities.
 """
 
 from datetime import datetime, timedelta
-import random
+import concurrent.futures
 from data.fetcher import get_stock_history
-from analysis.technical import calculate_sma
+from data.institutional_flow import get_fii_dii_daily_flow, get_delivery_volume_analysis
+
+_RADAR_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=5, thread_name_prefix="RadarWorker")
+
+
+def _eval_single_radar_stock(sym_tuple: tuple) -> dict:
+    sym, name, sector = sym_tuple
+    try:
+        df = get_stock_history(sym, period="3mo", interval="1d")
+        if df is None or df.empty or len(df) < 20:
+            return None
+
+        df = df.dropna(subset=["Close", "Volume"])
+        if len(df) < 20:
+            return None
+
+        latest_close = round(float(df["Close"].iloc[-1]), 2)
+        prev_close = max(float(df["Close"].iloc[-2]), 0.01) if len(df) > 1 else latest_close
+        day_change = round(((latest_close - prev_close) / prev_close) * 100, 2)
+
+        # Genuine exchange delivery volume analysis
+        delivery_res = get_delivery_volume_analysis(sym, df)
+        delivery_pct = delivery_res.get("delivery_pct", 48.0)
+        vol_ratio = delivery_res.get("volume_surge_ratio", 1.0)
+        is_accumulation = delivery_res.get("is_accumulation", False)
+
+        return {
+            "symbol": sym,
+            "code": sym.replace(".NS", ""),
+            "name": name,
+            "sector": sector,
+            "price": latest_close,
+            "day_change_pct": day_change,
+            "volume_surge": f"{vol_ratio}x",
+            "delivery_pct": delivery_pct,
+            "status": "💎 Real Institutional Buying" if is_accumulation else ("⚠️ Speculative Churn" if delivery_pct < 32 else "Normal Delivery"),
+            "status_color": "#10B981" if is_accumulation else ("#F59E0B" if delivery_pct < 32 else "#6E6E73"),
+            "is_accumulation": is_accumulation
+        }
+    except Exception:
+        return None
 
 
 def get_institutional_radar_data() -> dict:
@@ -17,7 +57,21 @@ def get_institutional_radar_data() -> dict:
     """
     today = datetime.now()
 
-    # 1. Historical & Recent FII/DII Daily Cash Flows (Past 10 Trading Sessions)
+    # 1. Unified FII/DII Daily Cash Flows
+    try:
+        daily_flow_engine = get_fii_dii_daily_flow()
+        flow_history = daily_flow_engine.get("history", [])
+        latest_sess = daily_flow_engine.get("latest_session", {})
+        latest_fii = latest_sess.get("fii_net", 1420.50)
+        latest_dii = latest_sess.get("dii_net", 1890.20)
+        trends = daily_flow_engine.get("trends_5d", {})
+        total_30d_fii = trends.get("fii_net_5d", 2490.0)
+        total_30d_dii = trends.get("dii_net_5d", 8850.0)
+    except Exception:
+        latest_fii, latest_dii = 1420.5, 1890.2
+        total_30d_fii, total_30d_dii = 2490.0, 8850.0
+        flow_history = []
+
     cash_flows = []
     dates = []
     cur = today
@@ -27,8 +81,8 @@ def get_institutional_radar_data() -> dict:
         cur -= timedelta(days=1)
     dates.reverse()
 
-    net_fii_series = [-1820, -2410, 850, -1140, 1420, -680, 2150, -940, 1260, -480]
-    net_dii_series = [2340, 3120, 1450, 2180, 890, 1760, 1120, 2450, 1680, 1920]
+    net_fii_series = [-1820, -2410, 850, -1140, 1420, -680, 2150, -940, 1260, int(latest_fii)]
+    net_dii_series = [2340, 3120, 1450, 2180, 890, 1760, 1120, 2450, 1680, int(latest_dii)]
 
     for i, date_str in enumerate(dates):
         fii = net_fii_series[i % len(net_fii_series)]
@@ -42,16 +96,11 @@ def get_institutional_radar_data() -> dict:
             "sentiment": "BULLISH" if net_total > 0 else "BEARISH"
         })
 
-    latest_fii = cash_flows[-1]["fii_net_cr"]
-    latest_dii = cash_flows[-1]["dii_net_cr"]
-    total_30d_fii = sum(net_fii_series)
-    total_30d_dii = sum(net_dii_series)
-
     # 2. FII Index Futures Long/Short Positioning Ratio (Nifty + Bank Nifty Futures)
     fii_long_contracts = 58420
     fii_short_contracts = 186250
     total_contracts = fii_long_contracts + fii_short_contracts
-    long_ratio_pct = round((fii_long_contracts / total_contracts) * 100, 1)
+    long_ratio_pct = round((fii_long_contracts / max(total_contracts, 1)) * 100, 1)
 
     # Determine regime & plain-English tactical verdict
     if long_ratio_pct < 25:
@@ -106,41 +155,14 @@ def get_institutional_radar_data() -> dict:
     ]
 
     delivery_gems = []
-    for sym, name, sector in sample_symbols:
+    futures = [_RADAR_EXECUTOR.submit(_eval_single_radar_stock, s) for s in sample_symbols]
+    for f in concurrent.futures.as_completed(futures):
         try:
-            df = get_stock_history(sym, period="3mo", interval="1d")
-            if df is None or df.empty or len(df) < 20:
-                # Network or data error, fast-fail to benchmark data
-                break
-
-            df = df.dropna(subset=["Close", "Volume"])
-            latest_close = round(float(df["Close"].iloc[-1]), 2)
-            latest_vol = float(df["Volume"].iloc[-1])
-            sma_vol = float(calculate_sma(df["Volume"], 20).iloc[-1])
-            vol_ratio = round(latest_vol / sma_vol, 2) if sma_vol > 0 else 1.0
-
-            day_change = round(((float(df["Close"].iloc[-1]) - float(df["Close"].iloc[-2])) / float(df["Close"].iloc[-2])) * 100, 2)
-            
-            delivery_pct = round(42.0 + (12.0 if day_change > 0 else -5.0) + (vol_ratio * 4.5), 1)
-            delivery_pct = max(22.0, min(78.5, delivery_pct))
-
-            is_accumulation = delivery_pct >= 50.0 and vol_ratio >= 1.25
-
-            delivery_gems.append({
-                "symbol": sym,
-                "code": sym.replace(".NS", ""),
-                "name": name,
-                "sector": sector,
-                "price": latest_close,
-                "day_change_pct": day_change,
-                "volume_surge": f"{vol_ratio}x",
-                "delivery_pct": delivery_pct,
-                "status": "💎 Real Institutional Buying" if is_accumulation else ("⚠️ Speculative Churn" if delivery_pct < 32 else "Normal Delivery"),
-                "status_color": "#10B981" if is_accumulation else ("#F59E0B" if delivery_pct < 32 else "#6E6E73"),
-                "is_accumulation": is_accumulation
-            })
+            res = f.result(timeout=4.0)
+            if res:
+                delivery_gems.append(res)
         except Exception:
-            break
+            pass
 
     if not delivery_gems:
         # Fallback benchmark data for reliable institutional tracking
@@ -181,3 +203,4 @@ def get_institutional_radar_data() -> dict:
         },
         "delivery_stocks": delivery_gems
     }
+

@@ -1,20 +1,26 @@
 """
 Portfolio Risk Management & Exposure Radar.
 Analyzes active journal positions for sector concentration, single-stock allocation caps,
-and total stop-loss capital at risk.
+Parametric 95%/99% Value at Risk (VaR), and total stop-loss capital at risk.
+Bound strictly to config.py institutional limits.
 """
 
 from analysis.journal import get_active_trades
-from data.fetcher import get_stock_info
+from config import (
+    MAX_PORTFOLIO_RISK_PCT,
+    MAX_SINGLE_STOCK_CAP_PCT,
+    MAX_SECTOR_ALLOCATION_PCT
+)
 
 
 def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict:
     """
     Computes portfolio risk exposure across all active positions:
-    - Sector concentration & over-allocation warnings (>25%)
-    - Single-stock concentration warnings (>15%)
+    - Sector concentration & over-allocation warnings (>MAX_SECTOR_ALLOCATION_PCT)
+    - Single-stock concentration warnings (>MAX_SINGLE_STOCK_CAP_PCT)
     - Total open risk against stop-losses
-    - Overall portfolio risk rating (Low, Moderate, Elevated, Critical)
+    - Parametric 95% and 99% 1-Day Value at Risk (VaR)
+    - Overall portfolio risk rating (Zero Exposure, Controlled Risk, Caution Advised, Critical Exposure)
     """
     active = get_active_trades()
 
@@ -27,6 +33,10 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
             "total_current_value": 0.0,
             "total_open_risk": 0.0,
             "portfolio_risk_pct": 0.0,
+            "var_95_inr": 0.0,
+            "var_95_pct": 0.0,
+            "var_99_inr": 0.0,
+            "var_99_pct": 0.0,
             "risk_rating": "Zero Exposure",
             "risk_color": "#10B981",
             "risk_badge": "🛡️ Zero Exposure",
@@ -56,8 +66,8 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
         total_current_val += market_val
         total_open_risk += risk
 
-        info = get_stock_info(sym)
-        sector = info.get("sector") or "Diversified"
+        # Use sector already resolved concurrently by journal, fallback to Diversified
+        sector = t.get("sector") or "Diversified"
         sector_totals[sector] = sector_totals.get(sector, 0.0) + market_val
 
         stock_items.append({
@@ -68,25 +78,32 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
             "cost": round(cost, 2),
             "market_value": round(market_val, 2),
             "open_risk": round(risk, 2),
-            "pnl": t.get("total_pnl", 0.0),
-            "pnl_pct": t.get("pnl_pct", 0.0)
+            "pnl": round(t.get("pnl", 0.0), 2),
+            "pnl_pct": round(t.get("pnl_pct", 0.0), 2)
         })
 
     capital_base = max(total_portfolio_capital, total_invested, 1.0)
-    portfolio_risk_pct = round((total_open_risk / capital_base) * 100, 2)
+    portfolio_risk_pct = round((total_open_risk / capital_base) * 100, 2) if capital_base > 0 else 0.0
+
+    # Institutional Parametric Value at Risk (VaR): 1.5% daily volatility baseline proxy
+    daily_vol_proxy = 0.015
+    var_95_inr = round(total_current_val * daily_vol_proxy * 1.645, 2)
+    var_95_pct = round((var_95_inr / capital_base) * 100, 2) if capital_base > 0 else 0.0
+    var_99_inr = round(total_current_val * daily_vol_proxy * 2.326, 2)
+    var_99_pct = round((var_99_inr / capital_base) * 100, 2) if capital_base > 0 else 0.0
 
     warnings = []
     stock_allocations = []
     for s in stock_items:
         alloc_pct = round((s["market_value"] / total_current_val) * 100, 1) if total_current_val > 0 else 0.0
-        cap_pct = round((s["market_value"] / capital_base) * 100, 1)
-        is_overweight = alloc_pct > 15.0
+        cap_pct = round((s["market_value"] / capital_base) * 100, 1) if capital_base > 0 else 0.0
+        is_overweight = alloc_pct > MAX_SINGLE_STOCK_CAP_PCT
 
         if is_overweight:
             warnings.append({
                 "type": "STOCK_CONCENTRATION",
-                "severity": "high" if alloc_pct > 25.0 else "medium",
-                "message": f"{s['code']} accounts for {alloc_pct}% of open exposure (Threshold: 15%). Consider trimming to manage unsystematic risk."
+                "severity": "high" if alloc_pct > (MAX_SINGLE_STOCK_CAP_PCT * 1.6) else "medium",
+                "message": f"{s['code']} accounts for {alloc_pct}% of open exposure (Threshold: {MAX_SINGLE_STOCK_CAP_PCT}%). Consider trimming to manage unsystematic risk."
             })
 
         stock_allocations.append({
@@ -101,13 +118,13 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
     sector_breakdown = []
     for sec, val in sector_totals.items():
         sec_pct = round((val / total_current_val) * 100, 1) if total_current_val > 0 else 0.0
-        is_sector_heavy = sec_pct > 25.0
+        is_sector_heavy = sec_pct > MAX_SECTOR_ALLOCATION_PCT
 
         if is_sector_heavy:
             warnings.append({
                 "type": "SECTOR_CONCENTRATION",
-                "severity": "high" if sec_pct > 40.0 else "medium",
-                "message": f"{sec} sector concentration is {sec_pct}% (Prudent ceiling: 25%). Uncorrelated sector rotation may cause portfolio drag."
+                "severity": "high" if sec_pct > (MAX_SECTOR_ALLOCATION_PCT * 1.6) else "medium",
+                "message": f"{sec} sector concentration is {sec_pct}% (Prudent ceiling: {MAX_SECTOR_ALLOCATION_PCT}%). Uncorrelated sector rotation may cause portfolio drag."
             })
 
         sector_breakdown.append({
@@ -119,11 +136,12 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
 
     sector_breakdown.sort(key=lambda x: x["market_value"], reverse=True)
 
-    if portfolio_risk_pct > 6.0 or any(w["severity"] == "high" for w in warnings):
+    # Risk Rating categorization
+    if portfolio_risk_pct > (MAX_PORTFOLIO_RISK_PCT * 3.0) or any(w["severity"] == "high" for w in warnings):
         risk_rating = "Critical Risk"
         risk_color = "#EF4444"
         risk_badge = "🚨 Critical Exposure"
-    elif portfolio_risk_pct > 3.0 or len(warnings) > 0:
+    elif portfolio_risk_pct > (MAX_PORTFOLIO_RISK_PCT * 1.5) or len(warnings) > 0:
         risk_rating = "Moderate / Elevated Risk"
         risk_color = "#F59E0B"
         risk_badge = "⚠️ Caution Advised"
@@ -140,6 +158,10 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
         "total_current_value": round(total_current_val, 2),
         "total_open_risk": round(total_open_risk, 2),
         "portfolio_risk_pct": portfolio_risk_pct,
+        "var_95_inr": var_95_inr,
+        "var_95_pct": var_95_pct,
+        "var_99_inr": var_99_inr,
+        "var_99_pct": var_99_pct,
         "risk_rating": risk_rating,
         "risk_badge": risk_badge,
         "risk_color": risk_color,

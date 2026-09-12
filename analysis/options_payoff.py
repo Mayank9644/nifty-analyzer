@@ -14,9 +14,9 @@ def calculate_strategy_payoff(
     custom_params: dict = None
 ) -> dict:
     """
-    Calculates multi-leg options strategy payoff curve across a ±8% underlying price range.
+    Calculates multi-leg options strategy payoff curve across a proportional underlying price range.
     """
-    spot = round(spot_price, 2)
+    spot = round(float(spot_price), 2)
     custom_params = custom_params or {}
 
     # Proportional ATM strikes and spread widths
@@ -39,7 +39,6 @@ def calculate_strategy_payoff(
     atm_strike = round(spot / strike_step) * strike_step
 
     if strategy == "bull_call_spread":
-        # Buy ATM Call, Sell OTM Call (+spread_width)
         k1 = atm_strike
         k2 = atm_strike + spread_width
         net_debit = round(spread_width * 0.38, 1)
@@ -68,7 +67,6 @@ def calculate_strategy_payoff(
         ]
 
     elif strategy == "bear_put_spread":
-        # Buy ATM Put, Sell OTM Put (-spread_width)
         k2 = atm_strike
         k1 = atm_strike - spread_width
         net_debit = round(spread_width * 0.38, 1)
@@ -131,7 +129,7 @@ def calculate_strategy_payoff(
         ]
 
     else:
-        # Default fallback: Long Call
+        # Default: Long Call
         k = atm_strike
         prem = round(spot * 0.012, 1)
         max_loss = round(prem * lot_size, 2)
@@ -163,11 +161,10 @@ def calculate_iv_percentile(current_vix: float = 13.5) -> dict:
     """
     Returns IV Rank and IV Percentile evaluation for Indian derivatives.
     """
-    # Typical India VIX 52-week range: ~10.2 to 24.5
     vix_min = 10.2
     vix_max = 24.5
 
-    iv_rank = round(((current_vix - vix_min) / (vix_max - vix_min)) * 100, 1)
+    iv_rank = round(((current_vix - vix_min) / (vix_max - vix_min)) * 100, 1) if (vix_max > vix_min) else 50.0
     iv_rank = max(1.0, min(99.0, iv_rank))
     iv_percentile = round(iv_rank * 0.95 + 2.0, 1)
 

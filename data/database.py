@@ -7,6 +7,7 @@ Includes auto-migration from legacy JSON files.
 import os
 import sqlite3
 import json
+import uuid
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trading_platform.db")
@@ -164,7 +165,7 @@ def db_get_closed_trades():
 
 def db_add_trade(trade: dict) -> dict:
     """Inserts a new trade into SQLite."""
-    trade_id = trade.get("id") or f"trade_{int(datetime.now().timestamp())}"
+    trade_id = trade.get("id") or f"trade_{int(datetime.now().timestamp()*1000)}_{uuid.uuid4().hex[:6]}"
     with get_connection() as conn:
         conn.execute("""
             INSERT INTO trade_journal
@@ -192,7 +193,7 @@ def db_add_trade(trade: dict) -> dict:
     return trade
 
 
-def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None, exit_tags: str = None) -> dict:
+def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None, exit_tags: str = None, realized_pnl: float = None, realized_pct: float = None) -> dict:
     """Closes an open trade and calculates final realized P&L."""
     if not exit_date:
         exit_date = datetime.now().strftime("%Y-%m-%d")
@@ -206,8 +207,25 @@ def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None, exit
         trade = dict(row)
         entry_price = float(trade["entry_price"])
         qty = int(trade["quantity"])
-        realized_pnl = round((exit_price - entry_price) * qty, 2)
-        realized_pct = round(((exit_price - entry_price) / entry_price) * 100, 2) if entry_price > 0 else 0.0
+
+        try:
+            realized_pnl = float(realized_pnl) if realized_pnl is not None else None
+        except (ValueError, TypeError):
+            realized_pnl = None
+
+        try:
+            realized_pct = float(realized_pct) if realized_pct is not None else None
+        except (ValueError, TypeError):
+            realized_pct = None
+
+        if realized_pnl is None and realized_pct is not None:
+            realized_pnl = round((entry_price * (realized_pct / 100.0)) * qty, 2)
+        elif realized_pnl is not None and realized_pct is None:
+            capital = entry_price * qty
+            realized_pct = round((realized_pnl / capital) * 100.0, 2) if capital > 0 else 0.0
+        elif realized_pnl is None and realized_pct is None:
+            realized_pnl = round((exit_price - entry_price) * qty, 2)
+            realized_pct = round(((exit_price - entry_price) / entry_price) * 100, 2) if entry_price > 0 else 0.0
 
         existing_tags = trade.get("tags") or ""
         final_tags = f"{existing_tags}, {exit_tags}".strip(", ") if exit_tags else existing_tags
@@ -228,12 +246,145 @@ def db_close_trade(trade_id: str, exit_price: float, exit_date: str = None, exit
         return {"status": "success", "trade": trade}
 
 
+def db_get_trade_by_id(trade_id: str):
+    """Fetches a single trade by ID."""
+    with get_connection() as conn:
+        cursor = conn.execute("SELECT * FROM trade_journal WHERE id = ?;", (trade_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def db_update_trade(trade_id: str, updates: dict) -> dict:
+    """Updates fields of an existing trade in SQLite."""
+    allowed = {"entry_price", "quantity", "stop_loss", "target_1", "target_2", "style", "notes", "tags", "entry_date"}
+    clean_updates = {k: v for k, v in updates.items() if k in allowed}
+    if not clean_updates:
+        return {"status": "error", "message": "No valid fields to update."}
+
+    set_clauses = [f"{k} = ?" for k in clean_updates.keys()]
+    values = list(clean_updates.values())
+    values.append(trade_id)
+
+    with get_connection() as conn:
+        cursor = conn.execute(f"UPDATE trade_journal SET {', '.join(set_clauses)} WHERE id = ?;", values)
+        conn.commit()
+        if cursor.rowcount == 0:
+            return {"status": "error", "message": f"Trade {trade_id} not found."}
+
+    return {"status": "success", "trade": db_get_trade_by_id(trade_id)}
+
+
+def db_partial_exit(trade_id: str, exit_qty: int, exit_price: float, exit_date: str = None, exit_tags: str = None, realized_pnl: float = None, realized_pct: float = None) -> dict:
+    """Executes a partial exit: decrements active position qty and inserts a closed trade record."""
+    if not exit_date:
+        exit_date = datetime.now().strftime("%Y-%m-%d")
+
+    with get_connection() as conn:
+        cursor = conn.execute("SELECT * FROM trade_journal WHERE id = ? AND status = 'OPEN';", (trade_id,))
+        row = cursor.fetchone()
+        if not row:
+            return {"status": "error", "message": f"Active trade {trade_id} not found."}
+
+        trade = dict(row)
+        curr_qty = int(trade["quantity"])
+        exit_qty = int(exit_qty)
+
+        if exit_qty <= 0:
+            return {"status": "error", "message": "Exit quantity must be greater than zero."}
+
+        if exit_qty >= curr_qty:
+            # Full exit fallback
+            return db_close_trade(trade_id, exit_price, exit_date, exit_tags, realized_pnl, realized_pct)
+
+        # Partial exit: decrement active position quantity
+        remaining_qty = curr_qty - exit_qty
+        conn.execute("UPDATE trade_journal SET quantity = ? WHERE id = ?;", (remaining_qty, trade_id))
+
+        # Create closed trade row for the exited quantity
+        closed_trade_id = f"{trade_id}_exit_{int(datetime.now().timestamp()*1000)}_{uuid.uuid4().hex[:6]}"
+        existing_tags = trade.get("tags") or ""
+        final_tags = f"{existing_tags}, {exit_tags}".strip(", ") if exit_tags else existing_tags
+        if "Partial Exit" not in final_tags:
+            final_tags = f"{final_tags}, Partial Exit".strip(", ")
+
+        conn.execute("""
+            INSERT INTO trade_journal
+            (id, symbol, code, entry_date, entry_price, quantity, stop_loss, target_1, target_2, style, status, exit_date, exit_price, pnl, pnl_pct, notes, tags, is_manual)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CLOSED', ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            closed_trade_id,
+            trade["symbol"],
+            trade["code"],
+            trade["entry_date"],
+            trade["entry_price"],
+            exit_qty,
+            trade["stop_loss"],
+            trade["target_1"],
+            trade.get("target_2"),
+            trade.get("style", "Swing"),
+            exit_date,
+            exit_price,
+            realized_pnl,
+            realized_pct,
+            f"Partial exit ({exit_qty}/{curr_qty} units). {trade.get('notes', '')}".strip(),
+            final_tags,
+            trade.get("is_manual", 0)
+        ))
+        conn.commit()
+
+        updated_open = db_get_trade_by_id(trade_id)
+        closed_trade = db_get_trade_by_id(closed_trade_id)
+        return {
+            "status": "success",
+            "is_partial": True,
+            "remaining_trade": updated_open,
+            "closed_trade": closed_trade,
+            "message": f"Successfully scaled out {exit_qty} shares of {trade['code']} @ ₹{exit_price:.2f}."
+        }
+
+
 def db_delete_trade(trade_id: str) -> bool:
     """Deletes a trade from SQLite."""
     with get_connection() as conn:
         cursor = conn.execute("DELETE FROM trade_journal WHERE id = ?;", (trade_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+
+def db_clear_journal(scope: str = "all") -> int:
+    """Clears trade journal records based on scope ('all', 'closed', 'active'). Returns number of deleted rows."""
+    with get_connection() as conn:
+        if scope == "closed":
+            cursor = conn.execute("DELETE FROM trade_journal WHERE status = 'CLOSED';")
+        elif scope == "active":
+            cursor = conn.execute("DELETE FROM trade_journal WHERE status = 'OPEN';")
+        else:
+            cursor = conn.execute("DELETE FROM trade_journal;")
+        conn.commit()
+        deleted_count = cursor.rowcount
+
+    # Also sync legacy JSON if it exists to avoid re-migration
+    try:
+        if os.path.exists(LEGACY_JSON_PATH):
+            if scope == "all":
+                with open(LEGACY_JSON_PATH, "w") as f:
+                    json.dump({"active_trades": [], "closed_trades": []}, f, indent=2)
+            elif scope == "closed":
+                with open(LEGACY_JSON_PATH, "r") as f:
+                    data = json.load(f)
+                data["closed_trades"] = []
+                with open(LEGACY_JSON_PATH, "w") as f:
+                    json.dump(data, f, indent=2)
+            elif scope == "active":
+                with open(LEGACY_JSON_PATH, "r") as f:
+                    data = json.load(f)
+                data["active_trades"] = []
+                with open(LEGACY_JSON_PATH, "w") as f:
+                    json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Failed to sync legacy JSON on journal clear: {e}")
+
+    return deleted_count
 
 
 # Initialize tables upon module load

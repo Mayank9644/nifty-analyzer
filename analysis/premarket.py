@@ -8,6 +8,7 @@ from datetime import datetime
 from cachetools import TTLCache
 from data.fetcher import get_stock_history, get_stock_info
 from data.commodity_fetcher import get_commodity_info, get_usd_inr_rate
+from config import USD_INR_ELEVATED_THRESHOLD, USD_INR_STRESSED_THRESHOLD
 
 _premarket_cache = TTLCache(maxsize=5, ttl=300)
 
@@ -65,22 +66,23 @@ def generate_premarket_briefing() -> dict:
     # USD / INR
     try:
         usd_inr = get_usd_inr_rate()
-        inr_sent = "BEARISH" if usd_inr > 83.8 else "NEUTRAL"
+        inr_sent = "BEARISH" if usd_inr > USD_INR_ELEVATED_THRESHOLD else "NEUTRAL"
         cues.append({
             "name": "USD / INR Currency",
             "value": f"₹{usd_inr:.2f}",
             "change_pct": 0.05,
             "sentiment": inr_sent
         })
-        if usd_inr > 83.9: bear_points += 1
+        if usd_inr > USD_INR_STRESSED_THRESHOLD: bear_points += 1
     except Exception:
-        cues.append({"name": "USD / INR Currency", "value": "₹83.75", "change_pct": 0.02, "sentiment": "NEUTRAL"})
+        cues.append({"name": "USD / INR Currency", "value": f"₹{USD_INR_ELEVATED_THRESHOLD:.2f}", "change_pct": 0.02, "sentiment": "NEUTRAL"})
 
     # 2. Nifty 50 Pivot Support & Resistance Levels
     nifty_spot = 24850.0
     r1, r2, s1, s2, pivot = 25050.0, 25200.0, 24700.0, 24550.0, 24850.0
     try:
-        nifty_df = get_stock_history("^NSEI", period="10d", interval="1d")
+        from data.context import GlobalMarketFeedManager
+        nifty_df = GlobalMarketFeedManager.get_instance().get_benchmark_context("^NSEI").df
         if not nifty_df.empty and len(nifty_df) >= 2:
             high = float(nifty_df["High"].iloc[-1])
             low = float(nifty_df["Low"].iloc[-1])

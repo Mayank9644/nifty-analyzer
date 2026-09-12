@@ -6,6 +6,7 @@ Max Profit/Loss, Greeks, and Implied Volatility Rank (IVR).
 
 import math
 from typing import Dict, Any, List
+import config
 from data.fetcher import get_stock_info
 from data.options_fetcher import get_option_chain_data
 
@@ -25,9 +26,13 @@ def calculate_black_scholes_pop(spot: float, strike: float, days_to_exp: float, 
 
     t = max(days_to_exp / 365.0, 0.001)
     sigma = max(iv_pct / 100.0, 0.05)
-    r = 0.0685  # Indian 10-Year G-Sec risk-free rate (6.85%)
+    r = getattr(config, "RISK_FREE_RATE", 0.065)
 
-    d2 = (math.log(spot / strike) + (r - 0.5 * sigma ** 2) * t) / (sigma * math.sqrt(t))
+    denom = sigma * math.sqrt(t)
+    if denom <= 0:
+        return 50.0
+
+    d2 = (math.log(spot / strike) + (r - 0.5 * sigma ** 2) * t) / denom
     prob_above = normal_cdf(d2)
 
     if option_type.upper() == "CE":
@@ -46,8 +51,8 @@ def generate_fno_recommendations(capital: float = 1000000.0) -> List[Dict[str, A
     # 1. NIFTY 50 Directional / Spread Setup
     try:
         nifty_info = get_stock_info("^NSEI")
-        nifty_spot = float(nifty_info.get("current_price", 23780.0))
-        nifty_chg = float(nifty_info.get("day_change_pct", 0.0))
+        nifty_spot = round(float(nifty_info.get("current_price", 23780.0)), 2)
+        nifty_chg = round(float(nifty_info.get("day_change_pct", 0.0)), 2)
 
         # Base strike rounding to 50 pts
         base_strike = round(nifty_spot / 50.0) * 50
@@ -114,7 +119,7 @@ def generate_fno_recommendations(capital: float = 1000000.0) -> List[Dict[str, A
     # 2. BANK NIFTY Range / Directional Setup
     try:
         bank_info = get_stock_info("^NSEBANK")
-        bank_spot = float(bank_info.get("current_price", 57080.0))
+        bank_spot = round(float(bank_info.get("current_price", 57080.0)), 2)
         bank_base = round(bank_spot / 100.0) * 100
         lot_size_bn = 15  # Official NSE Bank Nifty Lot Size
 
@@ -171,7 +176,7 @@ def generate_fno_recommendations(capital: float = 1000000.0) -> List[Dict[str, A
     # 3. Stock F&O: RELIANCE Covered Call / Bull Call Spread
     try:
         rel_info = get_stock_info("RELIANCE.NS")
-        rel_spot = float(rel_info.get("current_price", 1309.50))
+        rel_spot = round(float(rel_info.get("current_price", 1309.50)), 2)
         rel_base = round(rel_spot / 20.0) * 20
         lot_size_rel = 250
 

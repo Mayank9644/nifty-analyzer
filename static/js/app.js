@@ -71,13 +71,10 @@ function setupEventListeners() {
     document.querySelectorAll(".period-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
             document.querySelectorAll(".period-btn").forEach(b => {
-                b.classList.remove("bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm", "bg-blue-600", "text-white");
-                b.classList.add("text-[#636366]");
+                b.classList.remove("active");
             });
-            e.currentTarget.classList.remove("text-[#636366]");
-            e.currentTarget.classList.add("bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
+            e.currentTarget.classList.add("active");
             const period = e.currentTarget.dataset.period;
-
             const interval = e.currentTarget.dataset.interval || "1d";
             appState.currentPeriod = period;
             appState.currentInterval = interval;
@@ -191,16 +188,16 @@ function setupEventListeners() {
             else if (cat === "Index") badgeClass = "badge-index";
 
             return `
-                <div class="px-4 py-2.5 hover:bg-[#f5f5f7] cursor-pointer border-b border-[rgba(0,0,0,0.05)] flex justify-between items-center search-item transition-colors"
+                <div class="px-3.5 py-2.5 hover:bg-[#f5f5f7] dark:hover:bg-[#252838] cursor-pointer border-b border-black/5 dark:border-white/5 flex justify-between items-center search-item transition-colors"
                      data-symbol="${s.symbol}" data-category="${cat}" data-code="${code}">
-                    <div class="flex-1 pr-3">
-                        <div class="flex items-center gap-2">
-                            <span class="font-semibold text-sm text-[#1d1d1f] tracking-tight">${code}</span>
-                            <span class="${badgeClass}">${cat.toUpperCase()}</span>
+                    <div class="flex-1 min-w-0 pr-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-xs text-[#1d1d1f] dark:text-white tracking-tight">${code}</span>
+                            <span class="${badgeClass} text-[9.5px] px-1.5 py-0.5">${cat.toUpperCase()}</span>
                         </div>
-                        ${displayName ? `<span class="text-xs text-[#6e6e73] block mt-0.5 truncate max-w-xs">${displayName}</span>` : ''}
+                        ${displayName ? `<span class="text-[11px] text-[#6e6e73] dark:text-[#8e8e93] block mt-0.5 truncate">${displayName}</span>` : ''}
                     </div>
-                    <span class="text-[11px] text-[#86868b] font-medium whitespace-nowrap">${s.sector || 'NSE'}</span>
+                    <span class="text-[10.5px] text-[#86868b] dark:text-[#8e8e93] font-medium whitespace-nowrap">${s.sector || 'NSE'}</span>
                 </div>
             `;
         }).join("");
@@ -292,7 +289,7 @@ function updateNavbarMarketStatus(ms) {
 }
 
 function renderMarketTicker(data) {
-    const tickerContainer = document.getElementById("marketTickerBar");
+    const tickerContainer = document.getElementById("marketTickerBar") || document.getElementById("tickerTapeContainer");
     if (!tickerContainer) return;
 
     const nifty = data.indices.nifty;
@@ -327,84 +324,312 @@ function renderMarketTicker(data) {
     tickerContainer.innerHTML = `<div class="ticker-move">${htmlContent}${htmlContent}</div>`;
 }
 
+const MACRO_DESKS = [
+    { id: "institutional", label: "🏛️ Institutional Breadth" },
+    { id: "sectors", label: "📊 Sector RRG" },
+    { id: "commodities", label: "🥇 Commodities & FX" },
+    { id: "options", label: "📋 Options Desk" },
+    { id: "etf", label: "📦 ETF Screener" },
+    { id: "bees", label: "⚖️ ETF Allocation" },
+    { id: "calendar", label: "📅 Calendar" },
+    { id: "journal", label: "📒 Journal" },
+    { id: "backtest", label: "🧪 Backtest" },
+    { id: "news", label: "📰 News" }
+];
+
 const WORKSPACE_MAP = {
-    "stocks": { ws: "terminal", label: "Terminal", desks: [{ id: "stocks", label: "📈 Stocks Deep Dive" }] },
+    "stocks": { ws: "terminal", label: "Terminal", desks: [{ id: "stocks", label: "📈 Stocks Terminal" }] },
     "scanner": { ws: "discovery", label: "Discovery", desks: [
-        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
-        { id: "best-picks", label: "💡 Curated Guru Picks" },
-        { id: "screener", label: "🎯 Multi-Metric Screener" }
-    ]},
-    "best-picks": { ws: "discovery", label: "Discovery", desks: [
-        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
-        { id: "best-picks", label: "💡 Curated Guru Picks" },
-        { id: "screener", label: "🎯 Multi-Metric Screener" }
+        { id: "scanner", label: "🔥 SEPA Scanner" },
+        { id: "screener", label: "⚙️ Screener" },
+        { id: "best-picks", label: "💎 Curated Setups" },
+        { id: "ipo", label: "🚀 IPOs Tracker" }
     ]},
     "screener": { ws: "discovery", label: "Discovery", desks: [
-        { id: "scanner", label: "📡 SEPA Alpha Scanner" },
-        { id: "best-picks", label: "💡 Curated Guru Picks" },
-        { id: "screener", label: "🎯 Multi-Metric Screener" }
+        { id: "scanner", label: "🔥 SEPA Scanner" },
+        { id: "screener", label: "⚙️ Screener" },
+        { id: "best-picks", label: "💎 Curated Setups" },
+        { id: "ipo", label: "🚀 IPOs Tracker" }
     ]},
-    "institutional": { ws: "markets", label: "Markets & Macro", desks: [
-        { id: "institutional", label: "🏛️ Institutional Breadth" },
-        { id: "sectors", label: "📊 Sector Heatmap" },
-        { id: "options", label: "📋 F&O Options Desk" },
-        { id: "commodities", label: "🥇 MCX Commodities" }
+    "best-picks": { ws: "discovery", label: "Discovery", desks: [
+        { id: "scanner", label: "🔥 SEPA Scanner" },
+        { id: "screener", label: "⚙️ Screener" },
+        { id: "best-picks", label: "💎 Curated Setups" },
+        { id: "ipo", label: "🚀 IPOs Tracker" }
     ]},
-    "sectors": { ws: "markets", label: "Markets & Macro", desks: [
-        { id: "institutional", label: "🏛️ Institutional Breadth" },
-        { id: "sectors", label: "📊 Sector Heatmap" },
-        { id: "options", label: "📋 F&O Options Desk" },
-        { id: "commodities", label: "🥇 MCX Commodities" }
+    "ipo": { ws: "discovery", label: "Discovery", desks: [
+        { id: "scanner", label: "🔥 SEPA Scanner" },
+        { id: "screener", label: "⚙️ Screener" },
+        { id: "best-picks", label: "💎 Curated Setups" },
+        { id: "ipo", label: "🚀 IPOs Tracker" }
     ]},
-    "options": { ws: "markets", label: "Markets & Macro", desks: [
-        { id: "institutional", label: "🏛️ Institutional Breadth" },
-        { id: "sectors", label: "📊 Sector Heatmap" },
-        { id: "options", label: "📋 F&O Options Desk" },
-        { id: "commodities", label: "🥇 MCX Commodities" }
-    ]},
-    "commodities": { ws: "markets", label: "Markets & Macro", desks: [
-        { id: "institutional", label: "🏛️ Institutional Breadth" },
-        { id: "sectors", label: "📊 Sector Heatmap" },
-        { id: "options", label: "📋 F&O Options Desk" },
-        { id: "commodities", label: "🥇 MCX Commodities" }
-    ]},
-    "bees": { ws: "allocation", label: "ETFs & Allocation", desks: [
-        { id: "bees", label: "⚖️ Bees Donchian Rotation" },
-        { id: "etf", label: "📉 All-India ETF Screener" }
-    ]},
-    "etf": { ws: "allocation", label: "ETFs & Allocation", desks: [
-        { id: "bees", label: "⚖️ Bees Donchian Rotation" },
-        { id: "etf", label: "📉 All-India ETF Screener" }
-    ]},
-    "journal": { ws: "execution", label: "Execution & Risk", desks: [
-        { id: "journal", label: "📒 Trading Journal & Risk" },
-        { id: "backtest", label: "🧪 Strategy Backtester" }
-    ]},
-    "backtest": { ws: "execution", label: "Execution & Risk", desks: [
-        { id: "journal", label: "📒 Trading Journal & Risk" },
-        { id: "backtest", label: "🧪 Strategy Backtester" }
-    ]},
-    "ipo": { ws: "more", label: "Intelligence", desks: [
-        { id: "ipo", label: "🚀 IPOs Tracker" },
-        { id: "calendar", label: "📅 Economic Calendar" },
-        { id: "news", label: "📰 Live Market News" }
-    ]},
-    "calendar": { ws: "more", label: "Intelligence", desks: [
-        { id: "ipo", label: "🚀 IPOs Tracker" },
-        { id: "calendar", label: "📅 Economic Calendar" },
-        { id: "news", label: "📰 Live Market News" }
-    ]},
-    "news": { ws: "more", label: "Intelligence", desks: [
-        { id: "ipo", label: "🚀 IPOs Tracker" },
-        { id: "calendar", label: "📅 Economic Calendar" },
-        { id: "news", label: "📰 Live Market News" }
-    ]}
+    "institutional": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "sectors": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "commodities": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "options": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "etf": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "bees": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "journal": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "backtest": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "calendar": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS },
+    "news": { ws: "macro", label: "Macro Pulse", desks: MACRO_DESKS }
 };
+const subDeskMap = WORKSPACE_MAP;
 
 function switchWorkspace(workspaceKey, defaultTab) {
-    switchTab(defaultTab || "stocks");
+    let ws = workspaceKey || "terminal";
+    // Canonical mapping for legacy keys
+    if (ws === "markets" || ws === "allocation" || ws === "execution" || ws === "more") {
+        ws = "macro";
+    }
+
+    let targetTab = defaultTab;
+    if (!targetTab) {
+        if (ws === "terminal") targetTab = "stocks";
+        else if (ws === "discovery") targetTab = "scanner";
+        else if (ws === "macro") targetTab = "institutional";
+        else targetTab = "stocks";
+    }
+
+    switchTab(targetTab);
 }
 window.switchWorkspace = switchWorkspace;
+
+let lastFocusedDrawerTrigger = null;
+
+function toggleStockContextDrawer(panelId) {
+    const drawer = document.getElementById("stockContextDrawer");
+    const backdrop = document.getElementById("stockContextDrawerBackdrop");
+    if (!drawer) return;
+
+    if (panelId && drawer.dataset.activePanel === panelId && !drawer.classList.contains("hidden")) {
+        closeStockContextDrawer();
+        return;
+    }
+
+    lastFocusedDrawerTrigger = document.activeElement;
+
+    if (panelId) {
+        switchDrawerPanel(panelId);
+    }
+    drawer.classList.remove("hidden");
+    if (backdrop) backdrop.classList.remove("hidden");
+    const closeBtn = document.getElementById("contextDrawerCloseBtn");
+    if (closeBtn) closeBtn.focus();
+}
+window.toggleStockContextDrawer = toggleStockContextDrawer;
+
+function closeStockContextDrawer() {
+    const drawer = document.getElementById("stockContextDrawer");
+    const backdrop = document.getElementById("stockContextDrawerBackdrop");
+    if (drawer) drawer.classList.add("hidden");
+    if (backdrop) backdrop.classList.add("hidden");
+    if (lastFocusedDrawerTrigger && typeof lastFocusedDrawerTrigger.focus === "function") {
+        lastFocusedDrawerTrigger.focus();
+        lastFocusedDrawerTrigger = null;
+    }
+}
+window.closeStockContextDrawer = closeStockContextDrawer;
+
+// Keyboard accessibility: Escape key closes the context drawer
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        const drawer = document.getElementById("stockContextDrawer");
+        if (drawer && !drawer.classList.contains("hidden")) {
+            closeStockContextDrawer();
+        }
+    }
+});
+
+function switchDrawerPanel(panelId) {
+    const drawer = document.getElementById("stockContextDrawer");
+    if (drawer) drawer.dataset.activePanel = panelId;
+
+    // Update panel buttons
+    document.querySelectorAll(".drawer-tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.panel === panelId);
+    });
+
+    const titleElem = document.getElementById("contextDrawerTitle");
+    const subElem = document.getElementById("contextDrawerSubtitle");
+    const iconElem = document.getElementById("contextDrawerIcon");
+
+    const meta = {
+        "technicals": { title: "Technical Momentum & Delivery", sub: "RSI, MACD, Volume Profile & Smart Money Delivery Accumulation", icon: "📊" },
+        "fundamentals": { title: "DCF & Valuation Health", sub: "2-Stage DCF, Graham Number, Piotroski F-Score & Altman Z", icon: "💎" },
+        "ownership": { title: "Shareholding & Guru Moats", sub: "Promoter, FII/DII Stake & Top 8 Legend Investment Frameworks", icon: "👥" },
+        "options": { title: "Options Chain & Open Interest", sub: "Live NSE Derivatives Strikes, PCR & Max Pain", icon: "📋" },
+        "backtest": { title: "Strategy Backtest Simulation", sub: "Algorithmic Lookback, Win Rates & Maximum Drawdown", icon: "🧪" },
+        "news": { title: "Live News & Media Buzz", sub: "Real-time Sentiment Analysis & High-Impact Catalysts", icon: "📰" }
+    };
+
+    if (meta[panelId]) {
+        if (titleElem) titleElem.innerText = meta[panelId].title;
+        if (subElem) subElem.innerText = meta[panelId].sub;
+        if (iconElem) iconElem.innerText = meta[panelId].icon;
+    }
+
+    document.querySelectorAll(".drawer-panel-content").forEach(p => p.classList.add("hidden"));
+    const activePanel = document.getElementById(`drawerPanel-${panelId}`);
+    if (activePanel) {
+        activePanel.classList.remove("hidden");
+        populateDrawerPanelContent(panelId, activePanel);
+    }
+}
+window.switchDrawerPanel = switchDrawerPanel;
+
+function populateDrawerPanelContent(panelId, container) {
+    const sym = escapeHtml(appState.currentSymbol || "RELIANCE.NS");
+    if (panelId === "technicals") {
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-2">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-[#1c1c1e] dark:text-white">Active Symbol:</span>
+                    <span class="mono font-bold text-[#007aff]">${sym}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">RSI (14)</span>
+                        <strong class="mono text-sm text-[#1c1c1e] dark:text-white" id="drawerRsiVal">${document.getElementById("rsiValue") ? document.getElementById("rsiValue").innerText : "50.0"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">MACD Trend</span>
+                        <strong class="mono text-xs text-emerald-700" id="drawerMacdVal">${document.getElementById("macdStatus") ? document.getElementById("macdStatus").innerText : "BULLISH"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">Delivery Accumulation</span>
+                        <strong class="mono text-xs text-[#007aff]" id="drawerDeliveryVal">${document.getElementById("deliveryBadge") ? document.getElementById("deliveryBadge").innerText : "Checking..."}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">Volume Surge</span>
+                        <strong class="mono text-sm text-[#1c1c1e] dark:text-white" id="drawerVolVal">${document.getElementById("volRatio") ? document.getElementById("volRatio").innerText : "1.0x"}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="macos-box p-3.5 space-y-2">
+                <span class="text-xs font-bold text-[#1c1c1e] dark:text-white block">Classic Pivots (Floor & Ceiling):</span>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#b32020] block">Support S1</span>
+                        <strong class="mono text-[#b32020]">${document.getElementById("supportLevel") ? document.getElementById("supportLevel").innerText : "—"}</strong>
+                    </div>
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#0062cc] block">Pivot</span>
+                        <strong class="mono text-[#1c1c1e] dark:text-white">${document.getElementById("pivotLevel") ? document.getElementById("pivotLevel").innerText : "—"}</strong>
+                    </div>
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#1e7e34] block">Resistance R1</span>
+                        <strong class="mono text-[#1e7e34]">${document.getElementById("resistanceLevel") ? document.getElementById("resistanceLevel").innerText : "—"}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (panelId === "fundamentals") {
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-3">
+                <div class="flex justify-between items-center text-xs border-b border-[rgba(0,0,0,0.06)] pb-2">
+                    <span class="font-bold text-[#1c1c1e] dark:text-white">DCF & Graham Intrinsic Valuation:</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]">Institutional DCF</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#6e6e73] block">2-Stage DCF</span>
+                        <strong class="mono text-sm text-[#007aff]">${document.getElementById("dcfFairValueVal") ? document.getElementById("dcfFairValueVal").innerText : "—"}</strong>
+                    </div>
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#6e6e73] block">Graham No.</span>
+                        <strong class="mono text-sm text-[#1c1c1e] dark:text-white">${document.getElementById("grahamNumberVal") ? document.getElementById("grahamNumberVal").innerText : "—"}</strong>
+                    </div>
+                    <div class="p-2 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10px] text-[#6e6e73] block">Margin of Safety</span>
+                        <strong class="mono text-sm text-emerald-700">${document.getElementById("marginOfSafetyVal") ? document.getElementById("marginOfSafetyVal").innerText : "—"}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="macos-box p-3.5 space-y-2">
+                <span class="text-xs font-bold text-[#1c1c1e] dark:text-white block">Quantitative Health Metrics:</span>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">Piotroski F-Score</span>
+                        <strong class="mono text-sm text-emerald-700">${document.getElementById("piotroskiScoreVal") ? document.getElementById("piotroskiScoreVal").innerText : "8 / 9"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6e6e73] block">Altman Z-Score</span>
+                        <strong class="mono text-sm text-[#007aff]">${document.getElementById("altmanScoreVal") ? document.getElementById("altmanScoreVal").innerText : "3.4"}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (panelId === "ownership") {
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-3">
+                <span class="text-xs font-bold text-[#1c1c1e] dark:text-white block">Shareholding Structure:</span>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#0062cc] block font-semibold">Promoters</span>
+                        <strong class="mono text-base text-[#1c1c1e] dark:text-white">${document.getElementById("promoterVal") ? document.getElementById("promoterVal").innerText : "50%"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#1e7e34] block font-semibold">FII (Foreign)</span>
+                        <strong class="mono text-base text-[#1c1c1e] dark:text-white">${document.getElementById("fiiVal") ? document.getElementById("fiiVal").innerText : "20%"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#8a4500] block font-semibold">DII (Mutual Funds)</span>
+                        <strong class="mono text-base text-[#1c1c1e] dark:text-white">${document.getElementById("diiVal") ? document.getElementById("diiVal").innerText : "15%"}</strong>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                        <span class="text-[10.5px] text-[#6b2f8a] block font-semibold">Retail / Public</span>
+                        <strong class="mono text-base text-[#1c1c1e] dark:text-white">${document.getElementById("publicVal") ? document.getElementById("publicVal").innerText : "15%"}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="macos-box p-3.5 space-y-2">
+                <span class="text-xs font-bold text-[#1c1c1e] dark:text-white block">Top Legendary Investor Alignment:</span>
+                <div class="p-2.5 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)]">
+                    <strong class="text-xs text-[#007aff] block">${document.getElementById("bestStrategyName") ? document.getElementById("bestStrategyName").innerText : "Warren Buffett Moat"}</strong>
+                    <span class="text-[11px] text-[#6e6e73]">${document.getElementById("bestStrategyGuru") ? document.getElementById("bestStrategyGuru").innerText : "Value Investing Framework"}</span>
+                </div>
+            </div>
+        `;
+    } else if (panelId === "options") {
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-[#1c1c1e] dark:text-white">F&O Options Chain:</span>
+                    <button onclick="switchTab('options'); closeStockContextDrawer();" class="px-2.5 py-1 rounded bg-[#007aff] text-white text-[10.5px] font-semibold cursor-pointer">
+                        Open Full Options Desk ➔
+                    </button>
+                </div>
+                <p class="text-xs text-[#6e6e73]">Strike prices, Put-Call Ratio (PCR), and Max Pain analysis for ${sym.replace('.NS','')}.</p>
+                <div id="drawerOptionsSnippet" class="p-3 rounded-lg bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] text-xs text-center">
+                    <span class="text-[#8e8e93]">Open the Full Options Desk for interactive Greek surface & payoff simulator.</span>
+                </div>
+            </div>
+        `;
+    } else if (panelId === "backtest") {
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-[#1c1c1e] dark:text-white">Strategy Backtester:</span>
+                    <button onclick="switchTab('backtest'); closeStockContextDrawer();" class="px-2.5 py-1 rounded bg-[#007aff] text-white text-[10.5px] font-semibold cursor-pointer">
+                        Open Full Backtest Lab ➔
+                    </button>
+                </div>
+                <p class="text-xs text-[#6e6e73]">Simulate breakout, mean-reversion, and momentum rules on ${sym}.</p>
+            </div>
+        `;
+    } else if (panelId === "news") {
+        const newsContent = document.getElementById("stockNewsContainer") ? document.getElementById("stockNewsContainer").innerHTML : "";
+        container.innerHTML = `
+            <div class="macos-box p-3.5 space-y-3">
+                <span class="text-xs font-bold text-[#1c1c1e] dark:text-white block">Recent News & Catalysts:</span>
+                <div class="space-y-2 text-xs">
+                    ${newsContent || '<div class="text-[#8e8e93] text-center py-4">No recent news available for this ticker.</div>'}
+                </div>
+            </div>
+        `;
+    }
+}
 
 function toggleTickerTape() {
     const strip = document.getElementById("liveTickerStrip");
@@ -441,21 +666,50 @@ function switchTab(tab) {
     if (tab === "recommendations") tab = "best-picks";
     appState.currentTab = tab;
 
-    // Synchronize Master Workspace navigation
+    // Determine canonical workspace
     const info = WORKSPACE_MAP[tab] || WORKSPACE_MAP["stocks"];
-    document.querySelectorAll(".workspace-btn").forEach(wb => {
-        if (wb.dataset.workspace === info.ws) {
-            wb.classList.add("active");
+    const activeWs = info.ws;
+
+    // Toggle Workspace Sections
+    const wsTerminal = document.getElementById("workspace-terminal");
+    const wsDiscovery = document.getElementById("workspace-discovery");
+    const wsMacro = document.getElementById("workspace-macro");
+
+    if (wsTerminal) wsTerminal.classList.toggle("hidden", activeWs !== "terminal");
+    if (wsDiscovery) wsDiscovery.classList.toggle("hidden", activeWs !== "discovery");
+    if (wsMacro) wsMacro.classList.toggle("hidden", activeWs !== "macro");
+
+    // Update Omni-Bar Workspace Pills
+    document.querySelectorAll(".workspace-pill, .workspace-btn").forEach(btn => {
+        const bws = btn.dataset.workspace;
+        const matches = (bws === activeWs) || 
+                        (activeWs === "macro" && (bws === "markets" || bws === "allocation" || bws === "execution"));
+        if (matches) {
+            btn.classList.add("active");
         } else {
-            wb.classList.remove("active");
+            btn.classList.remove("active");
         }
     });
 
+    // Update Sub-Desk highlight buttons inside Discovery
+    document.querySelectorAll("#discoverySubDeskTrack .subdesk-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.subdesk === tab);
+    });
+
+    // Update Sub-Desk highlight buttons inside Macro
+    document.querySelectorAll("#macroSubDeskTrack .subdesk-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.subdesk === tab);
+    });
+
     // Populate Contextual Sub-Desks Track
+    const subDeskContainer = document.getElementById("subDeskContainer");
+    if (subDeskContainer) {
+        subDeskContainer.classList.toggle("hidden", activeWs === "terminal");
+    }
     const subDeskTrack = document.getElementById("subDeskNavTrack");
     const breadcrumb = document.getElementById("activeWorkspaceBreadcrumb");
     if (breadcrumb) {
-        breadcrumb.innerHTML = `Workspace: <strong class="text-[#1c1c1e]">${info.label}</strong>`;
+        breadcrumb.innerHTML = `Workspace: <strong class="text-[#1c1c1e] dark:text-white">${info.label}</strong>`;
     }
     if (subDeskTrack) {
         subDeskTrack.innerHTML = info.desks.map(d => `
@@ -483,21 +737,16 @@ function switchTab(tab) {
 
     if (tab === "stocks") {
         setTimeout(() => {
-            const algoContainer = document.getElementById("candlestickChartContainer");
-            if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "algo") {
-                if (typeof tvChart !== "undefined" && tvChart && algoContainer && algoContainer.clientWidth > 0) {
-                    tvChart.applyOptions({ width: algoContainer.clientWidth });
-                    tvChart.timeScale().fitContent();
-                }
-            } else if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro") {
+            if (typeof refitAllCharts === "function") {
+                refitAllCharts();
+            }
+            if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro") {
                 if (typeof updateTradingViewProSymbol === "function" && appState.currentSymbol) {
                     updateTradingViewProSymbol(appState.currentSymbol);
                 }
             }
         }, 60);
-    }
-
-    if (tab === "institutional") {
+    } else if (tab === "institutional") {
         loadInstitutionalRadar();
     } else if (tab === "best-picks") {
         loadBestRecommendations();
@@ -530,6 +779,7 @@ function switchTab(tab) {
         loadMarketNewsFixed();
     }
 }
+window.switchTab = switchTab;
 
 
 function switchTradingStyle(style) {
@@ -640,6 +890,11 @@ async function loadStock(symbol, forceRefresh = false) {
     if (typeof _currentChartEngine !== "undefined" && _currentChartEngine === "tv_pro" && typeof updateTradingViewProSymbol === "function") {
         updateTradingViewProSymbol(symbol);
     }
+
+    // Keep period buttons active state synchronized with currentPeriod
+    document.querySelectorAll(".period-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.period === appState.currentPeriod);
+    });
 
     const cacheKey = `${symbol}_${appState.currentStyle}_${appState.currentPeriod}_${appState.currentInterval}`;
     const now = Date.now();
@@ -792,8 +1047,15 @@ async function loadChart(symbol, period, interval) {
     try {
         const res = await fetch(`/api/stock/${symbol}/chart?period=${period}&interval=${interval}`);
         const data = await res.json();
-        if (data.status === "success" && data.candles) {
+        if (data.status === "success" && data.candles && data.candles.length > 0) {
             initLightweightChart("candlestickChartContainer", data.candles, null, data.indicator_series);
+        } else {
+            console.warn(`Chart candles empty for ${symbol} (${period}/${interval}), falling back to 1y daily`);
+            const fbRes = await fetch(`/api/stock/${symbol}/chart?period=1y&interval=1d`);
+            const fbData = await fbRes.json();
+            if (fbData.status === "success" && fbData.candles && fbData.candles.length > 0) {
+                initLightweightChart("candlestickChartContainer", fbData.candles, null, fbData.indicator_series);
+            }
         }
     } catch (e) {
         console.error("Error refreshing chart:", e);
@@ -804,10 +1066,9 @@ function renderTradingViewTechnicalGauge(symbol) {
     const container = document.getElementById("tvTechnicalGaugeContainer");
     if (!container) return;
 
-    let cleanSym = (symbol || "RELIANCE.NS").replace(".NS", "").replace(".BO", "").trim().toUpperCase();
-    if (cleanSym === "^NSEI") cleanSym = "NIFTY";
-    else if (cleanSym === "^NSEBANK") cleanSym = "BANKNIFTY";
-    const tvSymbol = `NSE:${cleanSym}`;
+    const tvSymbol = (typeof formatTradingViewSymbol === "function") 
+        ? formatTradingViewSymbol(symbol || "RELIANCE.NS") 
+        : `BSE:${(symbol || "RELIANCE").replace(/\.NS$/i, "").replace(/\.BO$/i, "").trim().toUpperCase()}`;
 
     container.innerHTML = "";
 
@@ -971,6 +1232,32 @@ function renderSignalsBox(signals, styleInfo) {
         };
     }
 
+    // Synchronize Top Hero Execution Band
+    const bandStop = document.getElementById("heroBandStop");
+    const bandStopPct = document.getElementById("heroBandStopPct");
+    const bandEntry = document.getElementById("heroBandEntry");
+    const bandTarget = document.getElementById("heroBandTarget");
+    const bandTargetPct = document.getElementById("heroBandTargetPct");
+    const bandRiskReward = document.getElementById("heroBandRiskReward");
+    const bandVerdict = document.getElementById("heroBandVerdictBadge");
+
+    if (bandStop) bandStop.innerText = `₹${plan.stop_loss || '—'}`;
+    if (bandStopPct) bandStopPct.innerText = `(-${plan.stop_loss_pct || 0}%)`;
+    if (bandEntry) bandEntry.innerText = `₹${plan.entry_price || '—'}`;
+    if (bandTarget) bandTarget.innerText = `₹${plan.target_1 || '—'}`;
+    if (bandTargetPct) bandTargetPct.innerText = `(+${plan.target_1_pct || 0}%)`;
+    if (bandRiskReward) bandRiskReward.innerText = plan.risk_reward || "1 : 2.0";
+    if (bandVerdict) {
+        bandVerdict.innerText = sig.verdict || "HOLD";
+        if ((sig.verdict || "").includes("BUY")) {
+            bandVerdict.className = "px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]";
+        } else if ((sig.verdict || "").includes("SELL")) {
+            bandVerdict.className = "px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#fdf0f0] text-[#b32020] border border-[#f7c8c8]";
+        } else {
+            bandVerdict.className = "px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#fef6ed] text-[#8a4500] border border-[#fcdcb8]";
+        }
+    }
+
     container.innerHTML = `
         <div class="macos-card p-5 space-y-4">
             <!-- Header Verdict -->
@@ -1113,20 +1400,20 @@ function renderTechnicals(t) {
 }
 
 function renderFundamentals(f, info, valuation) {
-    if (!f) return;
+    if (!f || !info) return;
 
     // Grade Pill
     const gradeBadge = document.getElementById("fundamentalGradeBadge");
     if (gradeBadge) {
-        gradeBadge.innerText = f.grade;
-        gradeBadge.style.backgroundColor = `${f.color}20`;
-        gradeBadge.style.color = f.color;
-        gradeBadge.style.borderColor = `${f.color}40`;
+        gradeBadge.innerText = f.grade || "B+";
+        gradeBadge.style.backgroundColor = `${f.color || "#007aff"}20`;
+        gradeBadge.style.color = f.color || "#007aff";
+        gradeBadge.style.borderColor = `${f.color || "#007aff"}40`;
     }
 
-    if (document.getElementById("fundamentalRating")) document.getElementById("fundamentalRating").innerText = f.rating;
-    if (document.getElementById("fundamentalScore")) document.getElementById("fundamentalScore").innerText = `${f.score} / 100`;
-    if (document.getElementById("fundamentalSummary")) document.getElementById("fundamentalSummary").innerText = f.summary;
+    if (document.getElementById("fundamentalRating")) document.getElementById("fundamentalRating").innerText = f.rating || "Good / Stable";
+    if (document.getElementById("fundamentalScore")) document.getElementById("fundamentalScore").innerText = `${f.score || 70} / 100`;
+    if (document.getElementById("fundamentalSummary")) document.getElementById("fundamentalSummary").innerText = f.summary || "";
 
     // Promoter Pledge Warning Alert
     const pledgeAlert = document.getElementById("promoterPledgeAlert");
@@ -1140,13 +1427,23 @@ function renderFundamentals(f, info, valuation) {
         }
     }
 
-    // Core Ratios
-    if (document.getElementById("peRatioVal")) document.getElementById("peRatioVal").innerHTML = `${info.pe_ratio}x ${renderJargonTooltip("P/E Ratio")}`;
-    if (document.getElementById("pbRatioVal")) document.getElementById("pbRatioVal").innerHTML = `${info.pb_ratio}x ${renderJargonTooltip("P/B Ratio")}`;
-    if (document.getElementById("roeVal")) document.getElementById("roeVal").innerHTML = `${info.roe}% ${renderJargonTooltip("ROE")}`;
-    if (document.getElementById("debtVal")) document.getElementById("debtVal").innerHTML = `${info.debt_to_equity} ${renderJargonTooltip("Debt to Equity")}`;
-    if (document.getElementById("divYieldVal")) document.getElementById("divYieldVal").innerText = `${info.dividend_yield}%`;
-    if (document.getElementById("epsVal")) document.getElementById("epsVal").innerText = `₹${info.eps}`;
+    // Is banking/financial institution
+    const isBank = info.is_bank || (info.sector && (info.sector.includes("Bank") || info.sector.includes("Financial")));
+
+    // Core Ratios with zero-value prevention
+    const peText = (info.pe_ratio && info.pe_ratio > 0) ? `${info.pe_ratio}x` : '—';
+    const pbText = (info.pb_ratio && info.pb_ratio > 0) ? `${info.pb_ratio}x` : '—';
+    const roeText = (info.roe && info.roe > 0) ? `${info.roe}%` : '—';
+    const debtText = isBank ? 'N/A (Bank)' : ((info.debt_to_equity !== undefined && info.debt_to_equity >= 0) ? `${info.debt_to_equity}` : '—');
+    const divText = (info.dividend_yield && info.dividend_yield > 0) ? `${info.dividend_yield}%` : '0.0%';
+    const epsText = (info.eps && info.eps !== 0) ? `₹${info.eps}` : '—';
+
+    if (document.getElementById("peRatioVal")) document.getElementById("peRatioVal").innerHTML = `${peText} ${renderJargonTooltip("P/E Ratio")}`;
+    if (document.getElementById("pbRatioVal")) document.getElementById("pbRatioVal").innerHTML = `${pbText} ${renderJargonTooltip("P/B Ratio")}`;
+    if (document.getElementById("roeVal")) document.getElementById("roeVal").innerHTML = `${roeText} ${renderJargonTooltip("ROE")}`;
+    if (document.getElementById("debtVal")) document.getElementById("debtVal").innerHTML = `${debtText} ${renderJargonTooltip("Debt to Equity")}`;
+    if (document.getElementById("divYieldVal")) document.getElementById("divYieldVal").innerText = divText;
+    if (document.getElementById("epsVal")) document.getElementById("epsVal").innerText = epsText;
 
     // Piotroski 9-Point F-Score
     if (f.piotroski_f_score) {
@@ -1182,13 +1479,18 @@ function renderFundamentals(f, info, valuation) {
         if (aSummary) aSummary.innerText = a.summary || (a.z_score > 2.9 ? "Negligible insolvency probability." : "Keep watch on financial leverage.");
     }
 
-    // Extended Aligned Metrics
-    if (document.getElementById("netMarginVal")) document.getElementById("netMarginVal").innerText = `${info.profit_margins || 0}%`;
-    if (document.getElementById("opMarginVal")) document.getElementById("opMarginVal").innerText = `${info.operating_margins || 0}%`;
-    if (document.getElementById("bookVal")) document.getElementById("bookVal").innerText = `₹${info.book_value || 0}`;
+    // Extended Aligned Metrics with zero-value prevention
+    const netMarginText = (info.profit_margins && info.profit_margins !== 0) ? `${info.profit_margins}%` : '—';
+    const opMarginText = (info.operating_margins && info.operating_margins !== 0) ? `${info.operating_margins}%` : '—';
+    const bookValText = (info.book_value && info.book_value > 0) ? `₹${info.book_value}` : '—';
+    const roaText = (info.roa && info.roa > 0) ? `${info.roa}%` : '—';
+
+    if (document.getElementById("netMarginVal")) document.getElementById("netMarginVal").innerText = netMarginText;
+    if (document.getElementById("opMarginVal")) document.getElementById("opMarginVal").innerText = opMarginText;
+    if (document.getElementById("bookVal")) document.getElementById("bookVal").innerText = bookValText;
     if (document.getElementById("fcfVal")) document.getElementById("fcfVal").innerText = formatCrores(info.free_cashflow);
     if (document.getElementById("pegVal")) document.getElementById("pegVal").innerText = info.peg_ratio ? `${info.peg_ratio}x` : 'N/A';
-    if (document.getElementById("roaVal")) document.getElementById("roaVal").innerText = `${info.roa || 0}%`;
+    if (document.getElementById("roaVal")) document.getElementById("roaVal").innerText = roaText;
 
     // FinceptTerminal DCF & Graham Intrinsic Valuation Model
     if (valuation && valuation.status === "success") {
@@ -1371,194 +1673,10 @@ async function selectCommodity(symbol) {
 }
 
 // -------------------------------------------------------------------
-// Bees Strategy: NIFTYBEES vs GOLDBEES Momentum Switcher
+// Bees Strategy: Handled exclusively in /static/js/bees.js
 // -------------------------------------------------------------------
-async function loadBeesStrategy() {
-    const container = document.getElementById("beesResultsContainer");
-    if (!container) return;
 
-    container.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-12 text-[#8e8e93]">
-            <div class="w-8 h-8 border-2 border-[#007aff] border-t-transparent rounded-full animate-spin mb-3"></div>
-            <span class="text-xs font-semibold text-[#1c1c1e]">Evaluating 2-Year Trend, Momentum & 200 DMA Regime...</span>
-        </div>
-    `;
 
-    try {
-        const holding = document.getElementById("beesCurrentHolding") ? document.getElementById("beesCurrentHolding").value : "NONE";
-        const amount = document.getElementById("beesInvestmentInput") ? document.getElementById("beesInvestmentInput").value : "100000";
-
-        const res = await fetch(`/api/bees?amount=${amount}&holding=${holding}`);
-        const data = await res.json();
-
-        if (data.status !== "success") {
-            container.innerHTML = `<div class="p-6 text-center text-rose-600 bg-rose-50 rounded-2xl">Unable to evaluate Bees Strategy: ${data.message || 'Unknown error'}</div>`;
-            return;
-        }
-
-        const nb = data.niftybees;
-        const gb = data.goldbees;
-        const dep = data.deployment;
-        const rules = data.shift_rules;
-
-        container.innerHTML = `
-            <!-- 1. Executive Recommendation Hero -->
-            <div class="macos-card p-6 border-l-4" style="border-left-color: ${data.action_color || '#10b981'};">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center space-x-3.5">
-                        <span class="text-3xl">${data.action_icon || '⚖️'}</span>
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <h3 class="text-xl font-bold text-[#1c1c1e]">${data.action}</h3>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold" style="background-color: ${data.action_color}18; color: ${data.action_color};">
-                                    ${data.recommended_etf}
-                                </span>
-                            </div>
-                            <p class="text-xs text-[#6e6e73] mt-1 max-w-xl">${data.summary}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-[#8e8e93] uppercase font-bold tracking-wider block">Decision Score</span>
-                        <span class="text-2xl font-bold mono" style="color: ${data.action_color || '#10b981'};">${data.score > 0 ? '+' : ''}${data.score} / ${data.max_score}</span>
-                        <span class="text-[11px] text-[#6e6e73] block mt-0.5">${data.score_label}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Head-to-Head Comparison: NIFTYBEES vs GOLDBEES -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- NIFTYBEES Card -->
-                <div class="macos-card p-5 space-y-3 ${data.recommended_etf === 'NIFTYBEES' ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''}">
-                    <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-2.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-lg">📈</span>
-                            <div>
-                                <h4 class="font-bold text-[#1c1c1e] text-sm">${nb.name}</h4>
-                                <span class="text-[10.5px] text-[#8e8e93] font-mono">NSE: ${nb.code}</span>
-                            </div>
-                        </div>
-                        <span class="text-base font-bold mono text-[#1c1c1e]">₹${nb.price}</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">200 DMA</span>
-                            <span class="font-semibold mono ${nb.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
-                                ${nb.is_above_200 ? '✅ Above' : '❌ Below'} (₹${nb.sma200})
-                            </span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">RSI (14)</span>
-                            <span class="font-semibold mono text-[#1c1c1e]">${nb.rsi}</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">6M Return</span>
-                            <span class="font-semibold mono ${nb.ret_6m >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${nb.ret_6m > 0 ? '+' : ''}${nb.ret_6m}%</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">1Y Return</span>
-                            <span class="font-semibold mono ${nb.ret_1y >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${nb.ret_1y > 0 ? '+' : ''}${nb.ret_1y}%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GOLDBEES Card -->
-                <div class="macos-card p-5 space-y-3 ${data.recommended_etf === 'GOLDBEES' ? 'ring-2 ring-amber-500 bg-amber-50/20' : ''}">
-                    <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-2.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-lg">🥇</span>
-                            <div>
-                                <h4 class="font-bold text-[#1c1c1e] text-sm">${gb.name}</h4>
-                                <span class="text-[10.5px] text-[#8e8e93] font-mono">NSE: ${gb.code}</span>
-                            </div>
-                        </div>
-                        <span class="text-base font-bold mono text-[#1c1c1e]">₹${gb.price}</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">200 DMA</span>
-                            <span class="font-semibold mono ${gb.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
-                                ${gb.is_above_200 ? '✅ Above' : '❌ Below'} (₹${gb.sma200})
-                            </span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">RSI (14)</span>
-                            <span class="font-semibold mono text-[#1c1c1e]">${gb.rsi}</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">6M Return</span>
-                            <span class="font-semibold mono ${gb.ret_6m >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${gb.ret_6m > 0 ? '+' : ''}${gb.ret_6m}%</span>
-                        </div>
-                        <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.06)]">
-                            <span class="text-[10px] text-[#8e8e93] block">1Y Return</span>
-                            <span class="font-semibold mono ${gb.ret_1y >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${gb.ret_1y > 0 ? '+' : ''}${gb.ret_1y}%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. 20-Bullet Deployment Plan & Triggers -->
-            <div class="macos-card p-5 space-y-3">
-                <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-2.5">
-                    <h4 class="font-bold text-[#1c1c1e] text-sm flex items-center gap-2">
-                        <span>🎯</span> <span>20-Bullet Disciplined Capital Deployment Plan</span>
-                    </h4>
-                    <span class="text-xs text-[#6e6e73]">Total Capital: <strong class="text-[#1c1c1e] mono">${formatINR(dep.total_capital)}</strong> • Bullet: <strong class="text-[#1c1c1e] mono">${formatINR(dep.bullet_size)}</strong> (5%)</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left">
-                        <thead>
-                            <tr class="text-[#8e8e93] border-b border-[rgba(0,0,0,0.06)]">
-                                <th class="py-2">Bullet #</th>
-                                <th class="py-2">Trigger Condition</th>
-                                <th class="py-2">Target Price</th>
-                                <th class="py-2">Allocation</th>
-                                <th class="py-2">Units</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-[rgba(0,0,0,0.04)] font-mono">
-                            ${(dep.bullets || []).map(b => `
-                                <tr>
-                                    <td class="py-2 font-bold text-[#1c1c1e]">Bullet ${b.bullet} ${b.bullet === 1 ? '⚡ (CMP)' : ''}</td>
-                                    <td class="py-2 text-[#6e6e73]">${b.trigger}</td>
-                                    <td class="py-2 font-bold text-[#007aff]">₹${b.deploy_price}</td>
-                                    <td class="py-2 font-semibold text-[#1c1c1e]">${formatINR(b.amount)}</td>
-                                    <td class="py-2 text-[#6e6e73]">${b.units} units</td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
-                </div>
-                <p class="text-[11px] text-[#6e6e73] bg-[#f2f2f7] p-2.5 rounded-lg leading-relaxed mt-2">
-                    💡 <strong>Discipline Protocol:</strong> ${dep.rule}
-                </p>
-            </div>
-
-            <!-- 4. Regime Shift Rules -->
-            <div class="macos-card p-5 space-y-2.5">
-                <h4 class="font-bold text-[#1c1c1e] text-sm flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)] pb-2">
-                    <span>🔄</span> <span>Regime Shift & Rebalancing Protocol</span>
-                </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div class="p-3 rounded-lg bg-emerald-50/50 border border-emerald-200/60">
-                        <span class="font-bold text-emerald-800 block mb-1">When to Shift to NIFTYBEES:</span>
-                        <p class="text-[11px] text-emerald-700 leading-relaxed">${rules.switch_to_niftybees}</p>
-                    </div>
-                    <div class="p-3 rounded-lg bg-amber-50/50 border border-amber-200/60">
-                        <span class="font-bold text-amber-800 block mb-1">When to Shift to GOLDBEES:</span>
-                        <p class="text-[11px] text-amber-700 leading-relaxed">${rules.switch_to_goldbees}</p>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center text-[10.5px] text-[#8e8e93] pt-1">
-                    <span>${rules.review_frequency}</span>
-                    <span>${rules.cost_of_switching}</span>
-                </div>
-            </div>
-        `;
-    } catch (err) {
-        console.error("Error loading Bees Strategy:", err);
-        container.innerHTML = `<div class="p-6 text-center text-rose-600 bg-rose-50 rounded-2xl">Error executing Bees Strategy: ${err.message}</div>`;
-    }
-}
 
 // -------------------------------------------------------------------
 // F&O Options Dashboard
@@ -1861,9 +1979,6 @@ document.addEventListener("keydown", (e) => {
     } else if (e.key === "c" || e.key === "C") {
         e.preventDefault();
         openPositionCalcModal();
-    } else if (e.key === "d" || e.key === "D") {
-        e.preventDefault();
-        toggleDisplayDensity();
     } else if (e.key >= "1" && e.key <= "9") {
         const tabList = ["stocks", "institutional", "best-picks", "screener", "scanner", "bees", "sectors", "etf", "commodities"];
         const targetTab = tabList[parseInt(e.key, 10) - 1];
@@ -1875,45 +1990,22 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* =========================================================================
-   DISPLAY DENSITY SWITCHER (Standard vs Compact)
+   DISPLAY DENSITY (Standard Enforced as Permanent Default)
    ========================================================================= */
 function initDisplayDensity() {
-    const saved = localStorage.getItem("market_density") || "standard";
-    setDisplayDensity(saved);
+    try {
+        localStorage.removeItem("market_density");
+    } catch(e) {}
+    setDisplayDensity("standard");
 }
 
 function setDisplayDensity(mode) {
-    if (mode === "compact") {
-        document.body.classList.add("density-compact");
-        const cBtn = document.getElementById("densityCompactBtn");
-        const sBtn = document.getElementById("densityStandardBtn");
-        if (cBtn) {
-            cBtn.classList.add("bg-white", "text-[#1c1c1e]", "shadow-xs");
-            cBtn.classList.remove("text-[#6e6e73]");
-        }
-        if (sBtn) {
-            sBtn.classList.remove("bg-white", "text-[#1c1c1e]", "shadow-xs");
-            sBtn.classList.add("text-[#6e6e73]");
-        }
-    } else {
-        document.body.classList.remove("density-compact");
-        const cBtn = document.getElementById("densityCompactBtn");
-        const sBtn = document.getElementById("densityStandardBtn");
-        if (sBtn) {
-            sBtn.classList.add("bg-white", "text-[#1c1c1e]", "shadow-xs");
-            sBtn.classList.remove("text-[#6e6e73]");
-        }
-        if (cBtn) {
-            cBtn.classList.remove("bg-white", "text-[#1c1c1e]", "shadow-xs");
-            cBtn.classList.add("text-[#6e6e73]");
-        }
-    }
-    localStorage.setItem("market_density", mode);
+    // Standard is permanent default per design system
+    document.body.classList.remove("density-compact");
 }
 
 function toggleDisplayDensity() {
-    const isCompact = document.body.classList.contains("density-compact");
-    setDisplayDensity(isCompact ? "standard" : "compact");
+    setDisplayDensity("standard");
 }
 
 /* =========================================================================
@@ -2234,6 +2326,10 @@ function toggleAppTheme() {
 
 function setAppTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    if (document.body) {
+        document.body.classList.toggle("dark", theme === "dark");
+    }
     localStorage.setItem("market_theme", theme);
 
     const icon = document.getElementById("themeToggleIcon");
@@ -2245,6 +2341,7 @@ function setAppTheme(theme) {
         applyChartTheme(theme);
     }
 }
+window.setAppTheme = setAppTheme;
 window.toggleAppTheme = toggleAppTheme;
 
 /* =========================================================================
@@ -2415,7 +2512,6 @@ const COMMAND_PALETTE_ACTIONS = [
     { id: "act-theme", title: "Toggle OLED Dark / Light Mode", group: "Workstation Tools", icon: "🌓", action: () => toggleAppTheme() },
     { id: "act-calc", title: "Open Position Size & Risk Calculator", group: "Workstation Tools", icon: "🧮", action: () => openPositionCalcModal() },
     { id: "act-watchlist", title: "Toggle Watchlist Drawer (W)", group: "Workstation Tools", icon: "⭐️", action: () => toggleWatchlistDrawer() },
-    { id: "act-density", title: "Toggle Display Density (Standard / Compact)", group: "Workstation Tools", icon: "📏", action: () => toggleDisplayDensity() },
     { id: "act-rr", title: "Toggle Chart Risk/Reward Planner", group: "Workstation Tools", icon: "🎯", action: () => { switchTab("stocks"); if (typeof toggleRiskRewardPlanner === "function") toggleRiskRewardPlanner(); } },
     { id: "act-clear-recents", title: "Clear Recent Search History", group: "Workstation Tools", icon: "✕", action: () => clearSearchHistory() },
     { id: "act-shortcuts", title: "View Keyboard Shortcuts (? )", group: "Workstation Tools", icon: "⌨️", action: () => openShortcutsModal() },

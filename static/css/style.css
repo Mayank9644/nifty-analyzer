@@ -161,8 +161,8 @@ header.macos-header {
 
 /* ---- macOS Segmented Control (Tabs) ---- */
 .macos-segmented-track {
-    background: #e3e3e8 !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    background: #e2e2e7 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 9px !important;
     padding: 2.5px !important;
     display: inline-flex !important;
@@ -172,8 +172,8 @@ header.macos-header {
 
 .nav-tab-btn, .macos-segmented-item {
     font-size: 11.5px !important;
-    font-weight: 500 !important;
-    color: var(--macos-label-secondary) !important;
+    font-weight: 600 !important;
+    color: #2c2c2e !important;
     background: transparent !important;
     border: none !important;
     border-radius: 7px !important;
@@ -186,60 +186,99 @@ header.macos-header {
 
 .nav-tab-btn:hover:not(.active),
 .macos-segmented-item:hover:not(.active) {
-    color: var(--macos-label-primary) !important;
-    background: rgba(255, 255, 255, 0.45) !important;
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.6) !important;
 }
 
 .nav-tab-btn.active,
 .macos-segmented-item.active {
     background: #ffffff !important;
-    color: var(--macos-label-primary) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 2.5px rgba(0, 0, 0, 0.1), 0 0.5px 1px rgba(0, 0, 0, 0.06) !important;
+    color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 2.5px rgba(0, 0, 0, 0.12), 0 0.5px 1px rgba(0, 0, 0, 0.06) !important;
 }
 
-/* Strategy Subtab Strip */
+/* Strategy Subtab Strip Base */
 .style-btn {
     font-size: 11.5px !important;
-    font-weight: 500 !important;
-    color: var(--macos-label-secondary) !important;
-    background: transparent !important;
+    font-weight: 600 !important;
     border: none !important;
     border-radius: 6px !important;
     padding: 4px 10px !important;
     transition: all 0.15s ease !important;
     cursor: pointer !important;
 }
-.style-btn:hover:not(.active) {
-    color: var(--macos-label-primary) !important;
-    background: rgba(255, 255, 255, 0.4) !important;
+
+/* Light Mode Strategy Style Buttons */
+html[data-theme="light"] .style-btn,
+html:not(.dark) .style-btn {
+    color: #2c2c2e !important;
+    background: transparent !important;
 }
-.style-btn.active {
+html[data-theme="light"] .style-btn:hover:not(.active),
+html:not(.dark) .style-btn:hover:not(.active) {
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+html[data-theme="light"] .style-btn.active,
+html:not(.dark) .style-btn.active {
     background: #ffffff !important;
-    color: var(--macos-label-primary) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+    color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Period Buttons on Chart */
 .period-btn {
     font-size: 11.5px !important;
     font-weight: 500 !important;
-    color: var(--macos-label-secondary) !important;
-    background: transparent !important;
+    border: none !important;
     border-radius: 6px !important;
-    padding: 3.5px 9px !important;
-    transition: all 0.15s ease !important;
+    padding: 3.5px 8px !important;
+    min-width: 34px !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    user-select: none !important;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+    cursor: pointer !important;
 }
-.period-btn:hover:not(.active) {
-    color: var(--macos-label-primary) !important;
-    background: rgba(255, 255, 255, 0.4) !important;
+html[data-theme="light"] .period-btn,
+html:not(.dark) .period-btn {
+    color: #48484a !important;
+    background: transparent !important;
 }
-.period-btn.active {
+html[data-theme="light"] .period-btn:hover:not(.active),
+html:not(.dark) .period-btn:hover:not(.active) {
+    color: #000000 !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+html[data-theme="light"] .period-btn.active,
+html:not(.dark) .period-btn.active {
     background: #ffffff !important;
-    color: var(--macos-label-primary) !important;
+    color: #007aff !important;
     font-weight: 600 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="dark"] .period-btn,
+html.dark .period-btn {
+    color: #aeaeb2 !important;
+    background: transparent !important;
+}
+html[data-theme="dark"] .period-btn:hover:not(.active),
+html.dark .period-btn:hover:not(.active) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+html[data-theme="dark"] .period-btn.active,
+html.dark .period-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 122, 255, 0.4) !important;
 }
 
 /* ---- macOS Spotlight Search Field (Enlarged) ---- */
@@ -629,16 +668,67 @@ kbd.macos-kbd {
     border-color: #3b3f54;
 }
 
+html[data-theme="dark"] .macos-segmented-track,
+html.dark .macos-segmented-track,
 [data-theme="dark"] .macos-segmented-track {
-    background: #1b1e2b !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: #151722 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
-[data-theme="dark"] .nav-tab-btn.active,
-[data-theme="dark"] .macos-segmented-item.active {
-    background: #2b2f42 !important;
+html[data-theme="dark"] .nav-tab-btn,
+html.dark .nav-tab-btn,
+[data-theme="dark"] .nav-tab-btn,
+html[data-theme="dark"] .macos-segmented-item,
+html.dark .macos-segmented-item,
+[data-theme="dark"] .macos-segmented-item {
+    color: #e5e5ea !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] .nav-tab-btn:hover:not(.active),
+html.dark .nav-tab-btn:hover:not(.active),
+[data-theme="dark"] .nav-tab-btn:hover:not(.active),
+html[data-theme="dark"] .macos-segmented-item:hover:not(.active),
+html.dark .macos-segmented-item:hover:not(.active),
+[data-theme="dark"] .macos-segmented-item:hover:not(.active) {
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .nav-tab-btn.active,
+html.dark .nav-tab-btn.active,
+[data-theme="dark"] .nav-tab-btn.active,
+html[data-theme="dark"] .macos-segmented-item.active,
+html.dark .macos-segmented-item.active,
+[data-theme="dark"] .macos-segmented-item.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4) !important;
+}
+
+html[data-theme="dark"] .style-btn,
+html.dark .style-btn,
+[data-theme="dark"] .style-btn {
+    color: #e5e5ea !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] .style-btn:hover:not(.active),
+html.dark .style-btn:hover:not(.active),
+[data-theme="dark"] .style-btn:hover:not(.active) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .style-btn.active,
+html.dark .style-btn.active,
+[data-theme="dark"] .style-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4) !important;
 }
 
 [data-theme="dark"] .macos-card {
@@ -930,18 +1020,15 @@ kbd.macos-kbd {
 .subdesk-track {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     flex-wrap: wrap !important;
 }
 
 .subdesk-btn, .nav-tab-btn {
     font-size: 11.5px !important;
-    font-weight: 500 !important;
-    color: var(--macos-label-secondary) !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
+    font-weight: 600 !important;
     border-radius: 7px !important;
-    padding: 3.5px 10px !important;
+    padding: 4px 11px !important;
     transition: all 0.15s ease !important;
     cursor: pointer !important;
     display: inline-flex !important;
@@ -950,17 +1037,32 @@ kbd.macos-kbd {
     user-select: none;
 }
 
-.subdesk-btn:hover:not(.active), .nav-tab-btn:hover:not(.active) {
-    color: var(--macos-label-primary) !important;
-    background: rgba(0, 0, 0, 0.05) !important;
+html[data-theme="light"] .subdesk-btn,
+html:not(.dark) .subdesk-btn,
+html[data-theme="light"] .nav-tab-btn,
+html:not(.dark) .nav-tab-btn {
+    color: #2c2c2e !important;
+    background: #ededf2 !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
 }
 
-.subdesk-btn.active, .nav-tab-btn.active {
-    background: #ffffff !important;
-    color: var(--macos-blue) !important;
-    border-color: rgba(0, 122, 255, 0.22) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+html[data-theme="light"] .subdesk-btn:hover:not(.active),
+html:not(.dark) .subdesk-btn:hover:not(.active),
+html[data-theme="light"] .nav-tab-btn:hover:not(.active),
+html:not(.dark) .nav-tab-btn:hover:not(.active) {
+    color: #000000 !important;
+    background: #e2e2e7 !important;
+}
+
+html[data-theme="light"] .subdesk-btn.active,
+html:not(.dark) .subdesk-btn.active,
+html[data-theme="light"] .nav-tab-btn.active,
+html:not(.dark) .nav-tab-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    border-color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 4px rgba(0, 122, 255, 0.35) !important;
 }
 
 /* Standardized Component Buttons (Linear / Apple HIG) */
@@ -1088,23 +1190,39 @@ kbd.macos-kbd {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
 }
 
+html[data-theme="dark"] .subdesk-btn,
+html.dark .subdesk-btn,
 [data-theme="dark"] .subdesk-btn,
+html[data-theme="dark"] .nav-tab-btn,
+html.dark .nav-tab-btn,
 [data-theme="dark"] .nav-tab-btn {
-    color: #a1a1a6 !important;
+    color: #e5e5ea !important;
+    background: #1f2230 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    font-weight: 600 !important;
 }
 
+html[data-theme="dark"] .subdesk-btn:hover:not(.active),
+html.dark .subdesk-btn:hover:not(.active),
 [data-theme="dark"] .subdesk-btn:hover:not(.active),
+html[data-theme="dark"] .nav-tab-btn:hover:not(.active),
+html.dark .nav-tab-btn:hover:not(.active),
 [data-theme="dark"] .nav-tab-btn:hover:not(.active) {
-    color: #f5f5f7 !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    background: #2a2e40 !important;
 }
 
+html[data-theme="dark"] .subdesk-btn.active,
+html.dark .subdesk-btn.active,
 [data-theme="dark"] .subdesk-btn.active,
+html[data-theme="dark"] .nav-tab-btn.active,
+html.dark .nav-tab-btn.active,
 [data-theme="dark"] .nav-tab-btn.active {
-    background: #1c1f2e !important;
-    color: #409cff !important;
-    border-color: rgba(64, 156, 255, 0.4) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    background: #007aff !important;
+    color: #ffffff !important;
+    border-color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4) !important;
 }
 
 [data-theme="dark"] .btn-broker {
@@ -1117,9 +1235,17 @@ kbd.macos-kbd {
     background: rgba(10, 132, 255, 0.25) !important;
 }
 
+html[data-theme="dark"] #subDeskContainer,
+html.dark #subDeskContainer,
 [data-theme="dark"] #subDeskContainer {
-    background-color: #0e1017 !important;
-    border-color: rgba(255, 255, 255, 0.06) !important;
+    background-color: #13151f !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme="dark"] #activeWorkspaceBreadcrumb,
+html.dark #activeWorkspaceBreadcrumb,
+[data-theme="dark"] #activeWorkspaceBreadcrumb {
+    color: #a1a1a6 !important;
 }
 
 [data-theme="dark"] #moreDesksDropdown {
@@ -1261,3 +1387,303 @@ kbd.macos-kbd {
         border-radius: 12px !important;
     }
 }
+
+/* ============================================================
+   PILLAR 19: INSTITUTIONAL MASTER OMNI-BAR & CONTEXTUAL DRAWER
+   ============================================================ */
+
+/* 56px Master Omni-Bar */
+.omni-bar-header {
+    height: 56px !important;
+    min-height: 56px !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Master Workspace Segmented Pills */
+#masterWorkspaceTrack {
+    background: #e2e2e7 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+html[data-theme="dark"] #masterWorkspaceTrack,
+html.dark #masterWorkspaceTrack,
+[data-theme="dark"] #masterWorkspaceTrack {
+    background: #151722 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.workspace-pill {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 5px 12px !important;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    user-select: none;
+}
+
+/* Light Mode Workspace Pills */
+html[data-theme="light"] #masterWorkspaceTrack .workspace-pill,
+html:not(.dark) #masterWorkspaceTrack .workspace-pill,
+html[data-theme="light"] .workspace-pill,
+html:not(.dark) .workspace-pill {
+    color: #2c2c2e !important;
+    background: transparent !important;
+}
+
+html[data-theme="light"] #masterWorkspaceTrack .workspace-pill:hover:not(.active),
+html:not(.dark) #masterWorkspaceTrack .workspace-pill:hover:not(.active),
+html[data-theme="light"] .workspace-pill:hover:not(.active),
+html:not(.dark) .workspace-pill:hover:not(.active) {
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+}
+
+html[data-theme="light"] #masterWorkspaceTrack .workspace-pill.active,
+html:not(.dark) #masterWorkspaceTrack .workspace-pill.active,
+html[data-theme="light"] .workspace-pill.active,
+html:not(.dark) .workspace-pill.active {
+    background: #ffffff !important;
+    color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0.5px 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dark Mode Workspace Pills */
+html[data-theme="dark"] #masterWorkspaceTrack .workspace-pill,
+html.dark #masterWorkspaceTrack .workspace-pill,
+[data-theme="dark"] #masterWorkspaceTrack .workspace-pill,
+html[data-theme="dark"] .workspace-pill,
+html.dark .workspace-pill,
+[data-theme="dark"] .workspace-pill {
+    color: #e5e5ea !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] #masterWorkspaceTrack .workspace-pill:hover:not(.active),
+html.dark #masterWorkspaceTrack .workspace-pill:hover:not(.active),
+[data-theme="dark"] #masterWorkspaceTrack .workspace-pill:hover:not(.active),
+html[data-theme="dark"] .workspace-pill:hover:not(.active),
+html.dark .workspace-pill:hover:not(.active),
+[data-theme="dark"] .workspace-pill:hover:not(.active) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] #masterWorkspaceTrack .workspace-pill.active,
+html.dark #masterWorkspaceTrack .workspace-pill.active,
+[data-theme="dark"] #masterWorkspaceTrack .workspace-pill.active,
+html[data-theme="dark"] .workspace-pill.active,
+html.dark .workspace-pill.active,
+[data-theme="dark"] .workspace-pill.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.45) !important;
+}
+
+/* Picks Filter Bar Segmented Pills */
+.picks-filter-btn {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 5px 12px !important;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    user-select: none;
+}
+
+/* Light Mode Picks Filter Buttons */
+html[data-theme="light"] .picks-filter-btn,
+html:not(.dark) .picks-filter-btn {
+    color: #2c2c2e !important;
+    background: transparent !important;
+}
+
+html[data-theme="light"] .picks-filter-btn:hover:not(.active),
+html:not(.dark) .picks-filter-btn:hover:not(.active) {
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+}
+
+html[data-theme="light"] .picks-filter-btn.active,
+html:not(.dark) .picks-filter-btn.active {
+    background: #ffffff !important;
+    color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0.5px 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dark Mode Picks Filter Buttons */
+html[data-theme="dark"] .picks-filter-btn,
+html.dark .picks-filter-btn,
+[data-theme="dark"] .picks-filter-btn {
+    color: #e5e5ea !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] .picks-filter-btn:hover:not(.active),
+html.dark .picks-filter-btn:hover:not(.active),
+[data-theme="dark"] .picks-filter-btn:hover:not(.active) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .picks-filter-btn.active,
+html.dark .picks-filter-btn.active,
+[data-theme="dark"] .picks-filter-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.45) !important;
+}
+
+/* Visual Execution Band */
+.execution-band-track {
+    background: linear-gradient(90deg, rgba(217, 56, 58, 0.08) 0%, rgba(0, 122, 255, 0.06) 50%, rgba(40, 167, 69, 0.08) 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+}
+
+[data-theme="dark"] .execution-band-track {
+    background: linear-gradient(90deg, rgba(255, 69, 58, 0.15) 0%, rgba(10, 132, 255, 0.12) 50%, rgba(48, 209, 88, 0.15) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Contextual Slide-Over Drawer */
+.context-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 45;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.context-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 680px;
+    background: var(--macos-card) !important;
+    border-left: 1px solid var(--macos-border-strong);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.18);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    animation: drawerSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawerSlideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.context-drawer.hidden, .context-drawer-backdrop.hidden {
+    display: none !important;
+}
+
+.drawer-tab-btn {
+    color: var(--macos-label-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.drawer-tab-btn:hover {
+    color: var(--macos-label-primary);
+}
+
+html[data-theme="light"] .drawer-tab-btn.active,
+html:not(.dark) .drawer-tab-btn.active {
+    background: #ffffff !important;
+    color: #007aff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="dark"] .drawer-tab-btn.active,
+html.dark .drawer-tab-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4) !important;
+}
+
+.context-drawer-btn {
+    transition: all 0.15s ease;
+}
+
+.context-drawer-btn:hover {
+    border-color: #007aff !important;
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .context-drawer-btn {
+    background: #1f2230 !important;
+    color: #e5e5ea !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .context-drawer-btn:hover {
+    background: #2a2e40 !important;
+    color: #ffffff !important;
+    border-color: #007aff !important;
+}
+
+/* Chart Engine & Type Switchers High Contrast */
+.chart-engine-btn, .chart-type-btn {
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.chart-engine-btn.active, .chart-type-btn.active {
+    background: #ffffff !important;
+    color: #007aff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .chart-engine-btn,
+[data-theme="dark"] .chart-type-btn {
+    color: #e5e5ea !important;
+}
+
+[data-theme="dark"] .chart-engine-btn.active,
+[data-theme="dark"] .chart-type-btn.active {
+    background: #007aff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 4px rgba(0, 122, 255, 0.4);
+}
+
+
+

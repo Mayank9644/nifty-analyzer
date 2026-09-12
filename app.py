@@ -9,7 +9,7 @@ import yfinance as yf
 
 from config import PORT, HOST, DEFAULT_BENCHMARK, DEFAULT_BANKNIFTY
 from data.stock_list import ALL_STOCKS, ALL_ASSETS, POPULAR_ETFS, POPULAR_BONDS, NIFTY_50_STOCKS, COMMODITIES_LIST, FNO_INDICES, SECTORS
-from data.fetcher import get_stock_history, format_chart_data, get_stock_info, get_shareholding
+from data.fetcher import get_stock_history, format_chart_data, get_stock_info, get_shareholding, search_stocks, clear_stock_cache
 from data.commodity_fetcher import (
     get_commodity_info,
     get_all_commodities_overview,
@@ -29,7 +29,21 @@ from analysis.scanner import scan_alpha_momentum
 from analysis.sectors import analyze_all_sectors
 from analysis.etf import run_etf_screener
 from analysis.breadth import calculate_market_breadth
-from analysis.journal import add_trade, get_active_trades, close_trade, get_journal_stats, get_journal_analytics
+from analysis.journal import (
+    add_trade,
+    get_active_trades,
+    close_trade,
+    get_journal_stats,
+    get_journal_analytics,
+    get_journal_etf_status,
+    clear_journal,
+    get_trade_recommendation,
+    update_trade_details,
+    execute_partial_exit,
+    auto_calculate_risk_parameters,
+    bulk_import_trades_from_csv,
+    get_active_portfolio_summary
+)
 from data.database import db_get_active_trades, db_get_all_trades
 from analysis.backtest import run_strategy_backtest
 from analysis.screener import run_stock_screener
@@ -46,6 +60,14 @@ from data.market_schedule import get_market_status
 from analysis.intrinsic_valuation import calculate_intrinsic_valuation
 from data.cache_warmer import get_warmed_stock, set_warmed_stock, start_cache_warmer, get_cache_stats
 from data.institutional_flow import get_fii_dii_daily_flow, get_delivery_volume_analysis
+from analysis.recommendations import get_best_recommendations
+from analysis.bees_strategy import evaluate_single_etf_strategy
+from analysis.position_advisor import analyze_position
+from data.context import (
+    GlobalMarketFeedManager,
+    evaluate_security_unified,
+    compute_antigravity_risk_metrics
+)
 
 import csv
 import io
@@ -85,28 +107,32 @@ app.json = SafeJSONProvider(app)
 # Initialize HTTP Gzip & Brotli compression
 Compress(app)
 
-# Dedicated in-memory cache for benchmark index (15-min TTL) to eliminate repeated queries
-_benchmark_cache = TTLCache(maxsize=10, ttl=900)
-
 def get_cached_benchmark_history(benchmark_sym, period="1y", interval="1d"):
     """Caches benchmark index history to avoid redundant multi-megabyte queries on every stock lookup."""
-    cache_key = f"{benchmark_sym}_{period}_{interval}"
-    if cache_key in _benchmark_cache:
-        return _benchmark_cache[cache_key].copy()
-    try:
-        df = get_stock_history(benchmark_sym, period=period, interval=interval)
-        if df is not None and not df.empty:
-            _benchmark_cache[cache_key] = df
-            return df
-    except Exception:
-        pass
-    return pd.DataFrame()
+    return GlobalMarketFeedManager.get_instance().get_benchmark_context(benchmark_sym, period=period, interval=interval).df
+
+
+# Shared thread pool for concurrent stock bundle data fetching (eliminates per-request thread churn)
+_STOCK_BUNDLE_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=10,
+    thread_name_prefix="StockBundleWorker"
+)
 
 
 @app.route("/")
 def index():
     """Serve the primary dashboard user interface."""
     return render_template("index.html")
+
+
+@app.route("/health")
+def api_health():
+    """Lightweight health check endpoint for Render and cloud deployment probes."""
+    return jsonify({
+        "status": "healthy",
+        "service": "nifty-analyzer",
+        "cache_status": "active"
+    }), 200
 
 
 @app.route("/api/stocks/list")
@@ -128,7 +154,6 @@ def api_stocks_list():
 def api_stocks_search():
     """Dynamic search across all Indian stocks on NSE/BSE."""
     q = request.args.get("q", "").strip()
-    from data.fetcher import search_stocks
     results = search_stocks(q)
     return jsonify({"status": "success", "results": results})
 
@@ -140,7 +165,6 @@ def api_market_overview():
     """
     refresh = request.args.get("refresh", "false").lower() == "true"
     if refresh:
-        from data.fetcher import clear_stock_cache
         clear_stock_cache()
 
     try:
@@ -194,108 +218,8 @@ def api_market_status():
 
 
 def fetch_stock_bundle_data(symbol: str, style: str = "swing", period: str = "1y", interval: str = "1d", bundle: bool = True) -> dict:
-    """Fetch complete stock data package, calculating technicals, fundamentals, DCF, and delivery."""
-    # Concurrent parallel fetching of core stock data and benchmark history
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_info = executor.submit(get_stock_info, symbol)
-        future_sh = executor.submit(get_shareholding, symbol)
-        future_hist = executor.submit(get_stock_history, symbol, period=period, interval=interval)
-        future_bench = executor.submit(get_cached_benchmark_history, DEFAULT_BENCHMARK, period=period, interval=interval)
-        future_news = executor.submit(get_stock_news, symbol) if bundle else None
-
-        info = future_info.result()
-        shareholding = future_sh.result()
-        history_df = future_hist.result()
-        nifty_history = future_bench.result()
-        news_articles = future_news.result() if future_news else None
-
-    # 1. Fundamentals & Technicals
-    fundamentals = evaluate_fundamentals(info, shareholding)
-    technicals = analyze_technicals(history_df)
-
-    # 2. Signals tailored to trading style
-    signals = generate_signals(
-        info=info,
-        technicals=technicals,
-        fundamentals=fundamentals,
-        shareholding=shareholding,
-        style=style
-    )
-
-    # 3. Expert strategies scoring
-    strategies = score_expert_strategies(
-        info=info,
-        technicals=technicals,
-        fundamentals=fundamentals,
-        shareholding=shareholding
-    )
-
-    # 4. Trading style configuration
-    style_info = get_style_config(style)
-
-    # 5. Relative Strength & Minervini Stage 2 Template
-    relative_strength = {}
-    minervini = {}
-    vcp = {}
-    try:
-        if not history_df.empty and not nifty_history.empty:
-            relative_strength = calculate_mansfield_rs(history_df["Close"], nifty_history["Close"])
-            minervini = evaluate_minervini_trend_template(history_df, rs_score=relative_strength.get("rs_rating", 75))
-            vcp = detect_vcp_pattern(history_df)
-    except Exception:
-        pass
-
-    # 6. Multi-Timeframe Trend Confluence
-    mtf = {}
-    try:
-        mtf = evaluate_multitimeframe_confluence(symbol, daily_df=history_df)
-    except Exception:
-        pass
-
-    # 7. FinceptTerminal DCF & Graham Intrinsic Valuation
-    valuation = calculate_intrinsic_valuation(info)
-
-    # 8. NSE Delivery Volume & Institutional Accumulation
-    delivery = get_delivery_volume_analysis(symbol, history_df, info)
-
-    # 9. Indicator Time-Series for Synchronized Sub-Charts (RSI, MACD)
-    indicator_series = calculate_indicator_series(history_df)
-
-    response_payload = {
-        "status": "success",
-        "info": info,
-        "fundamentals": fundamentals,
-        "valuation": valuation,
-        "shareholding": shareholding,
-        "technicals": technicals,
-        "signals": signals,
-        "strategies": strategies,
-        "style_info": style_info,
-        "relative_strength": relative_strength,
-        "minervini": minervini,
-        "vcp": vcp,
-        "mtf": mtf,
-        "delivery": delivery,
-        "indicator_series": indicator_series
-    }
-
-    # Optional single-roundtrip bundle for high-efficiency client loading
-    if bundle:
-        response_payload["chart"] = {
-            "status": "success",
-            "symbol": symbol,
-            "period": period,
-            "interval": interval,
-            "candles": format_chart_data(history_df),
-            "indicator_series": indicator_series
-        }
-        response_payload["news"] = {
-            "status": "success",
-            "symbol": symbol,
-            "articles": news_articles or []
-        }
-
-    return response_payload
+    """Fetch complete stock data package with pooled concurrency and Antigravity metrics."""
+    return evaluate_security_unified(symbol, style=style, period=period, interval=interval, bundle=bundle)
 
 
 @app.route("/api/stock/<symbol>")
@@ -317,7 +241,6 @@ def api_stock_detail(symbol: str):
     bundle = request.args.get("bundle", "false").lower() == "true"
 
     if refresh:
-        from data.fetcher import clear_stock_cache
         clear_stock_cache(symbol)
 
     if not refresh and period == "1y" and interval == "1d":
@@ -334,76 +257,33 @@ def api_stock_detail(symbol: str):
         print(f"Error in api_stock_detail for {symbol}: {e}")
         try:
             info = get_stock_info(symbol)
+            price = float(info.get("current_price") or info.get("previous_close") or 0.0)
+            if price > 0:
+                return jsonify({
+                    "status": "partial",
+                    "warning": "Detailed historical technicals temporarily paused; live quotes active.",
+                    "info": info,
+                    "signals": None,
+                    "technicals": None,
+                    "fundamentals": None,
+                    "strategies": [],
+                    "style_info": get_style_config(style),
+                    "relative_strength": None,
+                    "minervini": None,
+                    "vcp": None,
+                    "mtf": None,
+                    "antigravity_risk": None
+                })
         except Exception:
-            info = {
-                "symbol": symbol,
-                "name": symbol,
-                "current_price": 100.0,
-                "previous_close": 100.0,
-                "day_change": 0.0,
-                "day_change_pct": 0.0,
-                "sector": "Diversified",
-                "industry": "Diversified",
-                "market_cap": 0
-            }
-        price = float(info.get("current_price") or 100.0)
-        return jsonify({
-            "status": "success",
-            "info": info,
-            "fundamentals": {
-                "grade": "B",
-                "score": 60,
-                "color": "#007aff",
-                "rating": "Sound Fundamental Baseline",
-                "summary": "Core metrics calculated with defensive market defaults.",
-                "piotroski_f_score": {"score": 6, "color": "#10b981", "grade": "Moderate Health", "verdict": "Financial foundation is sound."},
-                "altman_z_score": {"z_score": 2.8, "color": "#007aff", "zone": "Safe Zone", "summary": "Low financial distress risk."}
-            },
-            "valuation": calculate_intrinsic_valuation(info),
-            "shareholding": {"promoter": 50, "fii": 20, "dii": 15, "public": 15, "pledged": 0},
-            "technicals": {
-                "rsi": 50.0,
-                "rsi_signal": "Neutral (50.0)",
-                "trend": "Rangebound",
-                "trend_icon": "➡️",
-                "trend_color": "#6e6e73",
-                "indicators": {}
-            },
-            "signals": {
-                "signal": "HOLD",
-                "badge_class": "badge-neutral",
-                "icon": "⏳",
-                "confidence": 60,
-                "score": 50,
-                "risk_reward_ratio": "1 : 1.5",
-                "risk_profile": "MODERATE RISK",
-                "layman_summary": f"Stock is consolidating around ₹{price:.2f}. Awaiting definitive trend breakout.",
-                "trade_plan": {
-                    "entry_label": "Accumulate on pullbacks",
-                    "entry_price": f"₹{price * 0.98:.2f}",
-                    "stop_loss": f"₹{price * 0.95:.2f}",
-                    "stop_loss_pct": "3.0%",
-                    "target_1": f"₹{price * 1.05:.2f}",
-                    "target_1_pct": "+5.0%",
-                    "target_2": f"₹{price * 1.10:.2f}",
-                    "target_2_pct": "+10.0%",
-                    "position_sizing": calculate_position_size(price, price * 0.95)
-                }
-            },
-            "strategies": [],
-            "style_info": get_style_config(style),
-            "relative_strength": {"rs_rating": 75, "rating_color": "#007aff", "summary": "Mansfield Relative Strength vs Nifty"},
-            "minervini": {},
-            "vcp": {},
-            "mtf": {}
-        })
+            pass
+        return jsonify({"status": "error", "message": f"Unable to fetch market data for {symbol}: {str(e)}"}), 500
 
 
 @app.route("/api/stock/<symbol>/valuation")
 def api_stock_valuation(symbol: str):
     """Return FinceptTerminal-inspired 2-stage DCF, Graham Number, and Margin of Safety."""
-    info = get_stock_info(symbol)
-    valuation = calculate_intrinsic_valuation(info)
+    ctx = GlobalMarketFeedManager.get_instance().get_market_data_context(symbol)
+    valuation = calculate_intrinsic_valuation(ctx.info)
     return jsonify({
         "status": "success",
         "symbol": symbol,
@@ -418,7 +298,9 @@ def api_stock_chart(symbol: str):
     interval = request.args.get("interval", "1d")
 
     try:
-        df = get_stock_history(symbol, period=period, interval=interval)
+        from data.fetcher import resolve_symbol
+        resolved = resolve_symbol(symbol)
+        df = get_stock_history(resolved, period=period, interval=interval)
         chart_data = format_chart_data(df)
         indicator_series = calculate_indicator_series(df)
         return jsonify({
@@ -438,20 +320,14 @@ def api_stock_signals(symbol: str):
     """Dynamic signal recalculation when user switches trading styles."""
     style = request.args.get("style", "swing")
     try:
-        info = get_stock_info(symbol)
-        shareholding = get_shareholding(symbol)
-        fundamentals = evaluate_fundamentals(info, shareholding)
-        history_df = get_stock_history(symbol, period="1y", interval="1d")
-        technicals = analyze_technicals(history_df)
-
-        signals = generate_signals(
-            info=info,
-            technicals=technicals,
-            fundamentals=fundamentals,
-            shareholding=shareholding,
-            style=style
-        )
-        return jsonify({"status": "success", "signals": signals, "style": get_style_config(style)})
+        ctx = GlobalMarketFeedManager.get_instance().get_market_data_context(symbol)
+        eval_res = evaluate_security_unified(ctx, style=style, bundle=False)
+        return jsonify({
+            "status": "success",
+            "signals": eval_res["signals"],
+            "style": eval_res["style_info"],
+            "broker_ticket": eval_res.get("broker_ticket")
+        })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -651,10 +527,68 @@ def api_breadth():
 
 @app.route("/api/journal/active")
 def api_journal_active():
-    """Active trades with real-time P&L tracking."""
+    """Active trades with real-time P&L tracking and high-level portfolio KPI summary."""
     try:
         trades = get_active_trades()
-        return jsonify({"status": "success", "trades": trades})
+        summary = get_active_portfolio_summary()
+        return jsonify({"status": "success", "trades": trades, "portfolio_summary": summary})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/edit/<trade_id>", methods=["POST"])
+def api_journal_edit(trade_id: str):
+    """Updates fields of an active trade in the journal."""
+    try:
+        data = request.get_json() or {}
+        res = update_trade_details(trade_id, data)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/partial-exit/<trade_id>", methods=["POST"])
+def api_journal_partial_exit(trade_id: str):
+    """Executes a partial or full scale-out of an active trade."""
+    try:
+        data = request.get_json() or {}
+        exit_qty = data.get("exit_qty")
+        exit_price = data.get("exit_price")
+        exit_tags = data.get("exit_tags")
+        res = execute_partial_exit(trade_id, exit_qty=exit_qty, exit_price=exit_price, exit_tags=exit_tags)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/auto-risk", methods=["POST"])
+def api_journal_auto_risk():
+    """Automatically computes and sets Stop Loss & Targets for trades with SL=0."""
+    try:
+        data = request.get_json() or {}
+        trade_id = data.get("trade_id")
+        res = auto_calculate_risk_parameters(trade_id=trade_id)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/import", methods=["POST"])
+def api_journal_import():
+    """Bulk imports trades from CSV text or uploaded file."""
+    try:
+        csv_text = ""
+        if "file" in request.files:
+            file = request.files["file"]
+            csv_text = file.read().decode("utf-8", errors="ignore")
+        elif request.is_json:
+            data = request.get_json() or {}
+            csv_text = data.get("csv_text", "")
+        else:
+            csv_text = request.form.get("csv_text", "")
+
+        res = bulk_import_trades_from_csv(csv_text)
+        return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -731,7 +665,6 @@ def api_backtest():
 def api_recommendations():
     """Curated best shares and ETFs to trade right now."""
     try:
-        from analysis.recommendations import get_best_recommendations
         capital = float(request.args.get("capital", 1000000.0))
         refresh = request.args.get("refresh", "0").lower() in ("1", "true", "yes")
         res = get_best_recommendations(capital=capital, force_refresh=refresh)
@@ -746,11 +679,24 @@ def api_recommendations():
 def api_bees():
     """NIFTYBEES vs GOLDBEES single-ETF momentum switcher & 20-bullet deployment engine."""
     try:
-        from analysis.bees_strategy import evaluate_single_etf_strategy
         investment = float(request.args.get("amount", 100000.0))
         current_holding = request.args.get("holding", "NONE").upper()
         res = evaluate_single_etf_strategy(investment_amount=investment, current_holding=current_holding)
+        try:
+            res["journal_etf_status"] = get_journal_etf_status()
+        except Exception:
+            res["journal_etf_status"] = None
         return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/etf/journal-status")
+def api_etf_journal_status():
+    """Returns the user's active ETF journal holdings, allocation weights, and dynamic shift recommendations."""
+    try:
+        status_data = get_journal_etf_status()
+        return jsonify(status_data)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -760,7 +706,6 @@ def api_journal_manual():
     """Add a manually entered previous/current position to the journal."""
     try:
         data = request.get_json() or {}
-        from analysis.journal import add_trade
         trade = add_trade(
             symbol=data.get("symbol", "RELIANCE.NS"),
             entry_price=float(data.get("entry_price", 0)),
@@ -778,11 +723,37 @@ def api_journal_manual():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/api/journal/reset", methods=["POST"])
+def api_journal_reset():
+    """Resets the Trade Journal and clears realized P&L based on requested scope ('all', 'closed', 'active')."""
+    try:
+        data = request.get_json(silent=True) or {}
+        scope = data.get("scope", "all").strip().lower()
+        if scope not in ("all", "closed", "active"):
+            scope = "all"
+        result = clear_journal(scope=scope)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/recommendation")
+def api_journal_recommendation():
+    """Returns smart trade recommendations (CMP, SL, Target 1, Target 2, Style, Sizing) for any Stock or ETF."""
+    symbol = request.args.get("symbol", "").strip()
+    if not symbol:
+        return jsonify({"status": "error", "message": "Symbol parameter is required"}), 400
+    try:
+        data = get_trade_recommendation(symbol)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route("/api/journal/<trade_id>/advice")
 def api_journal_advice(trade_id):
     """Deep multi-factor position analysis — BUY MORE / HOLD / PARTIAL EXIT / SELL."""
     try:
-        from analysis.position_advisor import analyze_position
         trades = db_get_active_trades()
         trade = next((t for t in trades if t["id"] == trade_id), None)
         if not trade:
@@ -977,21 +948,23 @@ start_cache_warmer(fetch_stock_bundle_data)
 def _prewarm_recommendations_and_screener():
     import time
     time.sleep(1.5)
+    print("⚡ Pre-warming institutional cache for Recommendations, Screener, and ETFs...")
     try:
-        from analysis.recommendations import get_best_recommendations
         get_best_recommendations()
-    except Exception:
-        pass
+        print("  ✓ Best Picks cache warmed")
+    except Exception as e:
+        print(f"  ✗ Best Picks warmup error: {e}")
     try:
-        from analysis.screener import run_stock_screener
         run_stock_screener(golden_cross_only=True, rsi_min=35, rsi_max=80, roe_min=10)
-    except Exception:
-        pass
+        print("  ✓ Screener cache warmed")
+    except Exception as e:
+        print(f"  ✗ Screener warmup error: {e}")
     try:
-        from analysis.etf import run_etf_screener
         run_etf_screener()
-    except Exception:
-        pass
+        print("  ✓ ETF engine warmed")
+    except Exception as e:
+        print(f"  ✗ ETF warmup error: {e}")
+    print("⚡ Institutional cache pre-warming complete.")
 
 
 import threading

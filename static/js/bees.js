@@ -6,6 +6,11 @@
 
 let _beesCurrentHolding = "NONE";
 
+function fmtBeesPrice(val, decimals = 2) {
+    if (val === null || val === undefined || isNaN(val)) return "—";
+    return Number(val).toFixed(decimals);
+}
+
 async function loadBeesStrategy() {
     const container = document.getElementById("beesResultsContainer");
     const amountInput = document.getElementById("beesInvestmentInput");
@@ -44,12 +49,208 @@ function renderBeesUI(data) {
     const dep = data.deployment;
     const isNifty = data.recommended_etf === "NIFTYBEES";
     const etf = isNifty ? n : g;
+    const guide = data.simple_holding_guide || {};
+    const journalEtf = data.journal_etf_status || null;
 
     container.innerHTML = `
     <div class="space-y-6">
 
+        <!-- 1. EXECUTIVE "WHAT TO HOLD & WHEN TO SELL" DECISION HUB -->
+        <div class="macos-card p-6 space-y-5 border-2 ${isNifty ? 'border-[#10b981]/40' : 'border-[#f59e0b]/40'} bg-gradient-to-br ${isNifty ? 'from-white via-[#edf7ee]/25 to-white' : 'from-white via-[#fef6ed]/25 to-white'}">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${isNifty ? 'bg-[#10b981] text-white' : 'bg-[#f59e0b] text-white'}">
+                            ${guide.current_stance || ('CURRENT STANCE: HOLD ' + data.recommended_etf)}
+                        </span>
+                        <span class="text-xs font-semibold text-[#86868b]">Simplified ETF Holding Guide</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>${guide.stance_icon || (isNifty ? '🇮🇳' : '🥇')}</span>
+                        <span>${guide.hero_title || (isNifty ? 'Equities Leading Market (Bullish Uptrend)' : 'Gold Safe-Haven Leading (Defensive Regime)')}</span>
+                    </h2>
+                </div>
+                <div class="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[rgba(0,0,0,0.08)] shadow-sm">
+                    <div class="text-right text-xs">
+                        <span class="text-[10px] text-[#86868b] block font-medium uppercase tracking-wider">Live Prices (Max 2 Decimals)</span>
+                        <span class="font-bold mono text-[#1c1c1e]">NIFTYBEES ₹${fmtBeesPrice(n.price)}</span>
+                        <span class="text-[#86868b] mx-1">|</span>
+                        <span class="font-bold mono text-[#8a4500]">GOLDBEES ₹${fmtBeesPrice(g.price)}</span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- SHIFT ALERT (if holding different ETF) -->
+            <!-- 3 Plain-English Decision Pillars -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <!-- Pillar 1: What to Hold -->
+                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-[#10b981] uppercase tracking-wider">
+                            <span>📌</span> What to Hold Right Now
+                        </div>
+                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">${data.recommended_etf}</h3>
+                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed">
+                            ${guide.what_to_hold ? guide.what_to_hold.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : `Hold <strong>${data.recommended_etf}</strong> (₹${fmtBeesPrice(etf.price)}). Zero single-stock risk — you automatically participate in India's top companies with maximum safety.`}
+                        </p>
+                    </div>
+                    <div class="pt-2 text-[11px] font-semibold text-[#10b981] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                        <span>✓</span> Zero balance-sheet or company fraud risk
+                    </div>
+                </div>
+
+                <!-- Pillar 2: When to Sell -->
+                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-[#b32020] uppercase tracking-wider">
+                            <span>🛑</span> When to Sell
+                        </div>
+                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">${isNifty ? 'Exit / Shift Triggers' : 'Safe-Haven Exit Triggers'}</h3>
+                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed">
+                            ${guide.when_to_sell || (isNifty ? `Sell NIFTYBEES only if it closes below 50-DMA (₹${fmtBeesPrice(n.sma50)}) for 2 days, or if Donchian ratio hits the Gold breakdown trigger.` : `Hold Gold until Equities reclaim their 50-DMA and 200-DMA with strong breakout volume.`)}
+                        </p>
+                    </div>
+                    <div class="pt-2 text-[11px] font-semibold text-[#6e6e73] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                        <span>🛡️</span> No panic selling, rule-based execution
+                    </div>
+                </div>
+
+                <!-- Pillar 3: When to Switch -->
+                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-[#007aff] uppercase tracking-wider">
+                            <span>🔄</span> When to Switch (Shift Rules)
+                        </div>
+                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">Nifty ⇋ Gold Rotation</h3>
+                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed whitespace-pre-line">
+                            ${guide.when_to_switch || `• Shift to GOLDBEES: During equity bear markets to preserve capital.\n• Shift to NIFTYBEES: When equities break out to participate in bull compounding.`}
+                        </p>
+                    </div>
+                    <div class="pt-2 text-[11px] font-semibold text-[#007aff] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                        <span>⚡</span> Only ~2 frictionless switches per year
+                    </div>
+                </div>
+            </div>
+
+            <!-- All-Weather Target Allocation Bar -->
+            <div class="p-4 rounded-xl bg-white/70 border border-[rgba(0,0,0,0.06)] space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span class="font-bold text-[#1c1c1e] flex items-center gap-1.5">
+                        <span>🎯</span> Recommended All-Weather Portfolio Target Split
+                    </span>
+                    <span class="text-[11px] text-[#86868b] font-medium">Auto-Adjusted to Market Regime</span>
+                </div>
+                <div class="w-full bg-[#e5e5ea] rounded-full h-3 overflow-hidden flex shadow-inner">
+                    <div class="bg-[#007aff] h-full transition-all" style="width: ${isNifty ? '60%' : '25%'}" title="Equities: ${isNifty ? '60%' : '25%'}"></div>
+                    <div class="bg-[#ff9500] h-full transition-all" style="width: ${isNifty ? '25%' : '65%'}" title="Gold: ${isNifty ? '25%' : '65%'}"></div>
+                    <div class="bg-[#34c759] h-full transition-all" style="width: ${isNifty ? '15%' : '10%'}" title="Liquid / Cash: ${isNifty ? '15%' : '10%'}"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-[11px] pt-0.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#007aff] inline-block"></span>
+                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '60%' : '25%'} NIFTYBEES</span>
+                        <span class="text-[#86868b] hidden sm:inline">(Wealth Growth)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#ff9500] inline-block"></span>
+                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '25%' : '65%'} GOLDBEES</span>
+                        <span class="text-[#86868b] hidden sm:inline">(Crash Defense)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#34c759] inline-block"></span>
+                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '15%' : '10%'} LIQUIDBEES</span>
+                        <span class="text-[#86868b] hidden sm:inline">(Buy Dips Reserve)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 2. MY JOURNAL ETF ALLOCATION & LIVE REBALANCE RADAR -->
+        <div class="macos-card p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📒</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-[#1c1c1e] uppercase tracking-wide">My Journal ETF Allocation & Shift Advisor</h3>
+                        <p class="text-xs text-[#6e6e73]">Synchronized with active ETF positions in your SQLite Tradebook Journal</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('journal')" class="text-xs text-[#007aff] font-semibold hover:underline flex items-center gap-1">
+                    <span>Open Tradebook Journal</span> <span>→</span>
+                </button>
+            </div>
+
+            ${journalEtf && journalEtf.has_holdings ? `
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
+                    <!-- Current Portfolio Breakdown -->
+                    <div class="md:col-span-6 p-4 rounded-xl macos-box space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-semibold text-[#48484a]">Journal ETF Portfolio Value:</span>
+                            <span class="font-bold mono text-sm text-[#1c1c1e]">₹${Number(journalEtf.total_etf_value).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <!-- Progress Multi-bar -->
+                        <div class="w-full bg-[#e5e5ea] rounded-full h-3 overflow-hidden flex">
+                            <div class="bg-[#007aff] h-full transition-all" style="width: ${journalEtf.actual_allocation.equity_pct}%" title="Equities: ${journalEtf.actual_allocation.equity_pct}%"></div>
+                            <div class="bg-[#ff9500] h-full transition-all" style="width: ${journalEtf.actual_allocation.gold_pct}%" title="Gold: ${journalEtf.actual_allocation.gold_pct}%"></div>
+                            <div class="bg-[#34c759] h-full transition-all" style="width: ${journalEtf.actual_allocation.liquid_pct}%" title="Cash: ${journalEtf.actual_allocation.liquid_pct}%"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 text-[11px] mono pt-1">
+                            <div class="text-[#007aff] font-semibold">📈 Equity: ${journalEtf.actual_allocation.equity_pct}%</div>
+                            <div class="text-[#ff9500] font-semibold">🥇 Gold: ${journalEtf.actual_allocation.gold_pct}%</div>
+                            <div class="text-[#34c759] font-semibold">🛡️ Cash: ${journalEtf.actual_allocation.liquid_pct}%</div>
+                        </div>
+                    </div>
+
+                    <!-- Live Shift Guidance & Action -->
+                    <div class="md:col-span-6 p-4 rounded-xl ${journalEtf.shift_recommendation?.can_shift ? 'bg-[#edf7ee] border border-[#c3e6cb]' : 'macos-box'} flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] px-2 py-0.5 rounded font-bold" style="background-color: ${journalEtf.shift_recommendation?.badge_color}20; color: ${journalEtf.shift_recommendation?.badge_color};">
+                                    ${journalEtf.shift_recommendation?.badge || 'Optimal State'}
+                                </span>
+                            </div>
+                            <div class="font-bold text-xs text-[#1c1c1e] mt-1.5">${journalEtf.shift_recommendation?.title || 'Optimal Allocation'}</div>
+                            <p class="text-[11.5px] text-[#48484a] mt-1 leading-relaxed">${journalEtf.shift_recommendation?.description || ''}</p>
+                        </div>
+                        <div class="flex justify-end pt-1">
+                            ${journalEtf.shift_recommendation?.can_shift ? `
+                                <button onclick="executeJournalEtfShift('${journalEtf.shift_recommendation.from_symbol}', '${journalEtf.shift_recommendation.action_symbol}', ${journalEtf.shift_recommendation.suggested_price})"
+                                    class="btn-primary px-4 py-2 text-xs flex items-center gap-2 shadow-sm font-semibold cursor-pointer">
+                                    <span>🔄</span> <span>${journalEtf.shift_recommendation.action_text}</span>
+                                </button>
+                            ` : `
+                                <span class="text-xs font-semibold text-[#1e7e34] flex items-center gap-1">
+                                    <span>✓</span> Allocation matches live market regime
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            ` : `
+                <div class="p-6 rounded-xl macos-box text-center space-y-3">
+                    <div class="text-2xl">📊</div>
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1c1c1e]">No ETF Positions Currently Logged in Journal</h4>
+                        <p class="text-xs text-[#6e6e73] max-w-md mx-auto mt-1">
+                            Add an ETF trade to your journal to activate live portfolio allocation tracking, actual vs target rebalancing, and automatic shift recommendations.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+                        <button onclick="quickLogEtfToJournal('NIFTYBEES.NS', ${fmtBeesPrice(n.price)}, 50)"
+                            class="px-4 py-2 rounded-xl bg-[#28a745] hover:bg-[#1e7e34] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span>+</span> <span>Log 50 NIFTYBEES @ ₹${fmtBeesPrice(n.price)}</span>
+                        </button>
+                        <button onclick="quickLogEtfToJournal('GOLDBEES.NS', ${fmtBeesPrice(g.price)}, 100)"
+                            class="px-4 py-2 rounded-xl bg-[#b35900] hover:bg-[#8a4500] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span>+</span> <span>Log 100 GOLDBEES @ ₹${fmtBeesPrice(g.price)}</span>
+                        </button>
+                    </div>
+                </div>
+            `}
+        </div>
+
+
+        <!-- SHIFT ALERT (if holding different ETF in simulator dropdown) -->
         ${data.shift_alert ? `
         <div class="p-4 rounded-xl border flex items-start gap-3" style="border-color: ${data.shift_alert.color}40; background: ${data.shift_alert.color}12;">
             <span class="text-2xl">${data.shift_alert.icon}</span>
@@ -60,6 +261,7 @@ function renderBeesUI(data) {
             </div>
         </div>
         ` : ""}
+
 
         <!-- MAIN VERDICT BANNER -->
         <div class="macos-card p-6">
@@ -86,7 +288,8 @@ function renderBeesUI(data) {
             </div>
         </div>
 
-        <!-- SIDE-BY-SIDE COMPARISON -->
+
+        <!-- SIDE-BY-SIDE COMPARISON (Strict Max 2 Decimals) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <!-- NIFTYBEES -->
@@ -105,24 +308,24 @@ function renderBeesUI(data) {
                     </div>
                 </div>
 
-                <div class="text-2xl font-bold text-[#1c1c1e] mb-3 mono">₹${n.price}</div>
+                <div class="text-2xl font-bold text-[#1c1c1e] mb-3 mono">₹${fmtBeesPrice(n.price)}</div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs mb-3">
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">50 DMA</span>
-                        <span class="font-bold mono ${n.is_above_50 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${n.sma50}</span>
+                        <span class="font-bold mono ${n.is_above_50 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${fmtBeesPrice(n.sma50)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">200 DMA</span>
-                        <span class="font-bold mono ${n.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${n.sma200}</span>
+                        <span class="font-bold mono ${n.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${fmtBeesPrice(n.sma200)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">RSI (14)</span>
-                        <span class="font-bold mono ${n.rsi < 40 ? 'text-[#1e7e34]' : n.rsi > 65 ? 'text-[#b32020]' : 'text-[#8a4500]'}">${n.rsi}</span>
+                        <span class="font-bold mono ${n.rsi < 40 ? 'text-[#1e7e34]' : n.rsi > 65 ? 'text-[#b32020]' : 'text-[#8a4500]'}">${fmtBeesPrice(n.rsi, 1)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">Volatility</span>
-                        <span class="font-bold mono text-[#1c1c1e]">${n.volatility}%</span>
+                        <span class="font-bold mono text-[#1c1c1e]">${fmtBeesPrice(n.volatility, 1)}%</span>
                     </div>
                 </div>
 
@@ -130,7 +333,7 @@ function renderBeesUI(data) {
                     ${[['1M', n.ret_1m], ['3M', n.ret_3m], ['6M', n.ret_6m], ['1Y', n.ret_1y]].map(([label, val]) => `
                         <div class="macos-box p-1.5">
                             <span class="text-[#86868b] block font-medium">${label}</span>
-                            <span class="font-bold mono ${val >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${val > 0 ? '+' : ''}${val}%</span>
+                            <span class="font-bold mono ${val >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${val > 0 ? '+' : ''}${fmtBeesPrice(val, 2)}%</span>
                         </div>
                     `).join('')}
                 </div>
@@ -152,24 +355,24 @@ function renderBeesUI(data) {
                     </div>
                 </div>
 
-                <div class="text-2xl font-bold text-[#1c1c1e] mb-3 mono">₹${g.price}</div>
+                <div class="text-2xl font-bold text-[#1c1c1e] mb-3 mono">₹${fmtBeesPrice(g.price)}</div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs mb-3">
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">50 DMA</span>
-                        <span class="font-bold mono ${g.is_above_50 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${g.sma50}</span>
+                        <span class="font-bold mono ${g.is_above_50 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${fmtBeesPrice(g.sma50)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">200 DMA</span>
-                        <span class="font-bold mono ${g.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${g.sma200}</span>
+                        <span class="font-bold mono ${g.is_above_200 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">₹${fmtBeesPrice(g.sma200)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">RSI (14)</span>
-                        <span class="font-bold mono ${g.rsi < 40 ? 'text-[#1e7e34]' : g.rsi > 65 ? 'text-[#b32020]' : 'text-[#8a4500]'}">${g.rsi}</span>
+                        <span class="font-bold mono ${g.rsi < 40 ? 'text-[#1e7e34]' : g.rsi > 65 ? 'text-[#b32020]' : 'text-[#8a4500]'}">${fmtBeesPrice(g.rsi, 1)}</span>
                     </div>
                     <div class="macos-box p-2">
                         <span class="text-[#86868b] block text-[10px] font-medium">Volatility</span>
-                        <span class="font-bold mono text-[#1c1c1e]">${g.volatility}%</span>
+                        <span class="font-bold mono text-[#1c1c1e]">${fmtBeesPrice(g.volatility, 1)}%</span>
                     </div>
                 </div>
 
@@ -177,12 +380,13 @@ function renderBeesUI(data) {
                     ${[['1M', g.ret_1m], ['3M', g.ret_3m], ['6M', g.ret_6m], ['1Y', g.ret_1y]].map(([label, val]) => `
                         <div class="macos-box p-1.5">
                             <span class="text-[#86868b] block font-medium">${label}</span>
-                            <span class="font-bold mono ${val >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${val > 0 ? '+' : ''}${val}%</span>
+                            <span class="font-bold mono ${val >= 0 ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${val > 0 ? '+' : ''}${fmtBeesPrice(val, 2)}%</span>
                         </div>
                     `).join('')}
                 </div>
             </div>
         </div>
+
 
         <!-- SIGNALS BREAKDOWN (Why this recommendation) -->
         <div class="macos-card p-5 space-y-4">
@@ -206,15 +410,16 @@ function renderBeesUI(data) {
             </div>
         </div>
 
+
         <!-- NIFTY/GOLD DONCHIAN RATIO ROTATION DESK -->
         <div class="macos-card p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
                 <div>
                     <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
-                        <span>⚖️</span> Nifty–Gold Donchian Ratio Rotation Strategy (65-Day Channel)
+                        <span>⚖️</span> Nifty–Gold Donchian Ratio Rotation Strategy (40-Day Channel)
                     </h3>
                     <p class="text-xs text-[#6e6e73] mt-0.5">
-                        Continuous Ratio tracking (NIFTYBEES ÷ GOLDBEES). Rotates 100% into the leading asset on 65-day channel breakouts with zero whipsaws.
+                        Continuous Ratio tracking (NIFTYBEES ÷ GOLDBEES). Rotates 100% into the leading asset on 40-day channel breakouts with 1% buffer & 2-day confirmation.
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -224,26 +429,26 @@ function renderBeesUI(data) {
                 </div>
             </div>
 
-            <!-- Metrics Grid Strip -->
+            <!-- Metrics Grid Strip (Max 2 Decimals for Prices, 3 Decimals for Ratios) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div class="macos-box p-3 text-center">
                     <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">Current Ratio</span>
-                    <span class="text-2xl font-bold text-[#007aff] mono block mt-0.5">${data.donchian?.current_ratio || data.ratio.current}x</span>
-                    <span class="text-[10.5px] text-[#6e6e73] mono">₹${data.ratio.nifty_price} ÷ ₹${data.ratio.gold_price}</span>
+                    <span class="text-2xl font-bold text-[#007aff] mono block mt-0.5">${fmtBeesPrice(data.donchian?.current_ratio || data.ratio.current, 3)}x</span>
+                    <span class="text-[10.5px] text-[#6e6e73] mono">₹${fmtBeesPrice(data.ratio.nifty_price)} ÷ ₹${fmtBeesPrice(data.ratio.gold_price)}</span>
                 </div>
                 <div class="macos-box p-3 text-center">
-                    <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">65D Upper Band</span>
-                    <span class="text-2xl font-bold text-[#10b981] mono block mt-0.5">${data.donchian?.upper || '—'}</span>
-                    <span class="text-[10px] font-semibold text-[#10b981] block">+${data.donchian?.dist_to_upper_pct || 0}% to Breakout</span>
+                    <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">40D Upper Band (+1%)</span>
+                    <span class="text-2xl font-bold text-[#10b981] mono block mt-0.5">${fmtBeesPrice(data.donchian?.upper_trigger || data.donchian?.upper, 3)}</span>
+                    <span class="text-[10px] font-semibold text-[#10b981] block">+${fmtBeesPrice(data.donchian?.dist_to_upper_pct, 1)}% to Breakout</span>
                 </div>
                 <div class="macos-box p-3 text-center">
-                    <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">65D Lower Band</span>
-                    <span class="text-2xl font-bold text-[#f59e0b] mono block mt-0.5">${data.donchian?.lower || '—'}</span>
-                    <span class="text-[10px] font-semibold text-[#f59e0b] block">-${data.donchian?.dist_to_lower_pct || 0}% to Breakdown</span>
+                    <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">40D Lower Band (-1%)</span>
+                    <span class="text-2xl font-bold text-[#f59e0b] mono block mt-0.5">${fmtBeesPrice(data.donchian?.lower_trigger || data.donchian?.lower, 3)}</span>
+                    <span class="text-[10px] font-semibold text-[#f59e0b] block">-${fmtBeesPrice(data.donchian?.dist_to_lower_pct, 1)}% to Breakdown</span>
                 </div>
                 <div class="macos-box p-3 text-center">
                     <span class="text-[10px] text-[#86868b] block uppercase tracking-wide font-medium">Channel Midline</span>
-                    <span class="text-2xl font-bold text-[#8e8e93] mono block mt-0.5">${data.donchian?.mid || '—'}</span>
+                    <span class="text-2xl font-bold text-[#8e8e93] mono block mt-0.5">${fmtBeesPrice(data.donchian?.mid, 3)}</span>
                     <span class="text-[10px] text-[#86868b] block font-medium">Hysteresis Center</span>
                 </div>
             </div>
@@ -256,8 +461,8 @@ function renderBeesUI(data) {
                     </span>
                     <div class="flex items-center gap-3 text-[10.5px]">
                         <span class="inline-flex items-center gap-1 text-[#007aff] font-semibold"><span class="w-2.5 h-0.5 bg-[#007aff] rounded-full inline-block"></span> Ratio</span>
-                        <span class="inline-flex items-center gap-1 text-[#10b981] font-semibold"><span class="w-2.5 h-0.5 bg-[#10b981] rounded-full inline-block"></span> 65D High (Nifty Breakout)</span>
-                        <span class="inline-flex items-center gap-1 text-[#f59e0b] font-semibold"><span class="w-2.5 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span> 65D Low (Gold Breakdown)</span>
+                        <span class="inline-flex items-center gap-1 text-[#10b981] font-semibold"><span class="w-2.5 h-0.5 bg-[#10b981] rounded-full inline-block"></span> 40D High (Nifty Breakout +1%)</span>
+                        <span class="inline-flex items-center gap-1 text-[#f59e0b] font-semibold"><span class="w-2.5 h-0.5 bg-[#f59e0b] rounded-full inline-block"></span> 40D Low (Gold Breakdown -1%)</span>
                         <span class="inline-flex items-center gap-1 text-[#8e8e93] font-semibold"><span class="w-2.5 h-0.5 bg-[#8e8e93] rounded-full inline-block border-b border-dashed"></span> Midline</span>
                     </div>
                 </div>
@@ -272,39 +477,40 @@ function renderBeesUI(data) {
                         <span class="text-base">🧪</span>
                         <span class="font-bold text-xs text-[#1c1c1e]">Real 5-Year NSE Historical Backtest (2020 – 2026)</span>
                     </div>
-                    <span class="text-[10.5px] text-[#007aff] font-semibold">Low Friction: Only ${data.backtest.total_switches} switches (~2 per year)</span>
+                    <span class="text-[10.5px] text-[#007aff] font-semibold">Low Friction: Only ${data.backtest.total_switches} switches (~1.2 per year)</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-center text-xs">
                     <div class="p-3 rounded-lg bg-[#edf7ee] border border-[#c3e6cb]">
                         <span class="text-[10px] text-[#1e7e34] font-bold block uppercase tracking-wider">Donchian Ratio Strategy</span>
-                        <span class="text-xl font-bold text-[#1e7e34] mono block mt-0.5">+${data.backtest.strategy_total}%</span>
-                        <span class="text-[11px] text-[#1e7e34] font-semibold">${data.backtest.strategy_cagr}% CAGR • Max DD: ${data.backtest.strategy_drawdown}%</span>
+                        <span class="text-xl font-bold text-[#1e7e34] mono block mt-0.5">+${fmtBeesPrice(data.backtest.strategy_total, 1)}%</span>
+                        <span class="text-[11px] text-[#1e7e34] font-semibold">${fmtBeesPrice(data.backtest.strategy_cagr, 1)}% CAGR • Max DD: ${fmtBeesPrice(data.backtest.strategy_drawdown, 1)}%</span>
                     </div>
                     <div class="p-3 rounded-lg bg-white border border-[rgba(0,0,0,0.08)]">
                         <span class="text-[10px] text-[#6e6e73] font-bold block uppercase tracking-wider">Nifty 50 Buy & Hold</span>
-                        <span class="text-xl font-bold text-[#1c1c1e] mono block mt-0.5">+${data.backtest.nifty_total}%</span>
-                        <span class="text-[11px] text-[#6e6e73] font-medium">${data.backtest.nifty_cagr}% CAGR • Max DD: ${data.backtest.nifty_drawdown}%</span>
+                        <span class="text-xl font-bold text-[#1c1c1e] mono block mt-0.5">+${fmtBeesPrice(data.backtest.nifty_total, 1)}%</span>
+                        <span class="text-[11px] text-[#6e6e73] font-medium">${fmtBeesPrice(data.backtest.nifty_cagr, 1)}% CAGR • Max DD: ${fmtBeesPrice(data.backtest.nifty_drawdown, 1)}%</span>
                     </div>
                     <div class="p-3 rounded-lg bg-white border border-[rgba(0,0,0,0.08)]">
                         <span class="text-[10px] text-[#8a4500] font-bold block uppercase tracking-wider">Gold BeES Buy & Hold</span>
-                        <span class="text-xl font-bold text-[#8a4500] mono block mt-0.5">+${data.backtest.gold_total}%</span>
-                        <span class="text-[11px] text-[#8a4500] font-medium">${data.backtest.gold_cagr}% CAGR • Max DD: ${data.backtest.gold_drawdown}%</span>
+                        <span class="text-xl font-bold text-[#8a4500] mono block mt-0.5">+${fmtBeesPrice(data.backtest.gold_total, 1)}%</span>
+                        <span class="text-[11px] text-[#8a4500] font-medium">${fmtBeesPrice(data.backtest.gold_cagr, 1)}% CAGR • Max DD: ${fmtBeesPrice(data.backtest.gold_drawdown, 1)}%</span>
                     </div>
                 </div>
                 <div class="text-[10.5px] text-[#6e6e73] text-center pt-1 leading-relaxed">
-                    💡 The Donchian Ratio Rotation outperformed pure Nifty 50 Buy-and-Hold by <strong class="text-[#1e7e34]">+${(data.backtest.strategy_total - data.backtest.nifty_total).toFixed(1)}%</strong> by seamlessly holding Gold during bear markets (2020 crash, 2022 rate hikes) and capturing explosive equity upside during bull runs.
+                    💡 The Donchian Ratio Rotation outperformed pure Nifty 50 Buy-and-Hold by <strong class="text-[#1e7e34]">+${fmtBeesPrice(data.backtest.strategy_total - data.backtest.nifty_total, 1)}%</strong> by seamlessly holding Gold during bear markets (2020 crash, 2022 rate hikes) and capturing explosive equity upside during bull runs.
                 </div>
             </div>
             ` : ''}
         </div>
 
-        <!-- 20-BULLET DEPLOYMENT PLAN -->
+
+        <!-- 20-BULLET DEPLOYMENT PLAN (Strict 2 Decimals) -->
         <div class="macos-card p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
                 <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
-                    <span>🎯</span> 20-Bullet Systematic Entry Plan — ${dep.etf} at ₹${dep.cmp}
+                    <span>🎯</span> 20-Bullet Systematic Entry Plan — ${dep.etf} at ₹${fmtBeesPrice(dep.cmp)}
                 </h3>
-                <span class="text-xs text-[#007aff] font-semibold">₹${formatNumber(dep.bullet_size, 0)} per bullet × 20 = ₹${formatNumber(dep.total_capital, 0)}</span>
+                <span class="text-xs text-[#007aff] font-semibold">₹${Number(dep.bullet_size).toLocaleString('en-IN', {maximumFractionDigits: 0})} per bullet × 20 = ₹${Number(dep.total_capital).toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
             </div>
             <div class="text-xs text-[#48484a] p-3 rounded-xl macos-box leading-relaxed">
                 <strong class="text-[#1c1c1e] block mb-1">📌 How to Use:</strong> ${dep.rule}
@@ -316,7 +522,7 @@ function renderBeesUI(data) {
                         ${dep.bullets.map(b => `
                             <div class="p-2.5 rounded-xl ${b.bullet === 1 ? 'bg-[#eef5fd] border border-[#b9d7fb]' : 'macos-box'} text-center">
                                 <span class="text-[#86868b] block font-medium">Bullet ${b.bullet}</span>
-                                <span class="font-bold text-[#1c1c1e] text-sm block mt-0.5 mono">₹${b.deploy_price}</span>
+                                <span class="font-bold text-[#1c1c1e] text-sm block mt-0.5 mono">₹${fmtBeesPrice(b.deploy_price)}</span>
                                 <span class="text-[#1e7e34] block font-semibold">${b.units} units</span>
                                 <span class="text-[#86868b] block mt-0.5">${b.trigger}</span>
                             </div>
@@ -329,14 +535,19 @@ function renderBeesUI(data) {
                 </div>
             </div>
 
-            <!-- Log Trade Button -->
-            <div class="mt-4 flex gap-3">
-                <button onclick="takeTradeFromScanner('${dep.etf}.NS', ${dep.cmp}, ${dep.units_at_cmp}, ${(dep.cmp * 0.92).toFixed(2)}, ${(dep.cmp * 1.20).toFixed(2)}, ${(dep.cmp * 1.30).toFixed(2)})"
-                    class="px-4 py-2 rounded-xl font-semibold text-xs shadow-sm flex items-center gap-2 ${isNifty ? 'bg-[#28a745] hover:bg-[#1e7e34]' : 'bg-[#b35900] hover:bg-[#8a4500]'} text-white transition-all">
-                    <span>📒</span> Log Bullet 1 — Buy ${dep.units_at_cmp} units @ ₹${dep.cmp}
+            <!-- Log Trade Buttons -->
+            <div class="mt-4 flex flex-wrap gap-3">
+                <button onclick="takeTradeFromScanner('${dep.etf}.NS', ${fmtBeesPrice(dep.cmp)}, ${dep.units_at_cmp}, ${fmtBeesPrice(dep.cmp * 0.92)}, ${fmtBeesPrice(dep.cmp * 1.20)}, ${fmtBeesPrice(dep.cmp * 1.30)})"
+                    class="px-4 py-2 rounded-xl font-semibold text-xs shadow-sm flex items-center gap-2 ${isNifty ? 'bg-[#28a745] hover:bg-[#1e7e34]' : 'bg-[#b35900] hover:bg-[#8a4500]'} text-white transition-all cursor-pointer">
+                    <span>📒</span> Custom Trade Modal — Buy ${dep.units_at_cmp} units @ ₹${fmtBeesPrice(dep.cmp)}
+                </button>
+                <button onclick="quickLogEtfToJournal('${dep.etf}.NS', ${fmtBeesPrice(dep.cmp)}, ${dep.units_at_cmp})"
+                    class="px-4 py-2 rounded-xl font-semibold text-xs border border-[rgba(0,0,0,0.12)] hover:bg-black/5 text-[#1c1c1e] transition-all flex items-center gap-2 cursor-pointer">
+                    <span>⚡</span> 1-Click Quick Log to Journal
                 </button>
             </div>
         </div>
+
 
         <!-- SWITCH RULES -->
         <div class="macos-card p-5 space-y-4">
@@ -431,20 +642,20 @@ function renderDonchianRatioChart(history) {
         }
     });
 
-    // 1. 65-Day Upper Band (Nifty Breakout Band - Green)
+    // 1. 40-Day Upper Band (Nifty Breakout Band +1% Buffer - Green)
     const upperSeries = _beesRatioChart.addLineSeries({
         color: "#10b981",
         lineWidth: 1.8,
-        title: "65D Upper",
+        title: "40D Upper (+1%)",
         priceLineVisible: false
     });
     upperSeries.setData(history.map(d => ({ time: d.time, value: d.upper })));
 
-    // 2. 65-Day Lower Band (Gold Breakdown Band - Amber)
+    // 2. 40-Day Lower Band (Gold Breakdown Band -1% Buffer - Amber)
     const lowerSeries = _beesRatioChart.addLineSeries({
         color: "#f59e0b",
         lineWidth: 1.8,
-        title: "65D Lower",
+        title: "40D Lower (-1%)",
         priceLineVisible: false
     });
     lowerSeries.setData(history.map(d => ({ time: d.time, value: d.lower })));

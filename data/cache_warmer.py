@@ -26,7 +26,7 @@ PRIORITY_WARM_SYMBOLS = [
     "BHARTIARTL.NS",
     "ITC.NS",
     "LT.NS",
-    "TATAMOTORS.NS",
+    "TMPV.NS",
     "KOTAKBANK.NS",
     "AXISBANK.NS",
     "HINDUNILVR.NS",
@@ -85,6 +85,26 @@ def get_cache_stats() -> Dict[str, Any]:
         "active_unexpired": active,
         "cached_symbols": symbols
     }
+
+
+def invalidate_warmed_stock(symbol: Optional[str] = None):
+    """
+    Invalidates entries in the warm cache.
+    If symbol is specified, clears all entries for that symbol.
+    If symbol is None, purges the entire warm cache.
+    """
+    global _WARMED_CACHE
+    with _CACHE_LOCK:
+        if symbol is None:
+            _WARMED_CACHE.clear()
+        else:
+            sym_clean = symbol.upper().strip()
+            keys_to_delete = [
+                k for k in list(_WARMED_CACHE.keys())
+                if k.split(":")[0] == sym_clean or k.split(":")[0].startswith(f"{sym_clean}.") or sym_clean.startswith(k.split(":")[0])
+            ]
+            for k in keys_to_delete:
+                _WARMED_CACHE.pop(k, None)
 
 
 def _cache_warmer_worker(app_context_callback):

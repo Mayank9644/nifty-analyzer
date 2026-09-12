@@ -3,64 +3,68 @@ Master lists for Indian Stocks, ETFs, Bonds, Commodities, and F&O symbols.
 """
 
 NIFTY_50_STOCKS = [
-    {"symbol": "RELIANCE.NS", "code": "RELIANCE", "name": "Reliance Industries Ltd", "sector": "Energy", "category": "Stock", "fno": True},
-    {"symbol": "TCS.NS", "code": "TCS", "name": "Tata Consultancy Services Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
-    {"symbol": "HDFCBANK.NS", "code": "HDFCBANK", "name": "HDFC Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "ICICIBANK.NS", "code": "ICICIBANK", "name": "ICICI Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "INFY.NS", "code": "INFY", "name": "Infosys Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
-    {"symbol": "BHARTIARTL.NS", "code": "BHARTIARTL", "name": "Bharti Airtel Ltd", "sector": "Telecommunication", "category": "Stock", "fno": True},
-    {"symbol": "ITC.NS", "code": "ITC", "name": "ITC Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "SBIN.NS", "code": "SBIN", "name": "State Bank of India", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "LICI.NS", "code": "LICI", "name": "Life Insurance Corp of India", "sector": "Financial Services", "category": "Stock", "fno": False},
-    {"symbol": "LT.NS", "code": "LT", "name": "Larsen & Toubro Ltd", "sector": "Construction", "category": "Stock", "fno": True},
-    {"symbol": "HINDUNILVR.NS", "code": "HINDUNILVR", "name": "Hindustan Unilever Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "BAJFINANCE.NS", "code": "BAJFINANCE", "name": "Bajaj Finance Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "HCLTECH.NS", "code": "HCLTECH", "name": "HCL Technologies Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
-    {"symbol": "MARUTI.NS", "code": "MARUTI", "name": "Maruti Suzuki India Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "SUNPHARMA.NS", "code": "SUNPHARMA", "name": "Sun Pharmaceutical Industries", "sector": "Healthcare", "category": "Stock", "fno": True},
     {"symbol": "ADANIENT.NS", "code": "ADANIENT", "name": "Adani Enterprises Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
-    {"symbol": "KOTAKBANK.NS", "code": "KOTAKBANK", "name": "Kotak Mahindra Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "TMPV.NS", "code": "TMPV", "name": "Tata Motors Passenger Vehicles Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "TMCV.NS", "code": "TMCV", "name": "Tata Motors Commercial Vehicles Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "TATAMOTORS.NS", "code": "TATAMOTORS", "name": "Tata Motors Ltd (Demerged: TMPV / TMCV)", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "AXISBANK.NS", "code": "AXISBANK", "name": "Axis Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "NTPC.NS", "code": "NTPC", "name": "NTPC Ltd", "sector": "Utilities", "category": "Stock", "fno": True},
-    {"symbol": "ONGC.NS", "code": "ONGC", "name": "Oil & Natural Gas Corp", "sector": "Energy", "category": "Stock", "fno": True},
-    {"symbol": "TITAN.NS", "code": "TITAN", "name": "Titan Company Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "POWERGRID.NS", "code": "POWERGRID", "name": "Power Grid Corp of India", "sector": "Utilities", "category": "Stock", "fno": True},
-    {"symbol": "TATASTEEL.NS", "code": "TATASTEEL", "name": "Tata Steel Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
-    {"symbol": "M&M.NS", "code": "M&M", "name": "Mahindra & Mahindra Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "BAJAJFINSV.NS", "code": "BAJAJFINSV", "name": "Bajaj Finserv Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
     {"symbol": "ADANIPORTS.NS", "code": "ADANIPORTS", "name": "Adani Ports and SEZ Ltd", "sector": "Services", "category": "Stock", "fno": True},
-    {"symbol": "COALINDIA.NS", "code": "COALINDIA", "name": "Coal India Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
+    {"symbol": "APOLLOHOSP.NS", "code": "APOLLOHOSP", "name": "Apollo Hospitals Enterprise Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
     {"symbol": "ASIANPAINT.NS", "code": "ASIANPAINT", "name": "Asian Paints Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "ULTRACEMCO.NS", "code": "ULTRACEMCO", "name": "UltraTech Cement Ltd", "sector": "Construction Materials", "category": "Stock", "fno": True},
-    {"symbol": "WIPRO.NS", "code": "WIPRO", "name": "Wipro Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "AXISBANK.NS", "code": "AXISBANK", "name": "Axis Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
     {"symbol": "BAJAJ-AUTO.NS", "code": "BAJAJ-AUTO", "name": "Bajaj Auto Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "GRASIM.NS", "code": "GRASIM", "name": "Grasim Industries Ltd", "sector": "Construction Materials", "category": "Stock", "fno": True},
-    {"symbol": "JSWSTEEL.NS", "code": "JSWSTEEL", "name": "JSW Steel Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
-    {"symbol": "NESTLEIND.NS", "code": "NESTLEIND", "name": "Nestle India Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "TECHM.NS", "code": "TECHM", "name": "Tech Mahindra Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
-    {"symbol": "HINDALCO.NS", "code": "HINDALCO", "name": "Hindalco Industries Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
-    {"symbol": "CIPLA.NS", "code": "CIPLA", "name": "Cipla Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
-    {"symbol": "DRREDDY.NS", "code": "DRREDDY", "name": "Dr. Reddy's Laboratories", "sector": "Healthcare", "category": "Stock", "fno": True},
-    {"symbol": "EICHERMOT.NS", "code": "EICHERMOT", "name": "Eicher Motors Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "DIVISLAB.NS", "code": "DIVISLAB", "name": "Divi's Laboratories Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
-    {"symbol": "HEROMOTOCO.NS", "code": "HEROMOTOCO", "name": "Hero MotoCorp Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
-    {"symbol": "TATACONSUM.NS", "code": "TATACONSUM", "name": "Tata Consumer Products", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "APOLLOHOSP.NS", "code": "APOLLOHOSP", "name": "Apollo Hospitals Enterprise", "sector": "Healthcare", "category": "Stock", "fno": True},
-    {"symbol": "BPCL.NS", "code": "BPCL", "name": "Bharat Petroleum Corp Ltd", "sector": "Energy", "category": "Stock", "fno": True},
-    {"symbol": "BRITANNIA.NS", "code": "BRITANNIA", "name": "Britannia Industries Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
-    {"symbol": "SHRIRAMFIN.NS", "code": "SHRIRAMFIN", "name": "Shriram Finance Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
-    {"symbol": "TRENT.NS", "code": "TRENT", "name": "Trent Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "BAJFINANCE.NS", "code": "BAJFINANCE", "name": "Bajaj Finance Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "BAJAJFINSV.NS", "code": "BAJAJFINSV", "name": "Bajaj Finserv Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
     {"symbol": "BEL.NS", "code": "BEL", "name": "Bharat Electronics Ltd", "sector": "Capital Goods", "category": "Stock", "fno": True},
-    {"symbol": "INDUSINDBK.NS", "code": "INDUSINDBK", "name": "IndusInd Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True}
+    {"symbol": "BHARTIARTL.NS", "code": "BHARTIARTL", "name": "Bharti Airtel Ltd", "sector": "Telecommunication", "category": "Stock", "fno": True},
+    {"symbol": "CIPLA.NS", "code": "CIPLA", "name": "Cipla Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
+    {"symbol": "COALINDIA.NS", "code": "COALINDIA", "name": "Coal India Ltd", "sector": "Energy", "category": "Stock", "fno": True},
+    {"symbol": "DRREDDY.NS", "code": "DRREDDY", "name": "Dr. Reddy's Laboratories Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
+    {"symbol": "EICHERMOT.NS", "code": "EICHERMOT", "name": "Eicher Motors Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
+    {"symbol": "ETERNAL.NS", "code": "ETERNAL", "name": "Eternal Ltd (formerly Zomato Ltd)", "sector": "Consumer Services", "category": "Stock", "fno": True},
+    {"symbol": "GRASIM.NS", "code": "GRASIM", "name": "Grasim Industries Ltd", "sector": "Construction Materials", "category": "Stock", "fno": True},
+    {"symbol": "HCLTECH.NS", "code": "HCLTECH", "name": "HCL Technologies Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "HDFCBANK.NS", "code": "HDFCBANK", "name": "HDFC Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "HDFCLIFE.NS", "code": "HDFCLIFE", "name": "HDFC Life Insurance Co Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "HINDALCO.NS", "code": "HINDALCO", "name": "Hindalco Industries Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
+    {"symbol": "HINDUNILVR.NS", "code": "HINDUNILVR", "name": "Hindustan Unilever Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "ICICIBANK.NS", "code": "ICICIBANK", "name": "ICICI Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "INDIGO.NS", "code": "INDIGO", "name": "InterGlobe Aviation Ltd", "sector": "Services", "category": "Stock", "fno": True},
+    {"symbol": "INFY.NS", "code": "INFY", "name": "Infosys Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "ITC.NS", "code": "ITC", "name": "ITC Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "JIOFIN.NS", "code": "JIOFIN", "name": "Jio Financial Services Ltd", "sector": "Financial Services", "category": "Stock", "fno": False},
+    {"symbol": "JSWSTEEL.NS", "code": "JSWSTEEL", "name": "JSW Steel Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
+    {"symbol": "KOTAKBANK.NS", "code": "KOTAKBANK", "name": "Kotak Mahindra Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "LT.NS", "code": "LT", "name": "Larsen & Toubro Ltd", "sector": "Construction", "category": "Stock", "fno": True},
+    {"symbol": "M&M.NS", "code": "M&M", "name": "Mahindra & Mahindra Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
+    {"symbol": "MARUTI.NS", "code": "MARUTI", "name": "Maruti Suzuki India Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
+    {"symbol": "MAXHEALTH.NS", "code": "MAXHEALTH", "name": "Max Healthcare Institute Ltd", "sector": "Healthcare", "category": "Stock", "fno": False},
+    {"symbol": "NESTLEIND.NS", "code": "NESTLEIND", "name": "Nestle India Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "NTPC.NS", "code": "NTPC", "name": "NTPC Ltd", "sector": "Utilities", "category": "Stock", "fno": True},
+    {"symbol": "ONGC.NS", "code": "ONGC", "name": "Oil & Natural Gas Corp Ltd", "sector": "Energy", "category": "Stock", "fno": True},
+    {"symbol": "POWERGRID.NS", "code": "POWERGRID", "name": "Power Grid Corp of India Ltd", "sector": "Utilities", "category": "Stock", "fno": True},
+    {"symbol": "RELIANCE.NS", "code": "RELIANCE", "name": "Reliance Industries Ltd", "sector": "Energy", "category": "Stock", "fno": True},
+    {"symbol": "SBILIFE.NS", "code": "SBILIFE", "name": "SBI Life Insurance Co Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "SBIN.NS", "code": "SBIN", "name": "State Bank of India", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "SHRIRAMFIN.NS", "code": "SHRIRAMFIN", "name": "Shriram Finance Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "SUNPHARMA.NS", "code": "SUNPHARMA", "name": "Sun Pharmaceutical Industries Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
+    {"symbol": "TATACONSUM.NS", "code": "TATACONSUM", "name": "Tata Consumer Products Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "TATASTEEL.NS", "code": "TATASTEEL", "name": "Tata Steel Ltd", "sector": "Metals & Mining", "category": "Stock", "fno": True},
+    {"symbol": "TCS.NS", "code": "TCS", "name": "Tata Consultancy Services Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "TECHM.NS", "code": "TECHM", "name": "Tech Mahindra Ltd", "sector": "Information Technology", "category": "Stock", "fno": True},
+    {"symbol": "TITAN.NS", "code": "TITAN", "name": "Titan Company Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "TMPV.NS", "code": "TMPV", "name": "Tata Motors Passenger Vehicles Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
+    {"symbol": "TRENT.NS", "code": "TRENT", "name": "Trent Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "ULTRACEMCO.NS", "code": "ULTRACEMCO", "name": "UltraTech Cement Ltd", "sector": "Construction Materials", "category": "Stock", "fno": True},
+    {"symbol": "WIPRO.NS", "code": "WIPRO", "name": "Wipro Ltd", "sector": "Information Technology", "category": "Stock", "fno": True}
 ]
 
 POPULAR_ADDITIONAL_STOCKS = [
-    {"symbol": "ETERNAL.NS", "code": "ETERNAL", "name": "Eternal Ltd (formerly Zomato)", "sector": "Consumer Services", "category": "Stock", "fno": True},
+    {"symbol": "TMCV.NS", "code": "TMCV", "name": "Tata Motors Commercial Vehicles Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
+    {"symbol": "TATAMOTORS.NS", "code": "TATAMOTORS", "name": "Tata Motors Ltd (TMPV / TMCV)", "sector": "Automobile", "category": "Stock", "fno": True},
     {"symbol": "ZOMATO.NS", "code": "ZOMATO", "name": "Zomato Ltd (Eternal Ltd)", "sector": "Consumer Services", "category": "Stock", "fno": True},
-    {"symbol": "JIOFIN.NS", "code": "JIOFIN", "name": "Jio Financial Services Ltd", "sector": "Financial Services", "category": "Stock", "fno": False},
+    {"symbol": "LICI.NS", "code": "LICI", "name": "Life Insurance Corp of India", "sector": "Financial Services", "category": "Stock", "fno": False},
+    {"symbol": "BPCL.NS", "code": "BPCL", "name": "Bharat Petroleum Corp Ltd", "sector": "Energy", "category": "Stock", "fno": True},
+    {"symbol": "BRITANNIA.NS", "code": "BRITANNIA", "name": "Britannia Industries Ltd", "sector": "Consumer Goods", "category": "Stock", "fno": True},
+    {"symbol": "DIVISLAB.NS", "code": "DIVISLAB", "name": "Divi's Laboratories Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
+    {"symbol": "INDUSINDBK.NS", "code": "INDUSINDBK", "name": "IndusInd Bank Ltd", "sector": "Financial Services", "category": "Stock", "fno": True},
+    {"symbol": "HEROMOTOCO.NS", "code": "HEROMOTOCO", "name": "Hero MotoCorp Ltd", "sector": "Automobile", "category": "Stock", "fno": True},
     {"symbol": "HAL.NS", "code": "HAL", "name": "Hindustan Aeronautics Ltd", "sector": "Defense / Capital Goods", "category": "Stock", "fno": True},
     {"symbol": "SUZLON.NS", "code": "SUZLON", "name": "Suzlon Energy Ltd", "sector": "Renewable Energy", "category": "Stock", "fno": False},
     {"symbol": "IREDA.NS", "code": "IREDA", "name": "Indian Renewable Energy Dev", "sector": "Financial Services", "category": "Stock", "fno": False},
@@ -120,7 +124,6 @@ POPULAR_ADDITIONAL_STOCKS = [
     {"symbol": "LUPIN.NS", "code": "LUPIN", "name": "Lupin Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
     {"symbol": "TORNTPHARM.NS", "code": "TORNTPHARM", "name": "Torrent Pharmaceuticals Ltd", "sector": "Healthcare", "category": "Stock", "fno": True},
     {"symbol": "MANKIND.NS", "code": "MANKIND", "name": "Mankind Pharma Ltd", "sector": "Healthcare", "category": "Stock", "fno": False},
-    {"symbol": "MAXHEALTH.NS", "code": "MAXHEALTH", "name": "Max Healthcare Institute", "sector": "Healthcare", "category": "Stock", "fno": False},
     {"symbol": "FORTIS.NS", "code": "FORTIS", "name": "Fortis Healthcare Ltd", "sector": "Healthcare", "category": "Stock", "fno": False},
     {"symbol": "NH.NS", "code": "NH", "name": "Narayana Hrudayalaya Ltd", "sector": "Healthcare", "category": "Stock", "fno": False},
     {"symbol": "PREMIERENE.NS", "code": "PREMIERENE", "name": "Premier Energies Ltd", "sector": "Renewable Energy", "category": "Stock", "fno": False},
@@ -236,5 +239,41 @@ SECTORS = [
     "Bonds & Debt"
 ]
 
-ALL_STOCKS = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS
+import os
+import json
+
+# Comprehensive National Stock Exchange (NSE) Listed Universe
+_nse_json_path = os.path.join(os.path.dirname(__file__), "nse_listed_stocks.json")
+NSE_LISTED_STOCKS = []
+if os.path.exists(_nse_json_path):
+    try:
+        with open(_nse_json_path, "r", encoding="utf-8") as _f:
+            NSE_LISTED_STOCKS = json.load(_f)
+    except Exception as _e:
+        print(f"Note loading nse_listed_stocks.json: {_e}")
+
+_seen_syms = set()
+ALL_STOCKS = []
+
+# 1. Nifty 50 official constituents first
+for s in NIFTY_50_STOCKS:
+    sym = s["symbol"]
+    if sym not in _seen_syms:
+        ALL_STOCKS.append(s)
+        _seen_syms.add(sym)
+
+# 2. Key popular liquid / midcap / smallcap stocks
+for s in POPULAR_ADDITIONAL_STOCKS:
+    sym = s["symbol"]
+    if sym not in _seen_syms:
+        ALL_STOCKS.append(s)
+        _seen_syms.add(sym)
+
+# 3. All remaining official active companies listed on the NSE (2,500+ stocks)
+for s in NSE_LISTED_STOCKS:
+    sym = s["symbol"]
+    if sym not in _seen_syms:
+        ALL_STOCKS.append(s)
+        _seen_syms.add(sym)
+
 ALL_ASSETS = ALL_STOCKS + POPULAR_ETFS + POPULAR_BONDS + FNO_INDICES + COMMODITIES_LIST

@@ -6,13 +6,13 @@ evaluates the 8-point Stage 2 Trend Template, and detects Volatility Contraction
 
 import pandas as pd
 import numpy as np
-from data.fetcher import get_stock_history
-from analysis.technical import calculate_sma
+from analysis.technical import calculate_sma, calculate_atr
 
 
 def calculate_mansfield_rs(stock_close: pd.Series, benchmark_close: pd.Series, lookback: int = 55) -> dict:
     """
     Computes Mansfield Relative Strength and normalized RS Score (0–99).
+    Uses outer date alignment with forward-fill to prevent holiday data drops.
     """
     default_res = {
         "mansfield_value": 0.0,
@@ -26,8 +26,8 @@ def calculate_mansfield_rs(stock_close: pd.Series, benchmark_close: pd.Series, l
     if stock_close is None or benchmark_close is None or len(stock_close) < 20 or len(benchmark_close) < 20:
         return default_res
 
-    # Inner join on matching trading dates to prevent index mismatch NaNs
-    df = pd.DataFrame({"stock": stock_close, "bench": benchmark_close}).dropna()
+    # Robust date alignment: outer join with forward fill
+    df = pd.DataFrame({"stock": stock_close, "bench": benchmark_close}).sort_index().ffill().dropna()
     if len(df) < 20:
         return default_res
 
@@ -46,7 +46,7 @@ def calculate_mansfield_rs(stock_close: pd.Series, benchmark_close: pd.Series, l
     except Exception:
         mansfield_val = 0.0
 
-    # Compute multi-lookback performance vs benchmark (3M, 6M, 1Y)
+    # Multi-lookback performance vs benchmark (3M, 6M, 1Y)
     min_len = len(df)
     idx_3m = min(63, min_len - 1)
     idx_6m = min(126, min_len - 1)
@@ -64,7 +64,7 @@ def calculate_mansfield_rs(stock_close: pd.Series, benchmark_close: pd.Series, l
     bench_ret_6m = ((float(df["bench"].iloc[-1]) - b_base_6m) / b_base_6m) if b_base_6m > 0 else 0.0
     alpha_6m = stock_ret_6m - bench_ret_6m
 
-    # Weighted alpha: 60% 3M + 40% 6M
+    # Weighted composite alpha: 60% 3M + 40% 6M
     composite_alpha = (alpha_3m * 0.6) + (alpha_6m * 0.4)
     if np.isnan(composite_alpha) or np.isinf(composite_alpha):
         composite_alpha = 0.0
@@ -101,14 +101,16 @@ def calculate_mansfield_rs(stock_close: pd.Series, benchmark_close: pd.Series, l
 
 def evaluate_minervini_trend_template(df: pd.DataFrame, rs_score: int = 75) -> dict:
     """
-    Evaluates Mark Minervini's 8-Point Stage 2 Uptrend Template.
+    Evaluates Mark Minervini's 8-Point Stage 2 Uptrend Template with vectorization.
     """
     if df.empty or len(df) < 200:
         return {
             "stage_2_confirmed": False,
-            "passed_rules_count": 0,
+            "passed_count": 0,
             "total_rules": 8,
             "verdict": "Insufficient historical data for 200 DMA trend",
+            "verdict_color": "#6E6E73",
+            "summary": "Requires at least 200 daily sessions to compute Stage 2 criteria.",
             "checklist": []
         }
 
@@ -117,13 +119,14 @@ def evaluate_minervini_trend_template(df: pd.DataFrame, rs_score: int = 75) -> d
     sma50 = float(calculate_sma(close, 50).iloc[-1])
     sma150 = float(calculate_sma(close, 150).iloc[-1])
     sma200 = float(calculate_sma(close, 200).iloc[-1])
-    sma200_20d_ago = float(calculate_sma(close, 200).iloc[-20])
+    sma200_series = calculate_sma(close, 200)
+    sma200_20d_ago = float(sma200_series.iloc[-20]) if len(sma200_series) >= 20 else sma200
 
     high_52w = float(df["High"].max())
     low_52w = float(df["Low"].min())
 
-    dist_from_52w_low_pct = ((latest - low_52w) / low_52w) * 100
-    dist_from_52w_high_pct = ((high_52w - latest) / high_52w) * 100
+    dist_from_52w_low_pct = ((latest - low_52w) / low_52w) * 100.0 if low_52w > 0 else 0.0
+    dist_from_52w_high_pct = ((high_52w - latest) / high_52w) * 100.0 if high_52w > 0 else 0.0
 
     # 8 Minervini Criteria
     c1 = latest > sma150 and latest > sma200  # Price above 150 & 200 DMA
@@ -131,9 +134,9 @@ def evaluate_minervini_trend_template(df: pd.DataFrame, rs_score: int = 75) -> d
     c3 = sma200 > sma200_20d_ago             # 200 DMA trending upward
     c4 = sma50 > sma150 and sma50 > sma200   # 50 DMA above 150 & 200 DMA
     c5 = latest > sma50                      # Price above 50 DMA
-    c6 = dist_from_52w_low_pct >= 28.0       # At least 30% above 52W low
+    c6 = dist_from_52w_low_pct >= 25.0       # At least 25% above 52W low
     c7 = dist_from_52w_high_pct <= 25.0      # Within 25% of 52W high
-    c8 = rs_score >= 68                      # RS rating >= 70
+    c8 = rs_score >= 70                      # RS rating >= 70 threshold
 
     checklist = [
         {"rule": "Price above 150 & 200 DMA", "passed": c1, "detail": f"₹{round(latest, 1)} > ₹{round(sma200, 1)}"},
@@ -141,7 +144,7 @@ def evaluate_minervini_trend_template(df: pd.DataFrame, rs_score: int = 75) -> d
         {"rule": "200 DMA trending upward", "passed": c3, "detail": "Rising over last 20 sessions" if c3 else "Flat/Falling"},
         {"rule": "50 DMA > 150 & 200 DMA", "passed": c4, "detail": f"₹{round(sma50, 1)} > ₹{round(sma150, 1)}"},
         {"rule": "Current Price > 50 DMA", "passed": c5, "detail": f"₹{round(latest, 1)} > ₹{round(sma50, 1)}"},
-        {"rule": "At least 30% above 52W Low", "passed": c6, "detail": f"+{round(dist_from_52w_low_pct, 1)}% from Low"},
+        {"rule": "At least 25% above 52W Low", "passed": c6, "detail": f"+{round(dist_from_52w_low_pct, 1)}% from Low"},
         {"rule": "Within 25% of 52W High", "passed": c7, "detail": f"-{round(dist_from_52w_high_pct, 1)}% from High"},
         {"rule": "Relative Strength Rating >= 70", "passed": c8, "detail": f"RS Rating: {rs_score}/99"}
     ]
@@ -175,17 +178,21 @@ def evaluate_minervini_trend_template(df: pd.DataFrame, rs_score: int = 75) -> d
 
 def detect_vcp_pattern(df: pd.DataFrame) -> dict:
     """
-    Detects Volatility Contraction Pattern (VCP) waves (e.g. 20% -> 9% -> 4%).
+    Detects Volatility Contraction Pattern (VCP) across 3 successive market phases.
     """
     if len(df) < 60:
-        return {"has_vcp": False, "contractions": 0, "status": "No VCP"}
+        return {"has_vcp": False, "contractions": 0, "status": "No VCP", "pivot_price": 0.0, "waves_pct": [], "badge": "Normal Range", "summary": "Insufficient data for VCP."}
 
-    # Check high-low ranges over rolling 15-day chunks
-    w1_range = (df["High"].iloc[-60:-40].max() - df["Low"].iloc[-60:-40].min()) / df["Low"].iloc[-60:-40].min() * 100
-    w2_range = (df["High"].iloc[-40:-20].max() - df["Low"].iloc[-40:-20].min()) / df["Low"].iloc[-40:-20].min() * 100
-    w3_range = (df["High"].iloc[-20:].max() - df["Low"].iloc[-20:].min()) / df["Low"].iloc[-20:].min() * 100
+    # High-low depth across 3 successive waves (W1: 40-60d ago, W2: 20-40d ago, W3: recent 20d)
+    w1_low = float(df["Low"].iloc[-60:-40].min())
+    w2_low = float(df["Low"].iloc[-40:-20].min())
+    w3_low = float(df["Low"].iloc[-20:].min())
 
-    is_contracting = w1_range > w2_range > w3_range and w3_range <= 8.5
+    w1_range = ((float(df["High"].iloc[-60:-40].max()) - w1_low) / w1_low) * 100.0 if w1_low > 0 else 0.0
+    w2_range = ((float(df["High"].iloc[-40:-20].max()) - w2_low) / w2_low) * 100.0 if w2_low > 0 else 0.0
+    w3_range = ((float(df["High"].iloc[-20:].max()) - w3_low) / w3_low) * 100.0 if w3_low > 0 else 0.0
+
+    is_contracting = w1_range > w2_range > w3_range and w3_range <= 9.0
     pivot_price = round(float(df["High"].iloc[-15:].max()), 2)
 
     if is_contracting:

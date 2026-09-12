@@ -133,56 +133,55 @@ SECTORS_DATA = [
 
 
 from cachetools import TTLCache
+import concurrent.futures
 
 _sector_cache = TTLCache(maxsize=5, ttl=300)
+_SECTORS_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=6, thread_name_prefix="SectorsWorker")
 
 
-def analyze_all_sectors() -> dict:
-    """
-    Perform relative rotation, money flow, and breadth analysis across all 15 sectors.
-    """
-    if "sectors" in _sector_cache:
-        return _sector_cache["sectors"].copy()
-    # Fetch Nifty 50 benchmark history for relative strength calculation
-    nifty_df = get_stock_history("^NSEI", period="1y", interval="1d")
-    nifty_close = nifty_df["Close"] if not nifty_df.empty else pd.Series()
-
-    sector_results = []
-
-    for s in SECTORS_DATA:
-        ticker = s["ticker"]
+def _eval_single_sector(s: dict, nifty_close: pd.Series) -> dict:
+    ticker = s["ticker"]
+    try:
         # Try ticker first, or fallback to proxy
         df = get_stock_history(ticker, period="1y", interval="1d")
         if df.empty or len(df) < 30:
             df = get_stock_history(s["proxy"], period="1y", interval="1d")
 
         if df.empty or len(df) < 20:
-            continue
+            return None
 
         close = df["Close"]
-        high = df["High"]
-        low = df["Low"]
-        volume = df["Volume"]
-
         latest_close = float(close.iloc[-1])
+        if latest_close <= 0:
+            return None
+
         sma50 = float(calculate_sma(close, 50).iloc[-1]) if len(df) >= 50 else float(close.mean())
         sma200 = float(calculate_sma(close, 200).iloc[-1]) if len(df) >= 200 else sma50
         rsi = float(calculate_rsi(close, 14).iloc[-1])
 
-        # Relative Strength vs Nifty 50
+        # Relative Strength vs Nifty 50 with outer alignment to prevent holiday mismatches
         if not nifty_close.empty and len(nifty_close) >= 20:
-            aligned_nifty = nifty_close.iloc[-1]
-            rs_ratio = round((latest_close / aligned_nifty) / (float(close.iloc[-20]) / float(nifty_close.iloc[-20])), 3)
-            rs_momentum = round((float(close.iloc[-1]) / float(close.iloc[-5])) - (float(nifty_close.iloc[-1]) / float(nifty_close.iloc[-5])), 4)
+            aligned = pd.DataFrame({"sector": close, "nifty": nifty_close}).ffill().dropna()
+            if len(aligned) >= 20:
+                sec_now = float(aligned["sector"].iloc[-1])
+                nif_now = float(aligned["nifty"].iloc[-1])
+                sec_prev20 = float(aligned["sector"].iloc[-20])
+                nif_prev20 = float(aligned["nifty"].iloc[-20])
+                sec_prev5 = float(aligned["sector"].iloc[-5])
+                nif_prev5 = float(aligned["nifty"].iloc[-5])
+
+                rs_curr = sec_now / max(nif_now, 0.001)
+                rs_past20 = sec_prev20 / max(nif_prev20, 0.001)
+                rs_ratio = round(rs_curr / max(rs_past20, 0.001), 3)
+                rs_momentum = round((sec_now / max(sec_prev5, 0.001)) - (nif_now / max(nif_prev5, 0.001)), 4)
+            else:
+                rs_ratio = 1.0
+                rs_momentum = 0.0
         else:
             rs_ratio = 1.02
             rs_momentum = 0.015
 
         # RRG Quadrant Assignment:
-        # Leading: RS Ratio >= 1.0 and RS Momentum >= 0
-        # Weakening: RS Ratio >= 1.0 and RS Momentum < 0
-        # Lagging: RS Ratio < 1.0 and RS Momentum < 0
-        # Improving: RS Ratio < 1.0 and RS Momentum >= 0
         if rs_ratio >= 1.0 and rs_momentum >= 0:
             quadrant = "Leading"
             quadrant_color = "#10B981"
@@ -224,7 +223,7 @@ def analyze_all_sectors() -> dict:
         }
         mc_weight = weights_map.get(s["code"], 3.0)
 
-        sector_results.append({
+        return {
             "name": s["name"],
             "code": s["code"],
             "icon": s["icon"],
@@ -243,7 +242,40 @@ def analyze_all_sectors() -> dict:
             "sector_score": score,
             "top_stocks": top_stocks,
             "commentary": commentary
-        })
+        }
+    except Exception:
+        return None
+
+
+def analyze_all_sectors() -> dict:
+    """
+    Perform relative rotation, money flow, and breadth analysis across all 15 sectors.
+    """
+    if "sectors" in _sector_cache:
+        return _sector_cache["sectors"].copy()
+
+    # Fetch Nifty 50 benchmark history for relative strength calculation from GlobalMarketFeedManager
+    try:
+        from data.context import GlobalMarketFeedManager
+        nifty_close = GlobalMarketFeedManager.get_instance().get_benchmark_context("^NSEI").close_series
+    except Exception:
+        nifty_close = None
+    if nifty_close is None:
+        nifty_close = pd.Series(dtype="float64")
+
+    sector_results = []
+    futures = [_SECTORS_EXECUTOR.submit(_eval_single_sector, s, nifty_close) for s in SECTORS_DATA]
+    try:
+        for f in concurrent.futures.as_completed(futures, timeout=12.0):
+            try:
+                res = f.result()
+                if res:
+                    sector_results.append(res)
+            except Exception:
+                pass
+    except concurrent.futures.TimeoutError:
+        for f in futures:
+            f.cancel()
 
     # Sort sectors: Leading first, then Improving, then Weakening, then Lagging
     quadrant_order = {"Leading": 0, "Improving": 1, "Weakening": 2, "Lagging": 3}

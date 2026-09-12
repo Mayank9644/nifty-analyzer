@@ -20,6 +20,7 @@ def evaluate_fundamentals(info: dict, shareholding: dict) -> dict:
     rev_growth = info.get("revenue_growth", 0)
     promoter = shareholding.get("promoter", 50)
     pledged = shareholding.get("pledged", 0)
+    is_bank = info.get("is_bank", False) or "bank" in (info.get("sector") or "").lower() or "financial" in (info.get("sector") or "").lower()
 
     # 1. Valuation (25 pts)
     val_pts = 0
@@ -83,24 +84,32 @@ def evaluate_fundamentals(info: dict, shareholding: dict) -> dict:
 
     # 3. Debt & Balance Sheet Safety (25 pts)
     debt_pts = 0
-    if de <= 0.3:
-        debt_pts += 25
+    if is_bank:
+        debt_pts = 22
+        debt_verdict = "Banking / Financial Solvency (RBI CRAR Standard)"
+        debt_explanation = "Debt-to-Equity is not applicable for banking institutions; financial health is governed by RBI Capital Adequacy Ratios (CAR/CRAR)."
+    elif de <= 0.3:
+        debt_pts = 25
         debt_verdict = "Virtually Debt-Free / Ultra Safe Balance Sheet"
+        debt_explanation = f"Debt-to-Equity is {de} (lower than 0.5 is considered very healthy in India)."
     elif de <= 0.7:
-        debt_pts += 18
+        debt_pts = 18
         debt_verdict = "Comfortable Debt Levels"
+        debt_explanation = f"Debt-to-Equity is {de} (lower than 0.5 is considered very healthy in India)."
     elif de <= 1.5:
-        debt_pts += 10
+        debt_pts = 10
         debt_verdict = "Moderate Financial Leverage"
+        debt_explanation = f"Debt-to-Equity is {de} (lower than 0.5 is considered very healthy in India)."
     else:
-        debt_pts += 3
+        debt_pts = 4
         debt_verdict = "High Debt Burden — Exercise Caution"
+        debt_explanation = f"Debt-to-Equity is {de} (higher than 1.5 indicates significant financial leverage)."
 
     breakdown["financial_health"] = {
         "score": debt_pts,
         "max": 25,
         "verdict": debt_verdict,
-        "explanation": f"Debt-to-Equity is {de} (lower than 0.5 is considered very healthy in India)."
+        "explanation": debt_explanation
     }
     score += debt_pts
 
@@ -206,13 +215,14 @@ def calculate_piotroski_f_score(info: dict) -> dict:
     op_margin = info.get("operating_margins", 0)
     rev_growth = info.get("revenue_growth", 0)
     de = info.get("debt_to_equity", 0)
+    is_bank = info.get("is_bank", False) or "bank" in (info.get("sector") or "").lower() or "financial" in (info.get("sector") or "").lower()
 
     p1 = roe > 0
     p2 = op_margin > 0
     p3 = op_margin > (roe * 0.35)
     p4 = rev_growth > 0
-    p5 = de <= 0.8
-    p6 = de <= 1.2
+    p5 = de <= 0.8 or is_bank
+    p6 = de <= 1.2 or is_bank
     p7 = True
     p8 = op_margin >= 12.0
     p9 = rev_growth >= 8.0

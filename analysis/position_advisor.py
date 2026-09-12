@@ -26,6 +26,7 @@ from analysis.technical import (
     calculate_bollinger_bands, calculate_atr, calculate_adx
 )
 from analysis.fundamental import evaluate_fundamentals
+from config import STYLE_EXECUTION_PARAMS
 
 
 def _safe_float(val, default=0.0):
@@ -277,7 +278,17 @@ def analyze_position(trade: dict) -> dict:
     total_score = sum(scores.values())
     max_possible = len(scores) * 3
 
-    # ── FINAL VERDICT ──
+    # ── Volatility-Adjusted Trailing Stop & Breakeven Rule ──
+    trade_style = str(trade.get("style") or "swing").lower()
+    style_cfg = STYLE_EXECUTION_PARAMS.get(trade_style, STYLE_EXECUTION_PARAMS["swing"])
+    stop_mult = style_cfg.get("stop_atr_mult", 1.5)
+    pos_atr = atr if "atr" in locals() and atr > 0 else (current_price * 0.02)
+    trailing_stop_atr = round(current_price - (stop_mult * pos_atr), 2)
+
+    hit_target1 = target1 > 0 and current_price >= target1
+    breakeven_sl = max(sl, entry)
+
+    # ── FINAL VERDICT & UNIVEST 3-TIER MULTI-TRANCHE GUIDANCE ──
     if total_score >= 10:
         verdict   = "BUY MORE"
         verdict_icon = "🟢"
@@ -285,17 +296,17 @@ def analyze_position(trade: dict) -> dict:
         advice_class = "advice-badge-buy"
         confidence = min(99, int(70 + (total_score / max_possible) * 30))
         explanation = (
-            f"All major signals align bullishly. The stock is in an uptrend, "
+            f"All major technical and flow signals align bullishly. The stock is in an uptrend, "
             f"technicals are strong (RSI {rsi:.0f}), fundamentals are solid "
             f"(Grade {fund_grade}), and your R:R is still favourable. "
-            f"Averaging down (adding {max(1, quantity // 2)} more units near ₹{current_price:.0f}) "
-            f"can improve your average and amplify returns to Target ₹{target1:.0f}."
+            f"Averaging up (adding {max(1, quantity // 2)} more units near ₹{current_price:.0f}) "
+            f"can compound returns toward Target ₹{target1:.0f}."
         )
         action_steps = [
             f"Add {max(1, quantity // 2)} units near CMP ₹{current_price:.0f}",
-            f"Keep stop loss at ₹{sl:.0f} for the full position",
-            f"Target 1: ₹{target1:.0f} (+{remaining_upside:.1f}% from CMP)",
-            f"Target 2: ₹{target2:.0f}" if target2 else None
+            f"Anchor stop loss at ₹{max(sl, trailing_stop_atr):.0f} (ATR-adjusted)",
+            f"Tranche 1: Book 50% at Target 1 (₹{target1:.0f}) & shift SL to Entry (₹{entry:.0f})",
+            f"Tranche 2: Target 2 (₹{target2:.0f})" if target2 else f"Tranche 2: Target 2 (+{remaining_upside * 1.5:.1f}%)"
         ]
     elif total_score >= 5:
         verdict   = "HOLD"
@@ -304,17 +315,18 @@ def analyze_position(trade: dict) -> dict:
         advice_class = "advice-badge-hold"
         confidence = min(90, int(50 + (total_score / max_possible) * 30))
         explanation = (
-            f"The trade is progressing with mixed signals. Trend regime is "
-            f"{'favourable' if scores.get('trend', 0) > 0 else 'neutral'}, "
-            f"but some indicators suggest caution. "
-            f"Hold your current {quantity} units with stop at ₹{sl:.0f}. "
-            f"Do NOT add more until the signal score improves to 10+."
+            f"The trade thesis is intact with steady progress. Trend regime is "
+            f"{'favourable' if scores.get('trend', 0) > 0 else 'neutral'}. "
+            f"{'Target 1 reached: Lock stop loss to Breakeven (₹' + str(int(entry)) + '). ' if hit_target1 else ''}"
+            f"Hold current {quantity} units with stop at ₹{breakeven_sl if hit_target1 else max(sl, trailing_stop_atr):.0f}. "
+            f"Do NOT add new capital until breakout score improves to 10+."
         )
+        recommended_sl = breakeven_sl if hit_target1 else max(sl, trailing_stop_atr)
         action_steps = [
-            f"Hold {quantity} units — no new buying yet",
-            f"Trail stop loss to ₹{max(sl, current_price * 0.95):.0f} if already in profit",
-            f"Book 30-50% at Target 1 (₹{target1:.0f})" if target1 else None,
-            f"Re-evaluate if price breaks below ₹{min(sl, current_price * 0.92):.0f}"
+            f"Hold {quantity} units — no new capital addition",
+            f"Lock stop loss at ₹{recommended_sl:.0f} {'(Breakeven Activated)' if hit_target1 else '(Trailing ATR)'}",
+            f"Tranche 1: De-risk 50% at Target 1 (₹{target1:.0f})" if target1 else None,
+            f"Tranche 3 Runner: Trail along 21 EMA or ATR stop"
         ]
     elif total_score >= 0:
         verdict   = "PARTIAL EXIT"
@@ -323,17 +335,17 @@ def analyze_position(trade: dict) -> dict:
         advice_class = "advice-badge-hold"
         confidence = min(85, int(40 + abs(total_score / max_possible) * 30))
         exit_qty = max(1, quantity // 2)
+        realized_lock = (current_price - entry) * exit_qty
         explanation = (
-            f"Signals are weakening. The score ({total_score}) suggests the risk is "
-            f"rising relative to remaining reward. "
+            f"Momentum signals are deteriorating (Score: {total_score}). The remaining risk exceeds upside. "
             f"Selling half ({exit_qty} units) at ₹{current_price:.0f} locks in P&L "
-            f"of ₹{(current_price - entry) * exit_qty:+,.0f} while keeping exposure."
+            f"of ₹{realized_lock:+,.0f} while keeping partial exposure."
         )
         action_steps = [
-            f"Sell {exit_qty} of {quantity} units at CMP ₹{current_price:.0f}",
-            f"Lock in ₹{(current_price - entry) * exit_qty:+,.0f} on partial exit",
-            f"Hold remaining {quantity - exit_qty} units with tighter SL: ₹{current_price * 0.96:.0f}",
-            "Review full exit if price breaks below 50 DMA"
+            f"Sell {exit_qty} of {quantity} units immediately at CMP ₹{current_price:.0f}",
+            f"Lock in ₹{realized_lock:+,.0f} net realized P&L",
+            f"Tighten stop loss on remaining {quantity - exit_qty} units to ₹{max(sl, trailing_stop_atr):.0f}",
+            "Review full liquidation if price breaks below 50 DMA"
         ]
     else:
         verdict   = "EXIT / SELL"
@@ -343,17 +355,16 @@ def analyze_position(trade: dict) -> dict:
         confidence = min(95, int(60 + abs(total_score / max_possible) * 30))
         loss_at_exit = (current_price - entry) * quantity
         explanation = (
-            f"Multiple factors are against this position. Score: {total_score}. "
-            f"{'SL has been breached. ' if scores.get('sl_valid', 0) <= -3 else ''}"
-            f"Technicals show bearish trend, and time in trade ({days_held}d) is eroding capital. "
-            f"Exit now at ₹{current_price:.0f} to limit loss to ₹{loss_at_exit:+,.0f}. "
-            f"Capital can be redeployed in better setups."
+            f"Multiple quantitative factors are against this position (Score: {total_score}). "
+            f"{'Stop loss has been breached! ' if scores.get('sl_valid', 0) <= -3 else ''}"
+            f"Technicals show bearish breakdown. Exit now at ₹{current_price:.0f} to limit loss to ₹{loss_at_exit:+,.0f}. "
+            f"Capital can be redeployed into higher-conviction setups."
         )
         action_steps = [
             f"Exit ALL {quantity} units at market price ₹{current_price:.0f}",
-            f"Realized P&L on exit: ₹{loss_at_exit:+,.0f}",
+            f"Final realized P&L on exit: ₹{loss_at_exit:+,.0f}",
             "Do NOT average down — this trade has failed its thesis",
-            "Re-enter only if price reclaims 50 DMA with volume"
+            "Preserve remaining capital for setups meeting 10+ score"
         ]
 
     action_steps = [s for s in action_steps if s]
@@ -395,6 +406,8 @@ def analyze_position(trade: dict) -> dict:
             "days_held": days_held,
             "remaining_upside_pct": round(remaining_upside, 2),
             "remaining_risk_pct": round(remaining_risk, 2),
-            "rr_remaining": round(rr_remaining, 2)
+            "rr_remaining": round(rr_remaining, 2),
+            "trailing_stop_atr": round(trailing_stop_atr, 2),
+            "breakeven_active": hit_target1
         }
     }

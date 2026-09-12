@@ -1,60 +1,68 @@
 """
-Intrinsic Valuation Engine inspired by FinceptTerminal Equity Research Desk.
-Calculates 2-Stage Discounted Cash Flow (DCF), Benjamin Graham Bluechip Number,
-and Margin of Safety % vs Current Market Price.
+Intrinsic Valuation Engine inspired by FinceptTerminal & Univest Quantitative Desks.
+Calculates 3-Pillar Triangulated Valuation:
+1. 2-Stage Discounted Cash Flow (DCF) with Dynamic WACC bound to config.py
+2. Benjamin Graham Bluechip Number
+3. Peter Lynch PEG Fair Value Model
+Computes Consensus Fair Value and Margin of Safety % with complete zero-division immunity.
 """
 
 import math
+from config import RISK_FREE_RATE
 
 
 def calculate_intrinsic_valuation(info: dict) -> dict:
     """
-    Computes intrinsic fair value, Graham Number, and Margin of Safety.
+    Computes intrinsic fair value, Graham Number, Peter Lynch Value, and Margin of Safety.
     Uses Free Cashflow (DCF), EPS, Book Value, and growth estimates.
     """
-    cmp = float(info.get("current_price", 0.0))
-    eps = float(info.get("eps", 0.0))
-    book_value = float(info.get("book_value", 0.0))
-    revenue_growth = float(info.get("revenue_growth", 10.0))
-    earnings_growth = float(info.get("earnings_growth", 12.0))
-    mcap = float(info.get("market_cap", 0.0))
-    fcf = float(info.get("free_cashflow", 0.0))
+    cmp = float(info.get("current_price", 0.0) or 0.0)
+    eps = float(info.get("eps", 0.0) or 0.0)
+    book_value = float(info.get("book_value", 0.0) or 0.0)
+    revenue_growth = float(info.get("revenue_growth", 10.0) or 10.0)
+    earnings_growth = float(info.get("earnings_growth", 12.0) or 12.0)
+    mcap = float(info.get("market_cap", 0.0) or 0.0)
+    fcf = float(info.get("free_cashflow", 0.0) or 0.0)
+    beta = float(info.get("beta", 1.0) or 1.0)
 
     if cmp <= 0:
         return {"status": "unavailable", "message": "Price data required for valuation."}
 
-    # 1. 2-Stage Discounted Cash Flow (DCF) Model
-    # Discount rate (WACC): 11.5% for Indian equities (10Y G-Sec 6.85% + ERP 4.65%)
-    discount_rate = 0.115
-    terminal_growth = 0.045  # India long-term GDP terminal rate
+    # 1. Dynamic WACC (Cost of Equity): Ke = Rf + Beta * ERP
+    # Anchored to config.RISK_FREE_RATE (6.50% RBI Repo Rate)
+    rf = float(RISK_FREE_RATE)
+    erp = 0.05  # 5.0% Indian Equity Risk Premium
+    bounded_beta = max(0.65, min(beta, 1.60))
+    discount_rate = round(rf + (bounded_beta * erp), 4)
+    terminal_growth = 0.045  # 4.5% India long-term GDP terminal rate
 
     # Estimate FCF per share
-    fcf_per_share = 0.0
     if mcap > 0 and fcf > 0:
         shares_est = mcap / cmp
-        fcf_per_share = fcf / shares_est
+        fcf_per_share = fcf / shares_est if shares_est > 0 else 0.0
     elif eps > 0:
-        # FCF proxy: 80% of net earnings for capital-efficient bluechips
+        # FCF proxy: 80% of net earnings for capital-efficient Indian companies
         fcf_per_share = eps * 0.80
     else:
-        fcf_per_share = cmp * 0.035
+        # Do NOT fabricate positive cash flows for unprofitable companies
+        fcf_per_share = 0.0
 
-    # 5-year projected growth rate (capped between 6% and 18%)
+    # 5-year projected growth rate (clamped between 6% and 18%)
     g = max(min(max(revenue_growth, earnings_growth) / 100.0, 0.18), 0.06)
 
-    # 5-Year Stage 1 PV
-    pv_cashflows = 0.0
-    projected_fcf = fcf_per_share
-    for t in range(1, 6):
-        projected_fcf *= (1.0 + g)
-        pv_cashflows += projected_fcf / ((1.0 + discount_rate) ** t)
+    dcf_fair_value = 0.0
+    if fcf_per_share > 0:
+        pv_cashflows = 0.0
+        projected_fcf = fcf_per_share
+        for t in range(1, 6):
+            projected_fcf *= (1.0 + g)
+            pv_cashflows += projected_fcf / ((1.0 + discount_rate) ** t)
 
-    # Stage 2 Terminal Value PV
-    terminal_fcf = projected_fcf * (1.0 + terminal_growth)
-    terminal_val = terminal_fcf / (discount_rate - terminal_growth)
-    pv_terminal = terminal_val / ((1.0 + discount_rate) ** 5)
-
-    dcf_fair_value = round(pv_cashflows + pv_terminal, 2)
+        # Stage 2 Terminal Value PV
+        terminal_fcf = projected_fcf * (1.0 + terminal_growth)
+        terminal_val = terminal_fcf / (discount_rate - terminal_growth) if (discount_rate > terminal_growth) else 0.0
+        pv_terminal = terminal_val / ((1.0 + discount_rate) ** 5)
+        dcf_fair_value = round(pv_cashflows + pv_terminal, 2)
 
     # 2. Benjamin Graham Number Formula: sqrt(22.5 * EPS * BVPS)
     graham_number = 0.0
@@ -63,15 +71,26 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
         if graham_val > 0:
             graham_number = round(math.sqrt(graham_val), 2)
 
-    # 3. Consensus Fair Value (Weighted blend of DCF and Graham Number)
-    if graham_number > 0 and dcf_fair_value > 0:
-        consensus_fair_value = round((0.65 * dcf_fair_value) + (0.35 * graham_number), 2)
-    elif dcf_fair_value > 0:
-        consensus_fair_value = dcf_fair_value
+    # 3. Peter Lynch Fair Value Formula: EPS * Growth Rate
+    lynch_growth = max(min(earnings_growth, 25.0), 8.0)
+    lynch_fair_value = round(eps * lynch_growth, 2) if eps > 0 else 0.0
+
+    # 4. Triangulated Consensus Fair Value
+    valid_models = []
+    if dcf_fair_value > 0:
+        valid_models.append((dcf_fair_value, 0.50))
+    if graham_number > 0:
+        valid_models.append((graham_number, 0.25))
+    if lynch_fair_value > 0:
+        valid_models.append((lynch_fair_value, 0.25))
+
+    if valid_models:
+        total_weight = sum(w for _, w in valid_models)
+        consensus_fair_value = round(sum(v * (w / total_weight) for v, w in valid_models), 2)
     else:
         consensus_fair_value = round(cmp, 2)
 
-    # 4. Margin of Safety % = (Fair Value - CMP) / Fair Value * 100
+    # 5. Margin of Safety % = (Fair Value - CMP) / Fair Value * 100
     if consensus_fair_value > 0:
         margin_of_safety_pct = round(((consensus_fair_value - cmp) / consensus_fair_value) * 100.0, 1)
     else:
@@ -102,8 +121,9 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
     return {
         "status": "success",
         "cmp": cmp,
-        "dcf_fair_value": dcf_fair_value,
+        "dcf_fair_value": dcf_fair_value if dcf_fair_value > 0 else "N/A",
         "graham_number": graham_number if graham_number > 0 else "N/A",
+        "lynch_fair_value": lynch_fair_value if lynch_fair_value > 0 else "N/A",
         "consensus_fair_value": consensus_fair_value,
         "margin_of_safety_pct": margin_of_safety_pct,
         "verdict": verdict,
@@ -111,8 +131,9 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
         "icon": icon,
         "summary": summary,
         "parameters": {
-            "discount_rate_pct": round(discount_rate * 100, 1),
+            "discount_rate_pct": round(discount_rate * 100, 2),
             "projected_growth_pct": round(g * 100, 1),
-            "terminal_growth_pct": round(terminal_growth * 100, 1)
+            "terminal_growth_pct": round(terminal_growth * 100, 1),
+            "beta": round(bounded_beta, 2)
         }
     }

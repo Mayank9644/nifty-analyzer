@@ -55,9 +55,11 @@ function initLightweightChart(containerId, candleData, maData = null, indicatorS
     container.innerHTML = "";
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const width = container.clientWidth > 50 ? container.clientWidth : ((container.parentElement && container.parentElement.clientWidth > 50) ? container.parentElement.clientWidth : 800);
+    const height = container.clientHeight > 50 ? container.clientHeight : 420;
     const chartOptions = {
-        width: container.clientWidth,
-        height: container.clientHeight || 420,
+        width: width,
+        height: height,
         layout: {
             background: { color: isDark ? "#151722" : "#ffffff" },
             textColor: isDark ? "#a1a1a6" : "#6e6e73",
@@ -179,13 +181,41 @@ function initLightweightChart(containerId, candleData, maData = null, indicatorS
         initTradingViewProWidget(sym);
     }
 
-    // Responsive resize handler
-    window.addEventListener("resize", () => {
-        if (tvChart && container) {
-            tvChart.applyOptions({ width: container.clientWidth });
-        }
-    });
+    // Attach ResizeObserver to container to guarantee chart renders when tabs/workspaces switch
+    if (typeof ResizeObserver !== "undefined" && !container._roAttached) {
+        container._roAttached = true;
+        const ro = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                const w = Math.floor(entry.contentRect.width);
+                if (w > 50 && tvChart) {
+                    tvChart.applyOptions({ width: w });
+                    tvChart.timeScale().fitContent();
+                }
+            }
+        });
+        ro.observe(container);
+    }
 }
+
+function refitAllCharts() {
+    const c = document.getElementById("candlestickChartContainer");
+    if (tvChart && c && c.clientWidth > 50) {
+        tvChart.applyOptions({ width: c.clientWidth });
+        tvChart.timeScale().fitContent();
+    }
+    const rsiC = document.getElementById("rsiChartContainer");
+    if (rsiChart && rsiC && rsiC.clientWidth > 50) {
+        rsiChart.applyOptions({ width: rsiC.clientWidth });
+        rsiChart.timeScale().fitContent();
+    }
+    const macdC = document.getElementById("macdChartContainer");
+    if (macdChart && macdC && macdC.clientWidth > 50) {
+        macdChart.applyOptions({ width: macdC.clientWidth });
+        macdChart.timeScale().fitContent();
+    }
+}
+window.refitAllCharts = refitAllCharts;
+window.addEventListener("resize", refitAllCharts);
 
 /**
  * Switch between Candlestick and Area/Line chart type.
@@ -329,9 +359,8 @@ function toggleRiskRewardPlanner() {
  * Apply Dark / Light theme styling to TradingView Lightweight Chart canvas.
  */
 function applyChartTheme(theme) {
-    if (!tvChart) return;
     const isDark = theme === "dark";
-    tvChart.applyOptions({
+    const opts = {
         layout: {
             background: { color: isDark ? "#151722" : "#ffffff" },
             textColor: isDark ? "#a1a1a6" : "#6e6e73"
@@ -346,7 +375,11 @@ function applyChartTheme(theme) {
         rightPriceScale: {
             borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#e5e5ea"
         }
-    });
+    };
+    if (tvChart) tvChart.applyOptions(opts);
+    if (typeof _splitTvChart !== "undefined" && _splitTvChart) _splitTvChart.applyOptions(opts);
+    if (typeof rsiChart !== "undefined" && rsiChart) rsiChart.applyOptions(opts);
+    if (typeof macdChart !== "undefined" && macdChart) macdChart.applyOptions(opts);
 }
 
 function calculateSMAForChart(data, period) {
@@ -379,6 +412,8 @@ function renderShareholdingChart(canvasId, shareholding) {
         shareholdingChart.destroy();
     }
 
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
     shareholdingChart = new Chart(ctx, {
         type: "doughnut",
         data: {
@@ -391,8 +426,8 @@ function renderShareholdingChart(canvasId, shareholding) {
                     shareholding.public || 15
                 ],
                 backgroundColor: ["#0071e3", "#34c759", "#ff9500", "#af52de"],
-                borderColor: "#ffffff",
-                borderWidth: 3
+                borderColor: isDark ? "#1c1f2e" : "#ffffff",
+                borderWidth: 2
             }]
         },
         options: {
@@ -400,8 +435,7 @@ function renderShareholdingChart(canvasId, shareholding) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: "bottom",
-                    labels: { color: "#48484a", font: { family: "-apple-system, BlinkMacSystemFont, sans-serif", size: 11 }, padding: 12 }
+                    display: false
                 },
                 tooltip: {
                     callbacks: {
@@ -411,7 +445,7 @@ function renderShareholdingChart(canvasId, shareholding) {
                     }
                 }
             },
-            cutout: "70%"
+            cutout: "68%"
         }
     });
 }
@@ -830,20 +864,21 @@ let _currentTvProSymbol = null;
  * Format any application stock/index/commodity symbol into TradingView ticker format.
  */
 function formatTradingViewSymbol(symbol) {
-    if (!symbol) return "NSE:RELIANCE";
+    if (!symbol) return "BSE:RELIANCE";
     let s = symbol.toString().trim().toUpperCase();
 
     // Strip exchange suffixes
     s = s.replace(/\.NS$/i, "").replace(/\.BO$/i, "");
 
     // Index mappings
-    if (s === "^NSEI" || s === "NIFTY" || s === "NIFTY 50" || s === "NIFTY50") return "NSE:NIFTY";
-    if (s === "^NSEBANK" || s === "BANKNIFTY" || s === "NIFTY BANK" || s === "BANK NIFTY") return "NSE:BANKNIFTY";
-    if (s === "^CNXIT" || s === "NIFTYIT") return "NSE:CNXIT";
-    if (s === "^CNXAUTO" || s === "NIFTYAUTO") return "NSE:CNXAUTO";
-    if (s === "^CNXFMCG" || s === "NIFTYFMCG") return "NSE:CNXFMCG";
-    if (s === "^CNXMETAL" || s === "NIFTYMETAL") return "NSE:CNXMETAL";
-    if (s === "^CNXPHARMA" || s === "NIFTYPHARMA") return "NSE:CNXPHARMA";
+    if (s === "^NSEI" || s === "NIFTY" || s === "NIFTY 50" || s === "NIFTY50") return "INDEX:NIFTY";
+    if (s === "^NSEBANK" || s === "BANKNIFTY" || s === "NIFTY BANK" || s === "BANK NIFTY") return "INDEX:BANKNIFTY";
+    if (s === "^BSESN" || s === "SENSEX") return "BSE:SENSEX";
+    if (s === "^CNXIT" || s === "NIFTYIT") return "INDEX:CNXIT";
+    if (s === "^CNXAUTO" || s === "NIFTYAUTO") return "INDEX:CNXAUTO";
+    if (s === "^CNXFMCG" || s === "NIFTYFMCG") return "INDEX:CNXFMCG";
+    if (s === "^CNXMETAL" || s === "NIFTYMETAL") return "INDEX:CNXMETAL";
+    if (s === "^CNXPHARMA" || s === "NIFTYPHARMA") return "INDEX:CNXPHARMA";
 
     // Commodity mappings
     if (s === "GC=F" || s === "GOLD") return "MCX:GOLD";
@@ -851,10 +886,19 @@ function formatTradingViewSymbol(symbol) {
     if (s === "CL=F" || s === "CRUDEOIL" || s === "CRUDE OIL") return "MCX:CRUDEOIL";
 
     // If exchange is already prefixed (e.g. BSE:RELIANCE or NSE:RELIANCE)
-    if (s.includes(":")) return s;
+    if (s.includes(":")) {
+        if (s.startsWith("NSE:")) {
+            const symOnly = s.replace("NSE:", "");
+            if (symOnly === "NIFTY" || symOnly === "BANKNIFTY") {
+                return `INDEX:${symOnly}`;
+            }
+            return `BSE:${symOnly}`;
+        }
+        return s;
+    }
 
-    // Default to NSE
-    return `NSE:${s}`;
+    // Default Indian stocks to BSE: to avoid TradingView licensing blocks and Apple Inc. fallback
+    return `BSE:${s}`;
 }
 window.formatTradingViewSymbol = formatTradingViewSymbol;
 
@@ -898,6 +942,7 @@ function updateTradingViewProSymbol(symbol, force = false) {
         _tvProWidgetInstance = new TradingView.widget({
             "autosize": true,
             "symbol": tvSymbol,
+            "default_symbol": tvSymbol,
             "interval": "D",
             "timezone": "Asia/Kolkata",
             "theme": isDark ? "dark" : "light",
@@ -971,10 +1016,15 @@ function renderAlgorithmicMarkers(candleData) {
         const currentCode = (typeof appState !== "undefined" && appState.currentSymbol)
             ? appState.currentSymbol.replace(".NS", "").replace(".BO", "")
             : "";
+        const isNumericTime = candleData.length > 0 && typeof candleData[0].time === "number";
         _lastActiveTrades.forEach(t => {
             if (t.code === currentCode && t.entry_date) {
+                let mTime = t.entry_date;
+                if (isNumericTime) {
+                    mTime = Math.floor(new Date(t.entry_date + "T09:15:00+05:30").getTime() / 1000);
+                }
                 markers.push({
-                    time: t.entry_date,
+                    time: mTime,
                     position: 'belowBar',
                     color: '#7e22ce',
                     shape: 'arrowUp',
@@ -985,7 +1035,12 @@ function renderAlgorithmicMarkers(candleData) {
     }
 
     // Sort markers chronologically (strictly required by Lightweight Charts)
-    markers.sort((a, b) => (a.time > b.time ? 1 : -1));
+    markers.sort((a, b) => {
+        if (typeof a.time === "number" && typeof b.time === "number") {
+            return a.time - b.time;
+        }
+        return String(a.time).localeCompare(String(b.time));
+    });
 
     try {
         candleSeries.setMarkers(markers);

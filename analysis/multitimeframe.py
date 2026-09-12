@@ -1,29 +1,35 @@
 """
 Multi-Timeframe Trend Confluence Matrix (MTF).
 Evaluates trend alignment across 15-Minute (Intraday), 1-Hour (Swing),
-Daily (Core), and Weekly (Macro) timeframes.
+Daily (Core), and Weekly (Macro) timeframes using persistent thread pooling
+and authentic weekly resampling.
 """
 
+from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
 from data.fetcher import get_stock_history
 from analysis.technical import calculate_ema, calculate_sma, calculate_rsi
 
+# Persistent bounded executor for intraday & swing histories
+_MTF_EXECUTOR = ThreadPoolExecutor(max_workers=6, thread_name_prefix="MTFWorker")
 
-def evaluate_multitimeframe_confluence(symbol: str, daily_df=None) -> dict:
+
+def evaluate_multitimeframe_confluence(symbol: str, daily_df: pd.DataFrame = None) -> dict:
     """
     Computes trend direction and momentum across 4 timeframes (15m, 1h, Daily, Weekly).
-    If daily_df is provided, avoids redundant network calls.
+    Avoids redundant network calls by authentic weekly resampling from daily_df.
     """
-    timeframe_results = []
-
     # 1. Daily Core Timeframe
     has_daily = False
+    daily_tf = None
+    df_1d = daily_df if (daily_df is not None and not daily_df.empty) else get_stock_history(symbol, period="1y", interval="1d")
+
     try:
-        df_1d = daily_df if daily_df is not None and not daily_df.empty else get_stock_history(symbol, period="1y", interval="1d")
         if df_1d is not None and not df_1d.empty and len(df_1d) >= 30:
             df_1d = df_1d.dropna(subset=["Close"])
             c = df_1d["Close"]
-            sma50 = float(calculate_sma(c, min(50, len(c)-1)).iloc[-1])
-            sma200 = float(calculate_sma(c, min(200, len(c)-1)).iloc[-1])
+            sma50 = float(calculate_sma(c, min(50, len(c) - 1)).iloc[-1])
+            sma200 = float(calculate_sma(c, min(200, len(c) - 1)).iloc[-1])
             rsi = float(calculate_rsi(c, 14).iloc[-1])
             latest = float(c.iloc[-1])
 
@@ -46,112 +52,115 @@ def evaluate_multitimeframe_confluence(symbol: str, daily_df=None) -> dict:
     except Exception:
         daily_tf = _fallback_timeframe("Daily (Core)")
 
-    # Fetch 15m and 1h intraday/swing histories concurrently
-    import concurrent.futures
-    df_15m = None
-    df_1h = None
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        f_15m = executor.submit(get_stock_history, symbol, period="5d", interval="15m")
-        f_1h = executor.submit(get_stock_history, symbol, period="1mo", interval="1h")
-        try:
-            df_15m = f_15m.result(timeout=4.0)
-        except Exception:
-            df_15m = None
-        try:
-            df_1h = f_1h.result(timeout=4.0)
-        except Exception:
-            df_1h = None
+    if not daily_tf:
+        daily_tf = _fallback_timeframe("Daily (Core)")
 
-    # 2. 15-Minute Intraday Timeframe
+    # 2. Fetch 15m and 1h intraday/swing histories concurrently via persistent executor
+    f_15m = _MTF_EXECUTOR.submit(get_stock_history, symbol, "5d", "15m")
+    f_1h = _MTF_EXECUTOR.submit(get_stock_history, symbol, "1mo", "1h")
+
+    try:
+        df_15m = f_15m.result(timeout=3.5)
+    except Exception:
+        df_15m = None
+
+    try:
+        df_1h = f_1h.result(timeout=3.5)
+    except Exception:
+        df_1h = None
+
+    # 15-Minute Intraday Timeframe
     try:
         if df_15m is not None and not df_15m.empty and len(df_15m) >= 20:
             df_15m = df_15m.dropna(subset=["Close"])
-            c = df_15m["Close"]
-            ema20 = float(calculate_ema(c, 20).iloc[-1])
-            ema50 = float(calculate_ema(c, min(50, len(c)-1)).iloc[-1])
-            rsi = float(calculate_rsi(c, 14).iloc[-1])
-            latest = float(c.iloc[-1])
+            c_15m = df_15m["Close"]
+            ema20 = float(calculate_ema(c_15m, 20).iloc[-1])
+            ema50 = float(calculate_ema(c_15m, min(50, len(c_15m) - 1)).iloc[-1])
+            rsi_15m = float(calculate_rsi(c_15m, 14).iloc[-1])
+            latest_15m = float(c_15m.iloc[-1])
 
-            is_bull = latest > ema20 and ema20 > ema50 and rsi >= 48
-            is_bear = latest < ema20 and ema20 < ema50 and rsi <= 52
+            is_bull_15m = latest_15m > ema20 and ema20 > ema50 and rsi_15m >= 48
+            is_bear_15m = latest_15m < ema20 and ema20 < ema50 and rsi_15m <= 52
 
-            status = "BULLISH" if is_bull else ("BEARISH" if is_bear else "NEUTRAL")
-            color = "#10B981" if is_bull else ("#EF4444" if is_bear else "#F59E0B")
-            icon = "🟢" if is_bull else ("🔴" if is_bear else "🟡")
-            summary = f"₹{round(latest, 1)} > 20 EMA, RSI {round(rsi, 1)}" if is_bull else f"RSI {round(rsi, 1)}, 20 EMA ₹{round(ema20, 1)}"
+            status_15m = "BULLISH" if is_bull_15m else ("BEARISH" if is_bear_15m else "NEUTRAL")
+            color_15m = "#10B981" if is_bull_15m else ("#EF4444" if is_bear_15m else "#F59E0B")
+            icon_15m = "🟢" if is_bull_15m else ("🔴" if is_bear_15m else "🟡")
+            summary_15m = f"₹{round(latest_15m, 1)} > 20 EMA, RSI {round(rsi_15m, 1)}" if is_bull_15m else f"RSI {round(rsi_15m, 1)}, 20 EMA ₹{round(ema20, 1)}"
 
             tf_15m = {
                 "timeframe": "15M (Intraday)",
-                "status": status,
-                "color": color,
-                "icon": icon,
-                "detail": summary,
-                "is_bull": is_bull
+                "status": status_15m,
+                "color": color_15m,
+                "icon": icon_15m,
+                "detail": summary_15m,
+                "is_bull": is_bull_15m
             }
         else:
             tf_15m = _fallback_timeframe("15M (Intraday)")
     except Exception:
         tf_15m = _fallback_timeframe("15M (Intraday)")
 
-    # 3. 1-Hour Swing Timeframe
+    # 1-Hour Swing Timeframe
     try:
         if df_1h is not None and not df_1h.empty and len(df_1h) >= 20:
             df_1h = df_1h.dropna(subset=["Close"])
-            c = df_1h["Close"]
-            ema20 = float(calculate_ema(c, 20).iloc[-1])
-            ema50 = float(calculate_ema(c, min(50, len(c)-1)).iloc[-1])
-            rsi = float(calculate_rsi(c, 14).iloc[-1])
-            latest = float(c.iloc[-1])
+            c_1h = df_1h["Close"]
+            ema20_1h = float(calculate_ema(c_1h, 20).iloc[-1])
+            ema50_1h = float(calculate_ema(c_1h, min(50, len(c_1h) - 1)).iloc[-1])
+            latest_1h = float(c_1h.iloc[-1])
 
-            is_bull = latest > ema20 and ema20 > ema50
-            is_bear = latest < ema20 and ema20 < ema50
+            is_bull_1h = latest_1h > ema20_1h and ema20_1h > ema50_1h
+            is_bear_1h = latest_1h < ema20_1h and ema20_1h < ema50_1h
 
-            status = "BULLISH" if is_bull else ("BEARISH" if is_bear else "NEUTRAL")
-            color = "#10B981" if is_bull else ("#EF4444" if is_bear else "#F59E0B")
-            icon = "🟢" if is_bull else ("🔴" if is_bear else "🟡")
+            status_1h = "BULLISH" if is_bull_1h else ("BEARISH" if is_bear_1h else "NEUTRAL")
+            color_1h = "#10B981" if is_bull_1h else ("#EF4444" if is_bear_1h else "#F59E0B")
+            icon_1h = "🟢" if is_bull_1h else ("🔴" if is_bear_1h else "🟡")
 
             tf_1h = {
                 "timeframe": "1H (Swing)",
-                "status": status,
-                "color": color,
-                "icon": icon,
-                "detail": f"20 EMA (₹{round(ema20, 1)}) vs 50 EMA",
-                "is_bull": is_bull
+                "status": status_1h,
+                "color": color_1h,
+                "icon": icon_1h,
+                "detail": f"20 EMA (₹{round(ema20_1h, 1)}) vs 50 EMA",
+                "is_bull": is_bull_1h
             }
         else:
             tf_1h = _fallback_timeframe("1H (Swing)")
     except Exception:
         tf_1h = _fallback_timeframe("1H (Swing)")
 
-    # 4. Weekly Macro Timeframe
+    # 4. Weekly Macro Timeframe (Authentic Weekly Resampling from daily_df)
     try:
-        if daily_df is not None and not daily_df.empty and len(daily_df) >= 60:
-            # Derive weekly from daily without extra network call
-            c = daily_df["Close"]
-            wma20 = float(calculate_sma(c, 100).iloc[-1])  # 100 days ~ 20 weeks
-            wma50 = float(calculate_sma(c, min(200, len(c)-1)).iloc[-1])
-            latest = float(c.iloc[-1])
-            is_bull = latest > wma20 and wma20 >= wma50
-            is_bear = latest < wma20
+        if df_1d is not None and not df_1d.empty and len(df_1d) >= 60:
+            weekly_close = df_1d["Close"].resample("W-FRI").last().dropna()
+            if len(weekly_close) >= 20:
+                w_ema20 = float(calculate_ema(weekly_close, 20).iloc[-1])
+                w_sma50 = float(calculate_sma(weekly_close, min(50, len(weekly_close) - 1)).iloc[-1])
+                latest_w = float(weekly_close.iloc[-1])
 
-            status = "BULLISH" if is_bull else ("BEARISH" if is_bear else "NEUTRAL")
-            color = "#10B981" if is_bull else ("#EF4444" if is_bear else "#F59E0B")
-            icon = "🟢" if is_bull else ("🔴" if is_bear else "🟡")
+                is_bull_w = latest_w > w_ema20 and w_ema20 >= w_sma50
+                is_bear_w = latest_w < w_ema20
 
-            tf_1w = {
-                "timeframe": "Weekly (Macro)",
-                "status": status,
-                "color": color,
-                "icon": icon,
-                "detail": f"Macro Uptrend (Above 20 WMA ₹{round(wma20, 1)})" if is_bull else "Macro Consolidation / Pullback",
-                "is_bull": is_bull
-            }
+                status_w = "BULLISH" if is_bull_w else ("BEARISH" if is_bear_w else "NEUTRAL")
+                color_w = "#10B981" if is_bull_w else ("#EF4444" if is_bear_w else "#F59E0B")
+                icon_w = "🟢" if is_bull_w else ("🔴" if is_bear_w else "🟡")
+
+                tf_1w = {
+                    "timeframe": "Weekly (Macro)",
+                    "status": status_w,
+                    "color": color_w,
+                    "icon": icon_w,
+                    "detail": f"Macro Uptrend (Above 20 WMA ₹{round(w_ema20, 1)})" if is_bull_w else "Macro Pullback below 20 WMA",
+                    "is_bull": is_bull_w
+                }
+            else:
+                tf_1w = _fallback_timeframe("Weekly (Macro)")
         else:
             tf_1w = _fallback_timeframe("Weekly (Macro)")
     except Exception:
         tf_1w = _fallback_timeframe("Weekly (Macro)")
 
-    timeframe_results = [tf_15m, tf_1h, daily_tf if has_daily else _fallback_timeframe("Daily (Core)"), tf_1w]
+    timeframe_results = [tf_15m, tf_1h, daily_tf, tf_1w]
 
     # Overall Confluence Synthesis
     bull_count = sum([1 for t in timeframe_results if t.get("is_bull", False)])

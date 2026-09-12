@@ -8,7 +8,7 @@ let _sectorRrgChart = null;
 
 async function loadSectorsAnalysis() {
     const gridContainer = document.getElementById("sectorsGridContainer");
-    const rrgContainer = document.getElementById("sectorsRrgContainer");
+    const rrgContainer = document.getElementById("sectorsRrgView");
     const treemapContainer = document.getElementById("sectorsTreemapContainer");
 
     if (gridContainer) gridContainer.innerHTML = `<div class="p-8 text-center text-[#86868b] text-xs">Analyzing rotation, money flow & breadth across 15 Nifty sectors...</div>`;

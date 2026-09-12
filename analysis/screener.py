@@ -1,23 +1,25 @@
 """
-High-Speed Stock Screener Engine for Indian Equities.
-Allows multi-parameter filtering across P/E, ROE, RSI, Volume Surge, and 52W High breakouts.
-Uses ThreadPoolExecutor for sub-second concurrent scanning.
+Operation Antigravity — High-Speed Multi-Metric Screener Engine.
+Filters equities across P/E, ROE, RSI, Volume Surge, 52W High Breakouts,
+and outputs Univest-grade actionable execution parameters.
 """
 
 import concurrent.futures
 from data.stock_list import NIFTY_50_STOCKS, POPULAR_ADDITIONAL_STOCKS
 from data.fetcher import get_stock_info, get_stock_history
-from analysis.technical import calculate_sma, calculate_rsi
+from analysis.technical import calculate_sma, calculate_rsi, calculate_atr
+from data.institutional_flow import get_delivery_volume_analysis
 from cachetools import TTLCache
 
 _screener_cache = TTLCache(maxsize=100, ttl=900)
+_SCREENER_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=16, thread_name_prefix="ScreenerWorker")
 
 
 def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_surge, golden_cross_only):
     sym = item["symbol"]
     try:
         info = get_stock_info(sym)
-        price = info.get("current_price", 0.0)
+        price = float(info.get("current_price") or info.get("previous_close") or 0.0)
         if price <= 0:
             return None
 
@@ -79,6 +81,17 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
             score += 10
         score = min(score, 98)
 
+        # Authentic delivery volume evaluation
+        del_data = get_delivery_volume_analysis(sym, df, info)
+        delivery_pct = del_data.get("delivery_pct", 50.0)
+
+        # Univest-Grade Execution Action Parameters
+        atr_series = calculate_atr(df, 14)
+        atr_val = float(atr_series.iloc[-1]) if not atr_series.empty else price * 0.02
+        stop_loss = round(max(price - (1.5 * atr_val), price * 0.94), 2)
+        target_1 = round(price + (2.0 * atr_val), 2)
+        target_2 = round(price + (3.5 * atr_val), 2)
+
         if dist_52w_high <= 4.0 and vol_ratio >= 1.4:
             setup_tag = "🔥 High-Volume 52W Breakout"
             tag_color = "bg-[#edf7ee] text-[#1e7e34] border-[#c6e8cc]"
@@ -92,6 +105,20 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
             setup_tag = "📈 Trend Continuation"
             tag_color = "bg-[#f5f5f7] text-[#1c1c1e] border-[#d1d1d6]"
 
+        risk_per_share = max(price - stop_loss, price * 0.015)
+        computed_qty = max(1, min(int(10000.0 / risk_per_share), int(150000.0 / price))) if price > 0 else 10
+
+        from analysis.broker_bridge import generate_broker_order_links
+        broker_ticket = generate_broker_order_links(
+            symbol=sym,
+            quantity=computed_qty,
+            entry_price=price,
+            stop_loss=stop_loss,
+            target=target_1,
+            order_type="LIMIT",
+            product="CNC"
+        )
+
         return {
             "symbol": sym,
             "code": item.get("code", sym),
@@ -104,10 +131,18 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
             "rsi": rsi,
             "dist_52w_high_pct": dist_52w_high,
             "volume_ratio": vol_ratio,
+            "delivery_pct": delivery_pct,
             "is_golden_cross": is_golden,
             "setup_score": score,
             "setup_tag": setup_tag,
-            "tag_color": tag_color
+            "tag_color": tag_color,
+            "action_plan": {
+                "entry_zone": f"₹{round(price * 0.995, 2)} – ₹{round(price * 1.005, 2)}",
+                "stop_loss": stop_loss,
+                "target_1": target_1,
+                "target_2": target_2,
+                "broker_ticket": broker_ticket
+            }
         }
     except Exception:
         return None
@@ -125,36 +160,47 @@ def run_stock_screener(
     limit: int = 25
 ) -> dict:
     """
-    Filter Indian stocks using concurrent thread execution.
-    Prioritizes liquid index leaders and returns high-conviction matches.
+    Filter Indian stocks using pooled concurrent execution.
+    Prioritizes liquid index constituents and caches query results.
     """
     cache_key = f"scr_{pe_max}_{roe_min}_{rsi_min}_{rsi_max}_{near_52w_high}_{volume_surge}_{golden_cross_only}_{sector}"
     if cache_key in _screener_cache:
         return _screener_cache[cache_key]
 
     if sector and sector != "All":
-        universe = [s for s in (NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS) if s.get("sector") == sector]
+        raw_univ = [s for s in (NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS) if s.get("sector") == sector]
     else:
-        # Prioritize Nifty 50 followed by popular liquid names
-        universe = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS[:25]
+        raw_univ = NIFTY_50_STOCKS + POPULAR_ADDITIONAL_STOCKS[:25]
 
-    candidates = universe
+    seen_syms = set()
+    universe = []
+    for s in raw_univ:
+        sym = s.get("symbol")
+        if sym and sym not in seen_syms:
+            seen_syms.add(sym)
+            universe.append(s)
+
     matched_stocks = []
+    futures = {
+        _SCREENER_EXECUTOR.submit(
+            _eval_stock,
+            item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_surge, golden_cross_only
+        ): item for item in universe
+    }
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=18) as executor:
-        futures = {
-            executor.submit(
-                _eval_stock,
-                item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_surge, golden_cross_only
-            ): item for item in candidates
-        }
-        for future in concurrent.futures.as_completed(futures):
+    timed_out = False
+    try:
+        for future in concurrent.futures.as_completed(futures, timeout=15.0):
             try:
-                res = future.result(timeout=2.0)
+                res = future.result()
                 if res:
                     matched_stocks.append(res)
             except Exception:
                 pass
+    except concurrent.futures.TimeoutError:
+        timed_out = True
+        for f in futures:
+            f.cancel()
 
     matched_stocks.sort(key=lambda x: x["setup_score"], reverse=True)
     result = {
@@ -162,7 +208,6 @@ def run_stock_screener(
         "total_matches": len(matched_stocks),
         "results": matched_stocks[:limit]
     }
-    if matched_stocks:
+    if matched_stocks and not timed_out:
         _screener_cache[cache_key] = result
     return result
-

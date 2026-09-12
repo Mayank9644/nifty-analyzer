@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Market Analysis — Equities, ETFs, Bonds & Derivatives</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Instant Theme Synchronization -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem("market_theme") || "light";
+            document.documentElement.setAttribute("data-theme", saved);
+            if (saved === "dark") {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        })();
+    </script>
+    <!-- Tailwind CSS CDN Config -->
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {}
+            }
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- TradingView Lightweight Charts -->
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -13,7 +33,7 @@
     <!-- Chart.js for Radar and Doughnut charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- macOS Design System CSS -->
-    <link rel="stylesheet" href="/static/css/style.css?v=20260911_v8">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260912_v4">
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#007aff">
@@ -22,167 +42,122 @@
 </head>
 <body class="bg-[#f5f5f7] text-[#1c1c1e] min-h-screen flex flex-col antialiased selection:bg-[#007aff] selection:text-white">
 
-    <!-- macOS TOP APP WINDOW BAR & SPOTLIGHT SEARCH -->
-    <header class="macos-header px-4 lg:px-7 pt-3.5 pb-2.5 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.04)] bg-[#f5f5f7]/95 backdrop-blur-md">
-        <!-- Top Row: Brand, Spotlight Search, Status -->
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 mb-2">
+    <!-- 1. INSTITUTIONAL 56px MASTER OMNI-BAR -->
+    <header class="omni-bar-header macos-header px-4 lg:px-7 sticky top-0 z-30 bg-[#f5f5f7]/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)] shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+        <div class="max-w-screen-2xl mx-auto w-full h-14 flex items-center justify-between gap-3">
             
-            <!-- Left: Brand Logo & Title -->
-            <div class="flex items-center space-x-3 w-full md:w-auto">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-md flex-shrink-0" style="background: linear-gradient(135deg, #0052d4 0%, #4364f7 55%, #6fb1fc 100%);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="3" y="10" width="3" height="8" rx="1" fill="rgba(255,255,255,0.4)"/>
-                        <rect x="4" y="7" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
-                        <rect x="4" y="18" width="1" height="2" fill="rgba(255,255,255,0.4)"/>
-                        <rect x="10" y="5" width="4" height="11" rx="1" fill="white"/>
-                        <rect x="11.5" y="2" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
-                        <rect x="11.5" y="16" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
-                        <rect x="18" y="8" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/>
-                        <rect x="19" y="5" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
-                        <rect x="19" y="17" width="1" height="2.5" fill="rgba(255,255,255,0.4)"/>
-                        <path d="M3 20 L10 13 L14 16 L21 8" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-[15px] font-bold tracking-tight text-[#1c1c1e] leading-tight">
-                        Market Analysis
-                    </h1>
-                    <p class="text-[10.5px] text-[#6e6e73] font-medium">Equities • ETFs • Bonds • Commodities • Derivatives</p>
-                </div>
-            </div>
-
-            <!-- Center: Enlarged Spotlight Search Bar -->
-            <div class="relative w-full md:w-[460px] lg:w-[580px]">
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        id="stockSearchInput" 
-                        placeholder="🔍  Search Stocks, ETFs, Bonds, Commodities, Indices… (Press '/' to focus)" 
-                        class="w-full bg-[#e8e8ed] border border-transparent rounded-xl px-4 py-2.5 text-sm text-[#1c1c1e] placeholder-[#8e8e93] focus:bg-white focus:border-[#007aff] focus:outline-none transition-all shadow-sm"
-                        style="font-size: 13.5px;"
-                    />
-                </div>
-                <!-- Autocomplete Dropdown -->
-                <div id="searchDropdown" class="absolute left-0 right-0 top-12 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-xl hidden z-50 max-h-80 overflow-y-auto"></div>
-                <!-- Recent Searches Quick Chips -->
-                <div id="recentSearchesBar" class="hidden sm:flex items-center space-x-1.5 overflow-x-auto pt-1 text-[11px] text-[#6e6e73]"></div>
-            </div>
-
-            <!-- Right: Watchlist Drawer & Shortcuts & Live Status -->
-            <div class="flex items-center space-x-2 text-xs text-[#6e6e73]">
-                <!-- Dark / Light Mode Switcher -->
-                <button id="themeToggleBtn" onclick="toggleAppTheme()" title="Toggle Dark / Light Mode" class="px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
-                    <span id="themeToggleIcon">🌙</span>
-                </button>
-                <!-- Command Palette Launcher (Desktop) -->
-                <button onclick="openCommandPalette()" title="Spotlight Command Palette (Cmd + K / Ctrl + K)" class="hidden md:flex px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs items-center gap-1.5 transition-all cursor-pointer">
-                    <span>⌘</span>
-                    <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">K</kbd>
-                </button>
-                <button onclick="toggleWatchlistDrawer()" title="Toggle Watchlist (W)" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
-                    <span>⭐️</span>
-                    <span class="hidden sm:inline">Watchlist</span>
-                    <span id="watchlistCountBadge" class="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[10px]">0</span>
-                </button>
-                <button onclick="openAlertManagerModal()" title="Real-Time Alert Watchdog & Sound Chimes" class="px-2.5 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
-                    <span>🔔</span>
-                    <span class="hidden sm:inline">Alerts</span>
-                    <span id="navAlertBadge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 font-bold text-[10px]">0</span>
-                </button>
-                <!-- Shortcuts Launcher (Desktop) -->
-                <button onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)" class="hidden md:flex px-2 py-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs items-center gap-1 transition-all cursor-pointer">
-                    <span>⌨️</span>
-                    <kbd class="macos-kbd hidden sm:inline-flex text-[9px] py-0 px-1 leading-none">?</kbd>
-                </button>
-                <span id="navbarMarketStatus" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#f2f2f7] text-[#6e6e73] font-semibold text-[11px] border border-[rgba(0,0,0,0.08)] shadow-xs transition-all" title="National Stock Exchange of India (NSE) Session State">
-                    <span id="navbarMarketDot" class="w-2 h-2 rounded-full bg-[#8e8e93] mr-1.5"></span>
-                    <span id="navbarMarketText">Checking Market...</span>
-                </span>
-            </div>
-        </div>
-
-        <!-- Row 2: Master Workspaces Bar + Integrated Execution Strategy & Viewport Controls -->
-        <div class="max-w-7xl mx-auto py-1 flex flex-wrap items-center justify-between gap-2.5">
-            <nav class="flex items-center gap-2">
-                <!-- Master Workspaces (Top Level) -->
-                <div class="workspace-track shadow-xs">
-                    <button class="workspace-btn active" data-workspace="terminal" onclick="switchWorkspace('terminal', 'stocks')" title="Terminal Charting & Deep Dive">
-                        <span>📈</span> <span>Terminal</span>
-                    </button>
-                    <button class="workspace-btn" data-workspace="discovery" onclick="switchWorkspace('discovery', 'scanner')" title="Stock Discovery, SEPA Scanner & Curated Picks">
-                        <span>📡</span> <span>Discovery</span>
-                        <span class="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[9.5px]">New</span>
-                    </button>
-                    <button class="workspace-btn" data-workspace="markets" onclick="switchWorkspace('markets', 'institutional')" title="Institutional Breadth, Sectors, F&O & Commodities">
-                        <span>🏛️</span> <span>Markets &amp; Macro</span>
-                    </button>
-                    <button class="workspace-btn" data-workspace="allocation" onclick="switchWorkspace('allocation', 'bees')" title="ETFs & Systematic Rotation">
-                        <span>⚖️</span> <span>ETFs &amp; Allocation</span>
-                    </button>
-                    <button class="workspace-btn" data-workspace="execution" onclick="switchWorkspace('execution', 'journal')" title="Journal, Risk Radar & Backtester">
-                        <span>📒</span> <span>Execution &amp; Risk</span>
-                    </button>
-                </div>
-
-                <!-- More Desks Dropdown -->
-                <div class="relative inline-block text-left">
-                    <button id="moreDesksDropdownBtn" onclick="toggleMoreDesksDropdown(event)" class="px-2.5 py-1.5 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#5a5a5f] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11.5px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
-                        <span>⋯ More</span>
-                        <svg class="w-3 h-3 text-[#8e8e93]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div id="moreDesksDropdown" class="hidden absolute left-0 mt-1 w-44 rounded-xl bg-white/95 backdrop-blur-md border border-[rgba(0,0,0,0.12)] shadow-xl z-50 py-1 text-xs">
-                        <button onclick="switchTab('ipo'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
-                            <span>🚀</span> <span>IPOs Tracker</span>
-                        </button>
-                        <button onclick="switchTab('calendar'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
-                            <span>📅</span> <span>Economic Calendar</span>
-                        </button>
-                        <button onclick="switchTab('news'); toggleMoreDesksDropdown()" class="w-full text-left px-3 py-2 hover:bg-[#eff6ff] text-[#1c1c1e] font-medium flex items-center gap-2 cursor-pointer">
-                            <span>📰</span> <span>Live Market News</span>
-                        </button>
+            <!-- Left: Brand Logo & Master Workspaces Pills -->
+            <div class="flex items-center space-x-3 flex-shrink-0">
+                <a href="/" class="flex items-center space-x-2.5 cursor-pointer" title="Fincept Institutional Terminal">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-md flex-shrink-0" style="background: linear-gradient(135deg, #0052d4 0%, #4364f7 55%, #6fb1fc 100%);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="10" width="3" height="8" rx="1" fill="rgba(255,255,255,0.4)"/>
+                            <rect x="4" y="7" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
+                            <rect x="4" y="18" width="1" height="2" fill="rgba(255,255,255,0.4)"/>
+                            <rect x="10" y="5" width="4" height="11" rx="1" fill="white"/>
+                            <rect x="11.5" y="2" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
+                            <rect x="11.5" y="16" width="1" height="3" fill="rgba(255,255,255,0.7)"/>
+                            <rect x="18" y="8" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/>
+                            <rect x="19" y="5" width="1" height="3" fill="rgba(255,255,255,0.4)"/>
+                            <rect x="19" y="17" width="1" height="2.5" fill="rgba(255,255,255,0.4)"/>
+                            <path d="M3 20 L10 13 L14 16 L21 8" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
                     </div>
-                </div>
-            </nav>
+                    <div class="hidden sm:block">
+                        <span class="text-[13.5px] font-bold tracking-tight text-[#1c1c1e] dark:text-white leading-none block">
+                            Fincept <span class="text-[#007aff] font-semibold text-xs">Terminal</span>
+                        </span>
+                    </div>
+                </a>
 
-            <!-- Right Controls: Strategy Selector + Density + Ticker Toggle + Position Calc -->
-            <div class="flex items-center gap-2">
-                <!-- Strategy Selector (Integrated!) -->
-                <div class="macos-segmented-track" title="Execution Strategy (Adapts lookbacks, stops & targets)">
+                <!-- 3 Master Workspace Pills -->
+                <nav class="flex items-center p-1 rounded-xl shadow-xs" id="masterWorkspaceTrack">
+                    <button class="workspace-pill active" data-workspace="terminal" onclick="switchWorkspace('terminal', 'stocks')" title="Single-Stock Terminal & Charting">
+                        <span class="text-xs">📈</span> <span class="hidden md:inline font-semibold">Terminal</span>
+                    </button>
+                    <button class="workspace-pill" data-workspace="discovery" onclick="switchWorkspace('discovery', 'scanner')" title="Stock Scanners, Screeners & Setups">
+                        <span class="text-xs">📡</span> <span class="hidden md:inline font-semibold">Discovery</span>
+                    </button>
+                    <button class="workspace-pill" data-workspace="macro" onclick="switchWorkspace('macro', 'institutional')" title="Macro Radar, Sectors, F&O & Commodities">
+                        <span class="text-xs">🏛️</span> <span class="hidden md:inline font-semibold">Macro Pulse</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Center: Omni-Search Bar -->
+            <div class="relative flex-1 min-w-[280px] max-w-[460px] mx-2">
+                <input 
+                    type="text" 
+                    id="stockSearchInput" 
+                    placeholder="Search Stocks, ETFs, Sectors, Commodities…" 
+                    class="w-full h-[34px] bg-[#e3e3e8] dark:bg-[#1f2232] border border-black/10 dark:border-white/10 rounded-lg pl-3.5 pr-3.5 text-xs text-[#1c1c1e] dark:text-white placeholder-[#8e8e93] focus:bg-white dark:focus:bg-[#151722] focus:border-[#007aff] focus:ring-2 focus:ring-[#007aff]/25 focus:outline-none transition-all shadow-xs"
+                />
+                <!-- Autocomplete Dropdown: Constrained to exact width of search bar -->
+                <div id="searchDropdown" class="absolute left-0 right-0 w-full top-[38px] bg-white dark:bg-[#1c1f2e] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl hidden z-50 max-h-80 overflow-y-auto"></div>
+                <!-- Recent Searches Quick Chips -->
+                <div id="recentSearchesBar" class="hidden absolute left-0 right-0 w-full top-[38px] bg-white/95 dark:bg-[#1c1f2e]/95 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-lg p-1.5 shadow-md z-40 items-center space-x-1.5 overflow-x-auto text-[11px] text-[#6e6e73]"></div>
+            </div>
+
+            <!-- Right: Style Selector, Action Triggers & Status -->
+            <div class="flex items-center space-x-1.5 text-xs text-[#6e6e73] flex-shrink-0">
+                <!-- Strategy Style Selector -->
+                <div class="hidden lg:inline-flex macos-segmented-track" title="Execution Style (Adapts stops & targets)">
                     <button class="style-btn" data-style="intraday">
-                        <span>⚡</span> <span>Intraday</span>
+                        <span>⚡</span> <span class="text-[11px]">Intraday</span>
                     </button>
                     <button class="style-btn active" data-style="swing">
-                        <span>🔄</span> <span>Swing</span>
+                        <span>🔄</span> <span class="text-[11px]">Swing</span>
                     </button>
                     <button class="style-btn" data-style="positional">
-                        <span>📈</span> <span>Positional</span>
+                        <span>📈</span> <span class="text-[11px]">Positional</span>
                     </button>
                 </div>
 
-                <!-- Display Density Toggle -->
-                <div class="hidden sm:inline-flex macos-segmented-track" title="Display Density (Toggle with 'D')">
-                    <button id="densityStandardBtn" onclick="setDisplayDensity('standard')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#1c1c1e] bg-white shadow-xs">
-                        Standard
-                    </button>
-                    <button id="densityCompactBtn" onclick="setDisplayDensity('compact')" class="density-btn text-[11px] px-2 py-0.5 rounded-md font-medium text-[#6e6e73]">
-                        Compact
-                    </button>
-                </div>
+                <!-- Watchlist Drawer Button -->
+                <button onclick="toggleWatchlistDrawer()" title="Toggle Quick Watchlist (W)" class="px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>⭐️</span>
+                    <span id="watchlistCountBadge" class="px-1.5 py-0.2 rounded-full bg-[#007aff]/10 text-[#007aff] font-bold text-[9.5px]">0</span>
+                </button>
 
-                <!-- Live Ticker Toggle Button (Reclaims 36px) -->
-                <button onclick="toggleTickerTape()" id="tickerToggleBtn" title="Toggle Live Ticker Strip (T)" class="px-2 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#f2f2f7] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
-                    <span>📉</span> <span class="hidden sm:inline">Ticker</span>
+                <!-- Alerts Watchdog Button -->
+                <button onclick="openAlertManagerModal()" title="Real-Time Price & Technical Alerts" class="px-2 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>🔔</span>
+                    <span id="navAlertBadge" class="hidden px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 font-bold text-[9.5px]">0</span>
                 </button>
 
                 <!-- Position Calculator Button -->
-                <button onclick="openPositionCalcModal()" class="px-2.5 py-1 rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#007aff] hover:bg-[#eff6ff] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
-                    <span>🧮</span> <span class="hidden sm:inline">Calculator</span>
+                <button onclick="openPositionCalcModal()" title="Position Sizing & Risk Calculator (C)" class="hidden sm:flex px-2 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#007aff] hover:bg-[#eff6ff] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs items-center gap-1 transition-all cursor-pointer">
+                    <span>🧮</span>
                 </button>
+
+                <!-- Command Palette Button -->
+                <button onclick="openCommandPalette()" title="Command Palette (Cmd+K)" class="hidden md:flex px-2 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs items-center gap-1 transition-all cursor-pointer">
+                    <span>⌘K</span>
+                </button>
+
+                <!-- Live Ticker Strip Toggle Button -->
+                <button onclick="toggleTickerTape()" id="tickerToggleBtn" title="Toggle Live Ticker Strip (T)" class="px-2 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#6e6e73] hover:text-[#1c1c1e] dark:hover:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer">
+                    <span>📉</span>
+                </button>
+
+                <!-- Dark / Light Theme Toggle -->
+                <button id="themeToggleBtn" onclick="toggleAppTheme()" title="Toggle Dark/Light Mode" class="px-2 py-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.1)] text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] font-semibold text-[11px] shadow-xs flex items-center transition-all cursor-pointer">
+                    <span id="themeToggleIcon">🌙</span>
+                </button>
+
+                <!-- Hidden More Desks Dropdown anchor for keyboard shortcuts -->
+                <div id="moreDesksDropdown" class="hidden"></div>
+
+                <!-- Market Status Indicator -->
+                <span id="navbarMarketStatus" class="hidden 2xl:inline-flex items-center px-2 py-1 rounded-lg bg-[#f2f2f7] dark:bg-[#2c2c2e] text-[#6e6e73] font-semibold text-[10.5px] border border-[rgba(0,0,0,0.08)] shadow-xs" title="NSE Live Session Status">
+                    <span id="navbarMarketDot" class="w-2 h-2 rounded-full bg-[#8e8e93] mr-1.5"></span>
+                    <span id="navbarMarketText">Checking...</span>
+                </span>
             </div>
         </div>
     </header>
 
-    <!-- 2. STICKY LIVE FINANCIAL TICKER TAPE -->
+    <!-- 2. COLLAPSIBLE LIVE FINANCIAL TICKER TAPE (26px) -->
     <div id="liveTickerStrip" class="live-ticker-strip">
         <div class="ticker-tape-container" id="tickerTapeContainer">
             <div class="ticker-item" onclick="loadStock('^NSEI')"><span class="ticker-sym">NIFTY 50</span> <span class="ticker-price" id="ttNifty">23,779.15</span> <span class="ticker-badge down" id="ttNiftyChg">-0.50%</span></div>
@@ -196,11 +171,11 @@
         </div>
     </div>
 
-    <!-- 3. CONTEXTUAL SUB-DESK NAVIGATION TRACK (Adapts dynamically to active workspace) -->
-    <section id="subDeskContainer" class="bg-[#fafafc] border-b border-[rgba(0,0,0,0.06)] px-4 lg:px-7 py-1.5 transition-all">
+    <!-- 3. CONTEXTUAL SUB-DESK NAVIGATION TRACK (Hidden on Terminal, active on Discovery/Macro) -->
+    <section id="subDeskContainer" class="hidden bg-[#fafafc] border-b border-[rgba(0,0,0,0.06)] px-4 lg:px-7 py-1.5 transition-all">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5 text-xs">
             <div id="subDeskNavTrack" class="subdesk-track">
-                <!-- Injected dynamically by renderWorkspaceSubDesks() in app.js -->
+                <!-- Injected dynamically by app.js -->
                 <button class="nav-tab-btn active" data-tab="stocks">📈 Stocks Deep Dive</button>
             </div>
             <div class="flex items-center gap-2 text-[#8e8e93] text-[11px]">
@@ -227,80 +202,136 @@
         <div id="premarketSummaryBanner" class="mb-5"></div>
 
         <!-- =================================================================== -->
-        <!-- TAB 1: STOCKS VIEW                                                  -->
+        <!-- WORKSPACE 1: SINGLE-STOCK TERMINAL                                  -->
         <!-- =================================================================== -->
-        <div id="tab-view-stocks" class="tab-view space-y-5">
+        <section id="workspace-terminal" class="workspace-section space-y-5">
 
-            <!-- Stock Hero Information Card -->
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
-                        <h2 id="stockName" class="text-xl lg:text-2xl font-bold text-[#1c1c1e] tracking-tight">Reliance Industries Ltd</h2>
-                        <span id="stockSymbol" class="text-xs px-2 py-0.5 rounded-md bg-[#e5e5ea] text-[#48484a] font-mono font-medium">RELIANCE.NS</span>
-                        <span id="stockSector" class="badge-stock">Energy</span>
-                        <span id="stockRsBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]">RS 88/99</span>
-                        <span id="stockMinerviniBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">Minervini Stage 2</span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3.5 mt-2 text-xs text-[#6e6e73]">
-                        <span id="stockHighLow">Day H: — | L: —</span>
-                        <span class="text-[#d1d1d6]">•</span>
-                        <span id="stock52W">52W H: — | L: —</span>
-                        <span class="text-[#d1d1d6]">•</span>
-                        <span>Market Cap: <strong id="stockMarketCap" class="text-[#1c1c1e] font-semibold">—</strong></span>
-                    </div>
-                </div>
+            <!-- TAB 1: STOCKS VIEW                                                  -->
+            <div id="tab-view-stocks" class="tab-view space-y-5">
 
-                <div class="text-right">
-                    <div class="flex items-center justify-end gap-2.5">
-                        <div id="stockPrice" class="text-2xl lg:text-3xl font-bold text-[#1c1c1e] mono tracking-tight">—</div>
-                        <button onclick="refreshCurrentStock()" id="stockRefreshBtn" class="p-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#007aff] hover:bg-[#f2f2f7] shadow-xs transition-all cursor-pointer" title="Refresh live real-time price">
-                            <svg id="stockRefreshSvg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-end gap-2 mt-1">
-                        <div id="stockChange" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mono bg-[#f2f2f7] text-[#6e6e73] border border-[rgba(0,0,0,0.08)]">
-                            —
+                <!-- Stock Hero Information Card -->
+                <div class="macos-card p-5 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
+                                <h2 id="stockName" class="text-xl lg:text-2xl font-bold text-[#1c1c1e] tracking-tight">Reliance Industries Ltd</h2>
+                                <span id="stockSymbol" class="text-xs px-2 py-0.5 rounded-md bg-[#e5e5ea] text-[#48484a] font-mono font-medium">RELIANCE.NS</span>
+                                <span id="stockSector" class="badge-stock">Energy</span>
+                                <span id="stockRsBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]">RS 88/99</span>
+                                <span id="stockMinerviniBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">Minervini Stage 2</span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3.5 mt-2 text-xs text-[#6e6e73]">
+                                <span id="stockHighLow">Day H: — | L: —</span>
+                                <span class="text-[#d1d1d6]">•</span>
+                                <span id="stock52W">52W H: — | L: —</span>
+                                <span class="text-[#d1d1d6]">•</span>
+                                <span>Market Cap: <strong id="stockMarketCap" class="text-[#1c1c1e] font-semibold">—</strong></span>
+                            </div>
                         </div>
-                        <button onclick="openBrokerOrderModalFromHero()" class="px-2.5 py-1 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer" title="Execute directly via Zerodha Kite or Dhan">
-                            <span>⚡</span> <span>Trade on Broker</span>
-                        </button>
+
+                        <div class="text-right">
+                            <div class="flex items-center justify-end gap-2.5">
+                                <div id="stockPrice" class="text-2xl lg:text-3xl font-bold text-[#1c1c1e] mono tracking-tight">—</div>
+                                <button onclick="refreshCurrentStock()" id="stockRefreshBtn" class="p-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#007aff] hover:bg-[#f2f2f7] shadow-xs transition-all cursor-pointer" title="Refresh live real-time price">
+                                    <svg id="stockRefreshSvg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-end gap-2 mt-1">
+                                <div id="stockChange" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mono bg-[#f2f2f7] text-[#6e6e73] border border-[rgba(0,0,0,0.08)]">
+                                    —
+                                </div>
+                                <button onclick="openBrokerOrderModalFromHero()" class="px-2.5 py-1 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-semibold text-[11px] shadow-xs flex items-center gap-1 transition-all cursor-pointer" title="Execute directly via Zerodha Kite or Dhan">
+                                    <span>⚡</span> <span>Trade on Broker</span>
+                                </button>
+                            </div>
+                            <div id="liveTickTimestamp" class="mt-1 flex justify-end">
+                                <span class="inline-flex items-center text-[10.5px] text-[#8e8e93] font-mono">● Connecting to exchange feed...</span>
+                            </div>
+                        </div>
                     </div>
-                    <div id="liveTickTimestamp" class="mt-1 flex justify-end">
-                        <span class="inline-flex items-center text-[10.5px] text-[#8e8e93] font-mono">● Connecting to exchange feed...</span>
+
+                    <!-- VISUAL EXECUTION BAND (Stop, Entry, Target, R:R) -->
+                    <div id="heroExecutionBand" class="execution-band-track p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center space-x-2 flex-wrap gap-y-1.5">
+                            <span class="font-bold text-[#1c1c1e] text-[11px] flex items-center gap-1">
+                                <span>🎯</span> Execution Range:
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
+                                <span>🛑 Stop Loss:</span> <strong id="heroBandStop" class="mono font-bold">₹0.00</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(-0%)</span>
+                            </span>
+                            <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
+                                <span>⚡ Entry Zone:</span> <strong id="heroBandEntry" class="mono font-bold">₹0.00</strong>
+                            </span>
+                            <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-[#1e7e34] font-semibold text-[11px]">
+                                <span>🏁 Target 1:</span> <strong id="heroBandTarget" class="mono font-bold">₹0.00</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(+0%)</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] text-[#6e6e73]">R:R Ratio: <strong id="heroBandRiskReward" class="mono text-[#007aff] font-bold">1 : 2.0</strong></span>
+                            <span id="heroBandVerdictBadge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">BUY</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- MULTI-TIMEFRAME (MTF) CONFLUENCE STRIP (15M · 1H · Daily · Weekly) -->
-            <div id="stockMtfStrip" class="macos-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div class="flex items-center space-x-2">
-                    <span class="font-bold text-[#1c1c1e] text-[11.5px] flex items-center gap-1.5">
-                        <span>🧭</span> Multi-Timeframe Trend Confluence:
-                    </span>
-                    <span id="mtfVerdictBadge" class="px-2 py-0.5 rounded-md font-bold text-[10.5px] bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
-                        Checking alignment...
-                    </span>
-                </div>
-                <div id="mtfPillsContainer" class="flex items-center space-x-2 text-[11px] font-medium flex-wrap gap-y-1">
-                    <!-- Dynamic MTF pills injected via JavaScript -->
-                </div>
-            </div>
-
-            <!-- LAYMAN PREDICTION & TRADE PLAN BOX (Target for renderSignalsBox) -->
-            <div id="signalsBoxContainer"></div>
-
-            <!-- CHART CONTAINER WITH TIMEFRAME SWITCHERS -->
-            <div class="macos-card p-5 space-y-3.5">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                <!-- MULTI-TIMEFRAME (MTF) CONFLUENCE STRIP (15M · 1H · Daily · Weekly) -->
+                <div id="stockMtfStrip" class="macos-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div class="flex items-center space-x-2">
-                        <!-- Dual-Engine Switcher: Algo Chart vs TradingView Pro -->
-                        <div class="macos-segmented-track">
-                            <button id="engineAlgoBtn" class="chart-engine-btn active text-[11px] px-2.5 py-0.5 font-bold" onclick="setChartEngine('algo')">⚡ Algo Chart</button>
-                            <button id="engineTvProBtn" class="chart-engine-btn text-[11px] px-2.5 py-0.5 text-[#636366]" onclick="setChartEngine('tv_pro')">📈 TradingView Pro</button>
+                        <span class="font-bold text-[#1c1c1e] text-[11.5px] flex items-center gap-1.5">
+                            <span>🧭</span> Multi-Timeframe Trend Confluence:
+                        </span>
+                        <span id="mtfVerdictBadge" class="px-2 py-0.5 rounded-md font-bold text-[10.5px] bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
+                            Checking alignment...
+                        </span>
+                    </div>
+                    <div id="mtfPillsContainer" class="flex items-center space-x-2 text-[11px] font-medium flex-wrap gap-y-1">
+                        <!-- Dynamic MTF pills injected via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- LAYMAN PREDICTION & TRADE PLAN BOX (Target for renderSignalsBox) -->
+                <div id="signalsBoxContainer"></div>
+
+                <!-- CHART CONTAINER WITH TIMEFRAME SWITCHERS -->
+                <div class="macos-card p-5 space-y-3.5">
+                    <!-- Contextual Drawer Quick Launch Bar -->
+                    <div class="flex items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-2.5 overflow-x-auto">
+                        <div class="flex items-center space-x-1.5 flex-nowrap text-xs">
+                            <span class="text-[10.5px] font-bold text-[#6e6e73] uppercase tracking-wider mr-1 flex items-center gap-1">
+                                <span>⚡</span> Deep Dive Drawer:
+                            </span>
+                            <button type="button" onclick="toggleStockContextDrawer('technicals')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>📊</span> <span>Technicals &amp; Delivery</span>
+                            </button>
+                            <button type="button" onclick="toggleStockContextDrawer('fundamentals')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>💎</span> <span>DCF &amp; Health</span>
+                            </button>
+                            <button type="button" onclick="toggleStockContextDrawer('ownership')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>👥</span> <span>Ownership &amp; Moats</span>
+                            </button>
+                            <button type="button" onclick="toggleStockContextDrawer('options')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>📋</span> <span>Options Chain</span>
+                            </button>
+                            <button type="button" onclick="toggleStockContextDrawer('backtest')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>🧪</span> <span>Backtest Lab</span>
+                            </button>
+                            <button type="button" onclick="toggleStockContextDrawer('news')" class="context-drawer-btn px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-[#1c1c1e] hover:text-[#007aff] font-semibold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span>📰</span> <span>Live News</span>
+                            </button>
                         </div>
                     </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                        <div class="flex items-center space-x-2">
+                            <!-- Dual-Engine Switcher: Algo Chart vs TradingView Pro -->
+                            <div class="macos-segmented-track">
+                                <button id="engineAlgoBtn" class="chart-engine-btn active text-[11px] px-2.5 py-0.5 font-bold" onclick="setChartEngine('algo')">⚡ Algo Chart</button>
+                                <button id="engineTvProBtn" class="chart-engine-btn text-[11px] px-2.5 py-0.5 text-[#636366]" onclick="setChartEngine('tv_pro')">📈 TradingView Pro</button>
+                            </div>
+                        </div>
 
                     <div class="flex flex-wrap items-center gap-2">
                         <!-- Chart Style: Candles vs Line (Algo Engine) -->
@@ -324,7 +355,8 @@
                         </div>
 
                         <!-- Period Buttons (macOS Segmented Control) -->
-                        <div id="algoPeriodTrack" class="macos-segmented-track">
+                        <div id="algoPeriodTrack" class="macos-segmented-track shrink-0">
+                            <button class="period-btn" data-period="1d" data-interval="5m">1D</button>
                             <button class="period-btn" data-period="5d" data-interval="15m">5D</button>
                             <button class="period-btn" data-period="1mo" data-interval="1d">1M</button>
                             <button class="period-btn" data-period="6mo" data-interval="1d">6M</button>
@@ -335,34 +367,34 @@
                 </div>
 
                 <!-- Engine A: Proprietary Algorithmic Candlestick Chart -->
-                <div id="candlestickChartContainer" class="w-full h-[420px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                <div id="candlestickChartContainer" class="w-full h-[420px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
 
                 <!-- Engine B: TradingView Advanced Charting Pro Widget Container (Hidden by default) -->
-                <div id="tradingViewProContainer" class="hidden w-full h-[560px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                <div id="tradingViewProContainer" class="hidden w-full h-[560px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
 
                 <!-- Sub-Chart 1: Synchronized RSI(14) Indicator Pane (Hidden by default) -->
                 <div id="rsiChartCard" class="hidden space-y-1">
-                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#0369a1] font-semibold">
+                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#0369a1] dark:text-[#38bdf8] font-semibold">
                         <span>⚡ RSI (14) Momentum Oscillator — Overbought (70) / Oversold (30)</span>
                         <span id="rsiLiveValBadge" class="mono font-bold">50.0</span>
                     </div>
-                    <div id="rsiChartContainer" class="w-full h-[120px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                    <div id="rsiChartContainer" class="w-full h-[120px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
                 </div>
 
                 <!-- Sub-Chart 2: Synchronized MACD(12, 26, 9) Indicator Pane (Hidden by default) -->
                 <div id="macdChartCard" class="hidden space-y-1">
-                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#047857] font-semibold">
+                    <div class="flex items-center justify-between px-1 text-[10.5px] text-[#047857] dark:text-[#34d399] font-semibold">
                         <span>📊 MACD (12, 26, 9) & Momentum Histogram</span>
                         <span id="macdLiveValBadge" class="mono font-bold">Signal</span>
                     </div>
-                    <div id="macdChartContainer" class="w-full h-[130px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                    <div id="macdChartContainer" class="w-full h-[130px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
                 </div>
 
                 <!-- Secondary Split Chart Container (shown when Dual Split is active) -->
-                <div id="secondaryChartContainer" class="hidden w-full h-[380px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                <div id="secondaryChartContainer" class="hidden w-full h-[380px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
 
                 <!-- Interactive Risk-Reward Live Projection Bar (Active when toggled) -->
-                <div id="riskRewardBar" class="hidden p-2.5 rounded-lg bg-[#fafafc] border border-[rgba(0,0,0,0.06)] flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div id="riskRewardBar" class="hidden p-2.5 rounded-lg bg-[#fafafc] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.06)] dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-3">
                         <span class="font-bold text-[#b35900] flex items-center gap-1"><span>🎯</span> R:R Planner:</span>
                         <span>Entry: <strong id="rrEntryVal" class="mono text-[#007aff]">₹0.00</strong></span>
@@ -379,7 +411,7 @@
                 </div>
 
                 <!-- Volume Profile VPVR Info Bar (Active when toggled) -->
-                <div id="volumeProfileBar" class="hidden p-2.5 rounded-lg bg-[#fbf5fd] border border-[#f3e6fa] flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div id="volumeProfileBar" class="hidden p-2.5 rounded-lg bg-[#fbf5fd] dark:bg-[#1c1f2e] border border-[#f3e6fa] dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-3">
                         <span class="font-bold text-[#7828c8] flex items-center gap-1"><span>📊</span> Volume Profile (VPVR):</span>
                         <span>Point of Control (POC): <strong id="vpPocVal" class="mono text-[#e11d48]">₹0.00</strong></span>
@@ -396,7 +428,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
                 <!-- COLUMN 1: TECHNICAL INDICATORS CARD -->
-                <div class="macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                <div class="macos-card p-5 space-y-3.5 flex flex-col">
                     <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
                         <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
                             <span>⚡</span> Technical Momentum & Indicators
@@ -515,7 +547,7 @@
                 </div>
 
                 <!-- COLUMN 2: COMPANY FUNDAMENTALS & HEALTH CARD -->
-                <div class="macos-card p-5 space-y-3.5 flex flex-col justify-between">
+                <div class="macos-card p-5 space-y-3.5 flex flex-col">
                     <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
                         <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
                             <span>🏢</span> Company Fundamentals & Health
@@ -571,27 +603,27 @@
                             <div class="grid grid-cols-3 gap-2 text-center text-xs">
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">P/E Ratio</span>
-                                    <span id="peRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0x</span>
+                                    <span id="peRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">P/B Ratio</span>
-                                    <span id="pbRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0x</span>
+                                    <span id="pbRatioVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#1e7e34] block font-medium">Return on Eq (ROE)</span>
-                                    <span id="roeVal" class="font-bold text-[#1e7e34] mono mt-0.5 inline-flex items-center justify-center">0%</span>
+                                    <span id="roeVal" class="font-bold text-[#1e7e34] mono mt-0.5 inline-flex items-center justify-center">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">Debt to Equity</span>
-                                    <span id="debtVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">0</span>
+                                    <span id="debtVal" class="font-bold text-[#1c1c1e] mono mt-0.5 inline-flex items-center justify-center">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">Div Yield</span>
-                                    <span id="divYieldVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                    <span id="divYieldVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">EPS (TTM)</span>
-                                    <span id="epsVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹0</span>
+                                    <span id="epsVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—</span>
                                 </div>
                             </div>
                         </div>
@@ -602,15 +634,15 @@
                             <div class="grid grid-cols-3 gap-2 text-center text-xs">
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">Net Margin</span>
-                                    <span id="netMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                    <span id="netMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">Op Margin</span>
-                                    <span id="opMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">0%</span>
+                                    <span id="opMarginVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—</span>
                                 </div>
                                 <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
                                     <span class="text-[10px] text-[#6e6e73] block font-medium">Book Value</span>
-                                    <span id="bookVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">₹0</span>
+                                    <span id="bookVal" class="font-bold text-[#1c1c1e] mono mt-0.5 block">—</span>
                                 </div>
                             </div>
                         </div>
@@ -619,11 +651,11 @@
                         <div class="macos-box p-3">
                             <div class="flex justify-between items-center text-xs">
                                 <span class="text-[#48484a] font-medium">Free Cash Flow (FCF):</span>
-                                <span id="fcfVal" class="font-bold mono text-[#1c1c1e]">₹0 Cr</span>
+                                <span id="fcfVal" class="font-bold mono text-[#1c1c1e]">—</span>
                             </div>
                             <div class="flex justify-between items-center text-xs mt-2 text-[#6e6e73] pt-2 border-t border-[rgba(0,0,0,0.06)]">
-                                <span>PEG Ratio: <strong id="pegVal" class="text-[#007aff] mono">0.0</strong></span>
-                                <span>Return on Assets: <strong id="roaVal" class="text-[#1e7e34] mono">0%</strong></span>
+                                <span>PEG Ratio: <strong id="pegVal" class="text-[#007aff] mono">—</strong></span>
+                                <span>Return on Assets: <strong id="roaVal" class="text-[#1e7e34] mono">—</strong></span>
                             </div>
                         </div>
 
@@ -656,6 +688,43 @@
                             <p id="valuationSummaryText" class="text-[10.5px] text-[#555] leading-tight">Quant equity research model valuing cashflows against 10Y Indian G-Sec yield benchmark.</p>
                         </div>
 
+                        <!-- Institutional Ownership & Shareholding Structure -->
+                        <div class="macos-box p-3 space-y-2.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-[#48484a] font-semibold flex items-center gap-1.5">
+                                    <span>👥</span> Institutional Ownership & Shareholding:
+                                </span>
+                                <span class="text-[10px] text-[#007aff] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] border border-[#bfdbfe]">Ownership Distribution</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-center gap-4 pt-1">
+                                <div class="w-28 h-28 relative flex-shrink-0 mx-auto">
+                                    <canvas id="shareholdingChartCanvas"></canvas>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 w-full text-center">
+                                    <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                        <span class="text-[10px] text-[#0062cc] font-semibold uppercase tracking-wider block">Promoters</span>
+                                        <span id="promoterVal" class="text-sm font-bold mono text-[#1c1c1e] mt-0.5 block">—</span>
+                                        <span class="text-[9px] text-[#8e8e93]">Founders Stake</span>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                        <span class="text-[10px] text-[#1e7e34] font-semibold uppercase tracking-wider block">FII Funds</span>
+                                        <span id="fiiVal" class="text-sm font-bold mono text-[#1c1c1e] mt-0.5 block">—</span>
+                                        <span class="text-[9px] text-[#8e8e93]">Global Smart Money</span>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                        <span class="text-[10px] text-[#8a4500] font-semibold uppercase tracking-wider block">DII / MFs</span>
+                                        <span id="diiVal" class="text-sm font-bold mono text-[#1c1c1e] mt-0.5 block">—</span>
+                                        <span class="text-[9px] text-[#8e8e93]">Domestic AMCs & LIC</span>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-white border border-[rgba(0,0,0,0.05)]">
+                                        <span class="text-[10px] text-[#6b2f8a] font-semibold uppercase tracking-wider block">Public / Retail</span>
+                                        <span id="publicVal" class="text-sm font-bold mono text-[#1c1c1e] mt-0.5 block">—</span>
+                                        <span class="text-[9px] text-[#8e8e93]">Individual Public</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Valuation Summary Note -->
                         <div class="macos-box p-3 text-[11px] text-[#6e6e73] leading-relaxed">
                             💡 <strong>Valuation Context:</strong> P/E & P/B are evaluated against historical industry medians. Debt-to-Equity below 0.5 indicates strong financial safety.
@@ -663,43 +732,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <!-- DEDICATED PANEL: SHAREHOLDING & OWNERSHIP STRUCTURE -->
-            <div class="macos-card p-5 space-y-4">
-                <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] pb-3">
-                    <h3 class="text-sm font-semibold text-[#1c1c1e] flex items-center gap-2">
-                        <span>👥</span> Shareholding & Institutional Ownership Structure
-                    </h3>
-                    <span class="text-[11px] text-[#6e6e73]">Who owns the company?</span>
-                </div>
-                <div class="flex flex-col md:flex-row items-center gap-6">
-                    <div class="w-36 h-36 relative flex-shrink-0">
-                        <canvas id="shareholdingChartCanvas"></canvas>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
-                        <div class="macos-box p-3">
-                            <span class="text-[10px] text-[#0062cc] font-semibold uppercase tracking-wider block">Promoters (Founders)</span>
-                            <span id="promoterVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">50%</span>
-                            <span class="text-[10px] text-[#8e8e93]">Controlling stake</span>
-                        </div>
-                        <div class="macos-box p-3">
-                            <span class="text-[10px] text-[#1e7e34] font-semibold uppercase tracking-wider block">FII (Foreign Funds)</span>
-                            <span id="fiiVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">20%</span>
-                            <span class="text-[10px] text-[#8e8e93]">Global smart money</span>
-                        </div>
-                        <div class="macos-box p-3">
-                            <span class="text-[10px] text-[#8a4500] font-semibold uppercase tracking-wider block">DII (Domestic MFs)</span>
-                            <span id="diiVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">15%</span>
-                            <span class="text-[10px] text-[#8e8e93]">LIC & Indian AMCs</span>
-                        </div>
-                        <div class="macos-box p-3">
-                            <span class="text-[10px] text-[#6b2f8a] font-semibold uppercase tracking-wider block">Retail / Public</span>
-                            <span id="publicVal" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">15%</span>
-                            <span class="text-[10px] text-[#8e8e93]">General public</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- EXPERT STRATEGIES SECTION -->
@@ -750,6 +782,334 @@
             </div>
 
         </div>
+
+        
+            <!-- CONTEXTUAL SLIDE-OVER DRAWER FOR TERMINAL -->
+            <div id="stockContextDrawerBackdrop" class="context-drawer-backdrop hidden" onclick="closeStockContextDrawer()"></div>
+            <aside id="stockContextDrawer" class="context-drawer hidden" role="dialog" aria-modal="true" aria-label="Stock In-Depth Analytics">
+                <!-- Drawer Header -->
+                <div class="px-5 py-3.5 border-b border-[rgba(0,0,0,0.08)] flex items-center justify-between bg-[#fafafc] dark:bg-[#1c1f2e] sticky top-0 z-10">
+                    <div class="flex items-center space-x-2">
+                        <span id="contextDrawerIcon" class="text-lg">📊</span>
+                        <div>
+                            <h3 id="contextDrawerTitle" class="text-sm font-bold text-[#1c1c1e] dark:text-white leading-tight">Stock Analytics Drawer</h3>
+                            <p id="contextDrawerSubtitle" class="text-[10.5px] text-[#6e6e73]">Deep Dive Telemetry</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="contextDrawerCloseBtn" onclick="closeStockContextDrawer()" aria-label="Close Analytics Drawer" class="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1c1c1e] hover:bg-[#e8e8ed] dark:hover:bg-[#2c2c2e] transition-colors text-xs font-semibold cursor-pointer">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drawer Segmented Tabs -->
+                <div class="px-4 py-2 border-b border-[rgba(0,0,0,0.06)] bg-[#f5f5f7] dark:bg-[#151722] flex items-center space-x-1 overflow-x-auto text-xs" id="drawerInternalTabs">
+                    <button onclick="switchDrawerPanel('technicals')" class="drawer-tab-btn active px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="technicals">Technicals</button>
+                    <button onclick="switchDrawerPanel('fundamentals')" class="drawer-tab-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="fundamentals">DCF &amp; Valuation</button>
+                    <button onclick="switchDrawerPanel('ownership')" class="drawer-tab-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="ownership">Moats &amp; Gurus</button>
+                    <button onclick="switchDrawerPanel('options')" class="drawer-tab-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="options">Options</button>
+                    <button onclick="switchDrawerPanel('backtest')" class="drawer-tab-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="backtest">Backtest</button>
+                    <button onclick="switchDrawerPanel('news')" class="drawer-tab-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold" data-panel="news">News</button>
+                </div>
+
+                <!-- Drawer Content Body -->
+                <div class="p-5 overflow-y-auto space-y-4 flex-1" id="contextDrawerBody">
+                    <div id="drawerPanel-technicals" class="drawer-panel-content space-y-4"></div>
+                    <div id="drawerPanel-fundamentals" class="drawer-panel-content hidden space-y-4"></div>
+                    <div id="drawerPanel-ownership" class="drawer-panel-content hidden space-y-4"></div>
+                    <div id="drawerPanel-options" class="drawer-panel-content hidden space-y-4"></div>
+                    <div id="drawerPanel-backtest" class="drawer-panel-content hidden space-y-4"></div>
+                    <div id="drawerPanel-news" class="drawer-panel-content hidden space-y-4"></div>
+                </div>
+            </aside>
+
+        </section> <!-- /#workspace-terminal -->
+
+        <!-- =================================================================== -->
+        <!-- WORKSPACE 2: INSTITUTIONAL DISCOVERY DESK                           -->
+        <!-- =================================================================== -->
+        <section id="workspace-discovery" class="workspace-section hidden space-y-5">
+            <!-- Discovery Desk Sub-Header Bar -->
+            <div class="macos-card p-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#007aff] text-white flex items-center justify-center font-bold text-base shadow-sm">
+                        📡
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-[#1c1c1e] dark:text-white leading-tight">Institutional Discovery Desk</h2>
+                        <p class="text-[11px] text-[#6e6e73]">Alpha Scanners, Quant Screeners &amp; High-Conviction Setups</p>
+                    </div>
+                </div>
+                <div class="macos-segmented-track" id="discoverySubDeskTrack">
+                    <button class="subdesk-btn active" data-subdesk="scanner" onclick="switchTab('scanner')">
+                        <span>🔥</span> <span>SEPA Scanner</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="screener" onclick="switchTab('screener')">
+                        <span>⚙️</span> <span>Multi-Metric Screener</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="best-picks" onclick="switchTab('best-picks')">
+                        <span>💎</span> <span>Curated Guru Setups</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="ipo" onclick="switchTab('ipo')">
+                        <span>🚀</span> <span>IPOs Tracker</span>
+                    </button>
+                </div>
+            </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: ALPHA-MOMENTUM SCANNER                                         -->
+        <!-- =================================================================== -->
+        <div id="tab-view-scanner" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>📡</span> Alpha-Momentum Scanner
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">SEPA V4 · Breakout Entry · ATR Stop · Automated Position Sizing</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2 macos-box px-3 py-1.5 text-xs">
+                        <span class="text-[#6e6e73]">Capital ₹</span>
+                        <input type="number" id="scannerCapitalInput" value="1000000" class="w-24 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
+                        <span class="text-[#d1d1d6]">|</span>
+                        <span class="text-[#6e6e73]">Risk %</span>
+                        <input type="number" id="scannerRiskInput" value="2.0" step="0.5" class="w-12 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
+                    </div>
+                    <button onclick="runLiveScanner(true)" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                        <span>▶</span> <span>Run Live Scan</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="scannerStatusBanner" class="text-xs text-[#6e6e73]">
+                Click <strong>Run Live Scan</strong> to find qualified breakout candidates with automated share allocation.
+            </div>
+
+            <div id="scannerResultsContainer" class="macos-card p-5"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: MULTI-FACTOR STOCK SCREENER                                    -->
+        <!-- =================================================================== -->
+        <div id="tab-view-screener" class="tab-view hidden space-y-5">
+            <!-- Screener Control Panel -->
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3.5">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">🎯</span>
+                            <h3 class="text-base font-bold text-[#1c1c1e]">Multi-Factor Stock Screener</h3>
+                        </div>
+                        <p class="text-xs text-[#6e6e73] mt-0.5">Filter Nifty 50 & Midcap universe by Valuation, Profitability, RSI momentum, and 52W High breakout</p>
+                    </div>
+
+                    <!-- Quick Preset Pills & Export -->
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[11px] text-[#8e8e93] font-medium mr-1">Presets:</span>
+                        <button onclick="loadScreenerPresets('all_active')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f2f2f7] text-[#1c1c1e] border border-[rgba(0,0,0,0.12)] hover:bg-[#e5e5ea] transition-all">
+                            ⚡ All Leaders
+                        </button>
+                        <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all">
+                            🔥 52W Breakouts
+                        </button>
+                        <button onclick="loadScreenerPresets('compounder')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe] hover:bg-[#dbeafe] transition-all">
+                            💎 Compounders
+                        </button>
+                        <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all">
+                            🎯 Oversold Dips
+                        </button>
+                        <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
+                            <span>📥</span> <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Sector Filter</label>
+                        <select id="screenerSectorSelect" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e]">
+                            <option value="All">All Sectors</option>
+                            <option value="Financial Services">Financial Services</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Energy">Energy</option>
+                            <option value="Consumer Goods">Consumer Goods</option>
+                            <option value="Automobile">Automobile</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Capital Goods">Capital Goods</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Renewable Energy">Renewable Energy</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Max P/E Ratio (x)</label>
+                        <input type="number" id="screenerPeMax" placeholder="e.g. 35" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">Min ROE (%)</label>
+                        <input type="number" id="screenerRoeMin" placeholder="e.g. 15" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#48484a] mb-1">RSI Range (14D)</label>
+                        <div class="flex items-center space-x-1.5">
+                            <input type="number" id="screenerRsiMin" placeholder="Min" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                            <span class="text-[#8e8e93]">-</span>
+                            <input type="number" id="screenerRsiMax" placeholder="Max" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkbox Filters & Run Button -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                    <div class="flex flex-wrap items-center gap-3 text-xs">
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screener52wCheck" class="rounded text-[#007aff]">
+                            <span>Near 52W High (&lt; 8%)</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screenerVolSurgeCheck" class="rounded text-[#007aff]">
+                            <span>Volume Surge (&gt; 1.4x)</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
+                            <input type="checkbox" id="screenerGoldenCheck" class="rounded text-[#007aff]">
+                            <span>Golden Cross (50 &gt; 200 DMA)</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center space-x-2.5">
+                        <span id="screenerMatchCount" class="text-xs font-semibold text-[#007aff] px-2.5 py-1 rounded-full bg-[#eff6ff] border border-[#bfdbfe]">Ready to Scan</span>
+                        <button onclick="runScreenerQuery()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                            <span>🔍</span> <span>Run Screener</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screener Results Table -->
+            <div class="macos-card overflow-hidden">
+                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full text-left min-w-[720px]">
+                        <thead>
+                            <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa]">
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Stock / Company</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Sector</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">CMP & Day Change</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">P/E</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">ROE</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">RSI (14)</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">Setup Type</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="screenerResultsTable">
+                            <!-- Injected by screener.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: BEST PICKS (Top Shares & ETFs)                                -->
+        <!-- =================================================================== -->
+        <div id="tab-view-best-picks" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                        <span>💡</span> Best Shares & ETFs to Trade Today
+                    </h2>
+                    <p class="text-xs text-[#6e6e73]">Intraday MIS momentum, swing breakouts, positional trends, wealth compounders & F&O spreads</p>
+                </div>
+                <button onclick="loadBestRecommendations(true)" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                    <span>🔄</span> <span>Refresh Picks</span>
+                </button>
+            </div>
+
+            <!-- Best Picks Content Target -->
+            <div id="bestPicksContainer"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: INDIAN IPO TRACKER & GMP                                       -->
+        <!-- =================================================================== -->
+        <div id="tab-view-ipo" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🚀</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#1c1c1e]">Indian IPO Tracker & Grey Market Premium (GMP)</h3>
+                        <p class="text-xs text-[#6e6e73]">Real-time tracking of Mainboard & SME IPOs, listing estimates, and actionable apply/avoid advice</p>
+                    </div>
+                </div>
+                <button onclick="loadIpoTracker()" class="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>🔄</span> <span>Refresh IPOs</span>
+                </button>
+            </div>
+
+            <!-- Active & Upcoming IPOs Grid -->
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73] mb-3">🔥 Upcoming & Open IPOs for Bidding</h4>
+                <div id="activeIposContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Recently Listed IPOs Table -->
+            <div class="macos-card p-5 space-y-3">
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">🏆 Blockbuster Recent Listings (Performance Review)</h4>
+                <div id="recentIposContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+            </div>
+        </div>
+        </section> <!-- /#workspace-discovery -->
+
+        <!-- =================================================================== -->
+        <!-- WORKSPACE 3: MACRO PULSE & MARKET RADAR                             -->
+        <!-- =================================================================== -->
+        <section id="workspace-macro" class="workspace-section hidden space-y-5">
+            <!-- Macro Pulse Sub-Header Bar -->
+            <div class="macos-card p-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#5856d6] text-white flex items-center justify-center font-bold text-base shadow-sm">
+                        🏛️
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-[#1c1c1e] dark:text-white leading-tight">Macro Pulse &amp; Market Radar</h2>
+                        <p class="text-[11px] text-[#6e6e73]">Institutional Breadth, Sector Rotation RRG, Commodities, FX &amp; Catalysts</p>
+                    </div>
+                </div>
+                <div class="macos-segmented-track flex-wrap" id="macroSubDeskTrack">
+                    <button class="subdesk-btn active" data-subdesk="institutional" onclick="switchTab('institutional')">
+                        <span>🏛️</span> <span>Institutional Breadth</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="sectors" onclick="switchTab('sectors')">
+                        <span>📊</span> <span>Sector RRG</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="commodities" onclick="switchTab('commodities')">
+                        <span>🥇</span> <span>Commodities &amp; FX</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="options" onclick="switchTab('options')">
+                        <span>📋</span> <span>Options Desk</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="bees" onclick="switchTab('bees')">
+                        <span>⚖️</span> <span>ETF Allocation</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="calendar" onclick="switchTab('calendar')">
+                        <span>📅</span> <span>Calendar</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="journal" onclick="switchTab('journal')">
+                        <span>📒</span> <span>Journal &amp; Risk</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="backtest" onclick="switchTab('backtest')">
+                        <span>🧪</span> <span>Backtester</span>
+                    </button>
+                    <button class="subdesk-btn" data-subdesk="news" onclick="switchTab('news')">
+                        <span>📰</span> <span>Live News</span>
+                    </button>
+                </div>
+            </div>
 
         <!-- =================================================================== -->
         <!-- TAB: INSTITUTIONAL SMART MONEY RADAR                                -->
@@ -973,78 +1333,72 @@
         </div>
 
         <!-- =================================================================== -->
-        <!-- TAB: BEST PICKS (Top Shares & ETFs)                                -->
+        <!-- TAB: 15 SECTORS ROTATION (RRG) VIEW                                 -->
         <!-- =================================================================== -->
-        <div id="tab-view-best-picks" class="tab-view hidden space-y-5">
+        <div id="tab-view-sectors" class="tab-view hidden space-y-5">
             <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
-                        <span>💡</span> Best Shares & ETFs to Trade Today
+                        <span>📊</span> 15 Nifty Sectors Analysis
                     </h2>
-                    <p class="text-xs text-[#6e6e73]">Intraday MIS momentum, swing breakouts, positional trends, wealth compounders & F&O spreads</p>
+                    <p class="text-xs text-[#6e6e73]">Sector health, institutional money flow, and market rotation</p>
                 </div>
-                <button onclick="loadBestRecommendations(true)" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
-                    <span>🔄</span> <span>Refresh Picks</span>
-                </button>
+                <div class="flex items-center gap-3">
+                    <div class="macos-segmented-track">
+                        <button class="sector-subtab-btn active text-[11px] px-2.5 py-1" data-tab="rrg" onclick="switchSectorSubTab('rrg')">📈 4-Quadrant RRG</button>
+                        <button class="sector-subtab-btn text-[11px] px-2.5 py-1" data-tab="treemap" onclick="switchSectorSubTab('treemap')">🗺️ Treemap Heatmap</button>
+                        <button class="sector-subtab-btn text-[11px] px-2.5 py-1" data-tab="grid" onclick="switchSectorSubTab('grid')">📋 Sector Cards</button>
+                    </div>
+                    <button onclick="loadSectorsAnalysis()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                        <span>🔍</span> <span>Refresh Sector Health</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Best Picks Content Target -->
-            <div id="bestPicksContainer"></div>
-        </div>
+            <!-- Hot Money / Sector Rotation Callout Banner -->
+            <div id="sectorRotationBanner"></div>
 
-        <!-- =================================================================== -->
-        <!-- TAB: NIFTYBEES VS GOLDBEES (Single ETF Momentum Switcher)           -->
-        <!-- =================================================================== -->
-        <div id="tab-view-bees" class="tab-view hidden space-y-5">
-            <!-- Header & Controls -->
-            <div class="macos-card p-5">
-                <div class="flex flex-wrap items-start justify-between gap-4">
+            <!-- View 1: 4-Quadrant RRG Graph -->
+            <div id="sectorsRrgView" class="macos-card p-5 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
-                            <span>⚖️</span> NiftyBees vs GoldBees — Single ETF Strategy
-                        </h2>
-                        <p class="text-xs text-[#6e6e73] mt-1 max-w-2xl">
-                            Invest 100% in ONE ETF at a time. The tool calculates momentum, 200 DMA trend, and macro volatility to advise when to hold or shift.
-                        </p>
+                        <h3 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🔄</span> Relative Rotation Graph (RRG) — RS-Ratio vs RS-Momentum
+                        </h3>
+                        <p class="text-[11px] text-[#6e6e73]">Classified vs Nifty 50 into Leading (Green), Weakening (Amber), Lagging (Red), and Improving (Blue)</p>
                     </div>
-
-                    <!-- Controls Row -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">I currently hold:</span>
-                            <select id="beesCurrentHolding" class="bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] font-semibold outline-none">
-                                <option value="NONE">Nothing (New Allocation)</option>
-                                <option value="NIFTYBEES">📈 NIFTYBEES</option>
-                                <option value="GOLDBEES">🥇 GOLDBEES</option>
-                            </select>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">My capital:</span>
-                            <div class="flex items-center bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5">
-                                <span class="text-xs text-[#6e6e73] mr-1">₹</span>
-                                <input type="number" id="beesInvestmentInput" value="100000" step="10000"
-                                    class="bg-transparent text-xs text-[#1c1c1e] font-mono w-28 outline-none font-semibold" />
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col justify-end">
-                            <span class="text-[10px] text-transparent">–</span>
-                            <button onclick="loadBeesStrategy()"
-                                class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
-                                <span>⚡</span> <span>Get Decision</span>
-                            </button>
-                        </div>
+                    <div class="flex items-center gap-2 text-[10.5px]">
+                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Leading</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium border border-amber-200">Weakening</span>
+                        <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium border border-rose-200">Lagging</span>
+                        <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium border border-blue-200">Improving</span>
                     </div>
+                </div>
+                <div class="w-full h-[400px]">
+                    <canvas id="sectorRrgCanvas"></canvas>
                 </div>
             </div>
 
-            <!-- Bees Content Target -->
-            <div id="beesResultsContainer"></div>
+            <!-- View 2: Treemap Heatmap -->
+            <div id="sectorsTreemapView" class="hidden macos-card p-5 space-y-3">
+                <div>
+                    <h3 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🗺️</span> Market-Cap Weighted Sector Treemap Heatmap
+                    </h3>
+                    <p class="text-[11px] text-[#6e6e73]">Tile sizing proportional to Nifty index weight; color depicts 1-day momentum</p>
+                </div>
+                <div id="sectorsTreemapContainer"></div>
+            </div>
+
+            <!-- View 3: Sector Cards Grid -->
+            <div id="sectorsGridView" class="hidden">
+                <div id="sectorsGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
         </div>
 
+
         <!-- =================================================================== -->
-        <!-- TAB 2: COMMODITIES VIEW (Gold, Silver, Crude Oil, etc.)              -->
+        <!-- TAB: COMMODITIES INTELLIGENCE                                       -->
         <!-- =================================================================== -->
         <div id="tab-view-commodities" class="tab-view hidden space-y-5">
             <!-- Commodities Grid Cards -->
@@ -1226,117 +1580,58 @@
         </div>
 
         <!-- =================================================================== -->
-        <!-- TAB 4: MARKET NEWS VIEW                                             -->
+        <!-- TAB: NIFTYBEES VS GOLDBEES STRATEGY                                 -->
         <!-- =================================================================== -->
-        <div id="tab-view-news" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 space-y-4">
-                <h3 class="text-base font-bold text-[#1c1c1e] flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
-                    <span>📰</span> Live Indian Financial Markets & Economy News
-                </h3>
-                <div id="generalNewsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-        </div>
-
-        <!-- =================================================================== -->
-        <!-- TAB: LIVE SCANNER VIEW (SEPA V4 & Position Sizing)                   -->
-        <!-- =================================================================== -->
-        <div id="tab-view-scanner" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
-                        <span>📡</span> Alpha-Momentum Scanner
-                    </h2>
-                    <p class="text-xs text-[#6e6e73]">SEPA V4 · Breakout Entry · ATR Stop · Automated Position Sizing</p>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2 macos-box px-3 py-1.5 text-xs">
-                        <span class="text-[#6e6e73]">Capital ₹</span>
-                        <input type="number" id="scannerCapitalInput" value="1000000" class="w-24 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
-                        <span class="text-[#d1d1d6]">|</span>
-                        <span class="text-[#6e6e73]">Risk %</span>
-                        <input type="number" id="scannerRiskInput" value="2.0" step="0.5" class="w-12 bg-transparent font-bold text-[#1c1c1e] mono outline-none">
-                    </div>
-                    <button onclick="runLiveScanner(true)" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
-                        <span>▶</span> <span>Run Live Scan</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="scannerStatusBanner" class="text-xs text-[#6e6e73]">
-                Click <strong>Run Live Scan</strong> to find qualified breakout candidates with automated share allocation.
-            </div>
-
-            <div id="scannerResultsContainer" class="macos-card p-5"></div>
-        </div>
-
-        <!-- =================================================================== -->
-        <!-- TAB: 15 SECTORS ROTATION (RRG) VIEW                                 -->
-        <!-- =================================================================== -->
-        <div id="tab-view-sectors" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
-                        <span>📊</span> 15 Nifty Sectors Analysis
-                    </h2>
-                    <p class="text-xs text-[#6e6e73]">Sector health, institutional money flow, and market rotation</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="macos-segmented-track">
-                        <button class="sector-subtab-btn active text-[11px] px-2.5 py-1" data-tab="rrg" onclick="switchSectorSubTab('rrg')">📈 4-Quadrant RRG</button>
-                        <button class="sector-subtab-btn text-[11px] px-2.5 py-1" data-tab="treemap" onclick="switchSectorSubTab('treemap')">🗺️ Treemap Heatmap</button>
-                        <button class="sector-subtab-btn text-[11px] px-2.5 py-1" data-tab="grid" onclick="switchSectorSubTab('grid')">📋 Sector Cards</button>
-                    </div>
-                    <button onclick="loadSectorsAnalysis()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
-                        <span>🔍</span> <span>Refresh Sector Health</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Hot Money / Sector Rotation Callout Banner -->
-            <div id="sectorRotationBanner"></div>
-
-            <!-- View 1: 4-Quadrant RRG Graph -->
-            <div id="sectorsRrgView" class="macos-card p-5 space-y-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
+        <div id="tab-view-bees" class="tab-view hidden space-y-5">
+            <!-- Header & Controls -->
+            <div class="macos-card p-5">
+                <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h3 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider flex items-center gap-1.5">
-                            <span>🔄</span> Relative Rotation Graph (RRG) — RS-Ratio vs RS-Momentum
-                        </h3>
-                        <p class="text-[11px] text-[#6e6e73]">Classified vs Nifty 50 into Leading (Green), Weakening (Amber), Lagging (Red), and Improving (Blue)</p>
+                        <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                            <span>⚖️</span> NiftyBees vs GoldBees — Single ETF Strategy
+                        </h2>
+                        <p class="text-xs text-[#6e6e73] mt-1 max-w-2xl">
+                            Invest 100% in ONE ETF at a time. The tool calculates momentum, 200 DMA trend, and macro volatility to advise when to hold or shift.
+                        </p>
                     </div>
-                    <div class="flex items-center gap-2 text-[10.5px]">
-                        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Leading</span>
-                        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium border border-amber-200">Weakening</span>
-                        <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium border border-rose-200">Lagging</span>
-                        <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium border border-blue-200">Improving</span>
+
+                    <!-- Controls Row -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">I currently hold:</span>
+                            <select id="beesCurrentHolding" class="bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] font-semibold outline-none">
+                                <option value="NONE">Nothing (New Allocation)</option>
+                                <option value="NIFTYBEES">📈 NIFTYBEES</option>
+                                <option value="GOLDBEES">🥇 GOLDBEES</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">My capital:</span>
+                            <div class="flex items-center bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5">
+                                <span class="text-xs text-[#6e6e73] mr-1">₹</span>
+                                <input type="number" id="beesInvestmentInput" value="100000" step="10000"
+                                    class="bg-transparent text-xs text-[#1c1c1e] font-mono w-28 outline-none font-semibold" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col justify-end">
+                            <span class="text-[10px] text-transparent">–</span>
+                            <button onclick="loadBeesStrategy()"
+                                class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+                                <span>⚡</span> <span>Get Decision</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="w-full h-[400px]">
-                    <canvas id="sectorRrgCanvas"></canvas>
                 </div>
             </div>
 
-            <!-- View 2: Treemap Heatmap -->
-            <div id="sectorsTreemapView" class="hidden macos-card p-5 space-y-3">
-                <div>
-                    <h3 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider flex items-center gap-1.5">
-                        <span>🗺️</span> Market-Cap Weighted Sector Treemap Heatmap
-                    </h3>
-                    <p class="text-[11px] text-[#6e6e73]">Tile sizing proportional to Nifty index weight; color depicts 1-day momentum</p>
-                </div>
-                <div id="sectorsTreemapContainer"></div>
-            </div>
-
-            <!-- View 3: Sector Cards Grid -->
-            <div id="sectorsGridView" class="hidden">
-                <div id="sectorsGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
+            <!-- Bees Content Target -->
+            <div id="beesResultsContainer"></div>
         </div>
 
-
         <!-- =================================================================== -->
-        <!-- TAB: ETF MEAN-REVERSION (FRESH VARIANT) VIEW                        -->
+        <!-- TAB: ETF MEAN-REVERSION SCREENER (FRESH)                            -->
         <!-- =================================================================== -->
         <div id="tab-view-etf" class="tab-view hidden space-y-5">
             <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
@@ -1400,7 +1695,27 @@
         </div>
 
         <!-- =================================================================== -->
-        <!-- TAB: TRADE JOURNAL & PORTFOLIO TRACKER                              -->
+        <!-- TAB: MACRO ECONOMIC CALENDAR & EXPIRY WATCH                         -->
+        <!-- =================================================================== -->
+        <div id="tab-view-calendar" class="tab-view hidden space-y-5">
+            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">📅</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-[#1c1c1e]">Macro Economic Calendar & Expiry Watch</h3>
+                        <p class="text-xs text-[#6e6e73]">Track RBI MPC, US Federal Reserve interest rates, inflation numbers, and volatility catalysts</p>
+                    </div>
+                </div>
+                <button onclick="loadEconomicCalendar()" class="btn-secondary text-xs flex items-center gap-1.5">
+                    <span>🔄</span> <span>Refresh Calendar</span>
+                </button>
+            </div>
+
+            <div id="calendarEventsContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB: TRADE JOURNAL & PORTFOLIO ADVISORY                             -->
         <!-- =================================================================== -->
         <div id="tab-view-journal" class="tab-view hidden space-y-5">
             <div class="macos-card p-5 flex flex-wrap justify-between items-center gap-3">
@@ -1411,14 +1726,23 @@
                     <p class="text-xs text-[#6e6e73]">Track active positions, live P&L, and 9-factor algorithmic advice (Buy More, Hold, Sell)</p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="triggerAutoRiskShield()" title="Auto-calculate technical Stop Losses & 1:2 R:R targets for open positions" class="px-3 py-1.5 text-xs rounded-lg font-semibold bg-[#eef5fd] hover:bg-[#007aff] hover:text-white text-[#007aff] border border-[#b9d7fb] transition-all flex items-center gap-1 cursor-pointer">
+                        <span>🛡️</span> <span>Auto-Risk Shield</span>
+                    </button>
+                    <button onclick="openImportTradesModal()" title="Bulk Import Trades from CSV or Excel" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
+                        <span>📥</span> <span>Import CSV</span>
+                    </button>
                     <button onclick="exportJournalToCSV()" title="Download Journal CSV" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
-                        <span>📥</span> <span>Export CSV</span>
+                        <span>📤</span> <span>Export CSV</span>
                     </button>
                     <button onclick="printJournalSummary()" title="Print / PDF View" class="btn-secondary text-xs flex items-center gap-1 cursor-pointer">
                         <span>🖨️</span> <span>Print</span>
                     </button>
                     <button onclick="openManualTradeModal()" class="btn-primary px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer">
                         <span>✏️</span> <span>Add Position Manually</span>
+                    </button>
+                    <button onclick="promptResetJournal()" id="btnResetJournal" title="Clear Dashboard & Reset Realized P&L" class="px-3 py-1.5 text-xs rounded-lg font-medium border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/30 dark:border-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/50 flex items-center gap-1.5 cursor-pointer transition-all duration-150">
+                        <span>🗑️</span> <span>Reset Journal & P&L</span>
                     </button>
                     <button onclick="loadTradeJournal()" class="btn-secondary text-xs cursor-pointer">
                         🔄 Refresh P&L
@@ -1511,6 +1835,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ETF Allocation & Shift Advisor Banner -->
+            <div id="journalEtfRebalanceContainer"></div>
 
             <!-- Active Open Trades Table -->
             <div class="macos-card p-5 space-y-3">
@@ -1612,180 +1939,20 @@
         </div>
 
         <!-- =================================================================== -->
-        <!-- TAB: CUSTOM STOCK SCREENER                                          -->
+        <!-- TAB: LIVE FINANCIAL NEWS                                            -->
         <!-- =================================================================== -->
-        <div id="tab-view-screener" class="tab-view hidden space-y-5">
-            <!-- Screener Control Panel -->
+        <div id="tab-view-news" class="tab-view hidden space-y-5">
             <div class="macos-card p-5 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3.5">
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xl">🎯</span>
-                            <h3 class="text-base font-bold text-[#1c1c1e]">Multi-Factor Stock Screener</h3>
-                        </div>
-                        <p class="text-xs text-[#6e6e73] mt-0.5">Filter Nifty 50 & Midcap universe by Valuation, Profitability, RSI momentum, and 52W High breakout</p>
-                    </div>
-
-                    <!-- Quick Preset Pills & Export -->
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-[11px] text-[#8e8e93] font-medium mr-1">Presets:</span>
-                        <button onclick="loadScreenerPresets('all_active')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f2f2f7] text-[#1c1c1e] border border-[rgba(0,0,0,0.12)] hover:bg-[#e5e5ea] transition-all">
-                            ⚡ All Leaders
-                        </button>
-                        <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all">
-                            🔥 52W Breakouts
-                        </button>
-                        <button onclick="loadScreenerPresets('compounder')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe] hover:bg-[#dbeafe] transition-all">
-                            💎 Compounders
-                        </button>
-                        <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all">
-                            🎯 Oversold Dips
-                        </button>
-                        <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
-                            <span>📥</span> <span>Export CSV</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Filters Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
-                    <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Sector Filter</label>
-                        <select id="screenerSectorSelect" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e]">
-                            <option value="All">All Sectors</option>
-                            <option value="Financial Services">Financial Services</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Energy">Energy</option>
-                            <option value="Consumer Goods">Consumer Goods</option>
-                            <option value="Automobile">Automobile</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Capital Goods">Capital Goods</option>
-                            <option value="Real Estate">Real Estate</option>
-                            <option value="Renewable Energy">Renewable Energy</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Max P/E Ratio (x)</label>
-                        <input type="number" id="screenerPeMax" placeholder="e.g. 35" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
-                    </div>
-
-                    <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Min ROE (%)</label>
-                        <input type="number" id="screenerRoeMin" placeholder="e.g. 15" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
-                    </div>
-
-                    <div>
-                        <label class="block font-medium text-[#48484a] mb-1">RSI Range (14D)</label>
-                        <div class="flex items-center space-x-1.5">
-                            <input type="number" id="screenerRsiMin" placeholder="Min" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
-                            <span class="text-[#8e8e93]">-</span>
-                            <input type="number" id="screenerRsiMax" placeholder="Max" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Checkbox Filters & Run Button -->
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[rgba(0,0,0,0.06)]">
-                    <div class="flex flex-wrap items-center gap-3 text-xs">
-                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
-                            <input type="checkbox" id="screener52wCheck" class="rounded text-[#007aff]">
-                            <span>Near 52W High (&lt; 8%)</span>
-                        </label>
-                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
-                            <input type="checkbox" id="screenerVolSurgeCheck" class="rounded text-[#007aff]">
-                            <span>Volume Surge (&gt; 1.4x)</span>
-                        </label>
-                        <label class="flex items-center space-x-1.5 cursor-pointer text-[#48484a]">
-                            <input type="checkbox" id="screenerGoldenCheck" class="rounded text-[#007aff]">
-                            <span>Golden Cross (50 &gt; 200 DMA)</span>
-                        </label>
-                    </div>
-
-                    <div class="flex items-center space-x-2.5">
-                        <span id="screenerMatchCount" class="text-xs font-semibold text-[#007aff] px-2.5 py-1 rounded-full bg-[#eff6ff] border border-[#bfdbfe]">Ready to Scan</span>
-                        <button onclick="runScreenerQuery()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
-                            <span>🔍</span> <span>Run Screener</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Screener Results Table -->
-            <div class="macos-card overflow-hidden">
-                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
-                    <table class="w-full text-left min-w-[720px]">
-                        <thead>
-                            <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa]">
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Stock / Company</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Sector</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">CMP & Day Change</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">P/E</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">ROE</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">RSI (14)</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">Setup Type</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="screenerResultsTable">
-                            <!-- Injected by screener.js -->
-                        </tbody>
-                    </table>
-                </div>
+                <h3 class="text-base font-bold text-[#1c1c1e] flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <span>📰</span> Live Indian Financial Markets & Economy News
+                </h3>
+                <div id="generalNewsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
-        <!-- =================================================================== -->
-        <!-- TAB: INDIAN IPO TRACKER & GMP                                       -->
-        <!-- =================================================================== -->
-        <div id="tab-view-ipo" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-3">
-                    <div class="text-2xl">🚀</div>
-                    <div>
-                        <h3 class="text-lg font-bold text-[#1c1c1e]">Indian IPO Tracker & Grey Market Premium (GMP)</h3>
-                        <p class="text-xs text-[#6e6e73]">Real-time tracking of Mainboard & SME IPOs, listing estimates, and actionable apply/avoid advice</p>
-                    </div>
-                </div>
-                <button onclick="loadIpoTracker()" class="btn-secondary text-xs flex items-center gap-1.5">
-                    <span>🔄</span> <span>Refresh IPOs</span>
-                </button>
-            </div>
+    </section> <!-- /#workspace-macro -->
 
-            <!-- Active & Upcoming IPOs Grid -->
-            <div>
-                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73] mb-3">🔥 Upcoming & Open IPOs for Bidding</h4>
-                <div id="activeIposContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
-
-            <!-- Recently Listed IPOs Table -->
-            <div class="macos-card p-5 space-y-3">
-                <h4 class="text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">🏆 Blockbuster Recent Listings (Performance Review)</h4>
-                <div id="recentIposContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
-            </div>
-        </div>
-
-        <!-- =================================================================== -->
-        <!-- TAB: MACRO ECONOMIC CALENDAR                                        -->
-        <!-- =================================================================== -->
-        <div id="tab-view-calendar" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-3">
-                    <div class="text-2xl">📅</div>
-                    <div>
-                        <h3 class="text-lg font-bold text-[#1c1c1e]">Macro Economic Calendar & Expiry Watch</h3>
-                        <p class="text-xs text-[#6e6e73]">Track RBI MPC, US Federal Reserve interest rates, inflation numbers, and volatility catalysts</p>
-                    </div>
-                </div>
-                <button onclick="loadEconomicCalendar()" class="btn-secondary text-xs flex items-center gap-1.5">
-                    <span>🔄</span> <span>Refresh Calendar</span>
-                </button>
-            </div>
-
-            <div id="calendarEventsContainer" class="space-y-4"></div>
-        </div>
-
-        <!-- =================================================================== -->
+<!-- =================================================================== -->
         <!-- MODAL: POSITION SIZING CALCULATOR                                   -->
         <!-- =================================================================== -->
         <div id="positionCalcModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm hidden">
@@ -2008,10 +2175,6 @@
                 <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
                     <span class="text-[#48484a]">Open Position Sizing Calculator</span>
                     <kbd class="macos-kbd">C</kbd>
-                </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Toggle Display Density (Standard / Compact)</span>
-                    <kbd class="macos-kbd">D</kbd>
                 </div>
                 <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
                     <span class="text-[#48484a]">Direct Tab Jump (Stocks, Picks, Screener...)</span>

@@ -7,6 +7,17 @@ let _currentPicksFilter = "all";
 let _activeRecommendationsData = null;
 let _recommendationsSyncTimer = null;
 
+function fmtPrice(val, decimals = 2) {
+    if (val === null || val === undefined || isNaN(val)) return "0.00";
+    const n = Number(val);
+    const maxD = Math.max(0, Math.min(2, Number(decimals)));
+    const minD = Math.min(maxD, 2);
+    return n.toLocaleString('en-IN', {
+        minimumFractionDigits: minD,
+        maximumFractionDigits: maxD
+    });
+}
+
 async function loadBestRecommendations(forceRefresh = false) {
     const container = document.getElementById("bestPicksContainer");
     if (!container) return;
@@ -41,9 +52,18 @@ async function loadBestRecommendations(forceRefresh = false) {
         const data = await res.json();
 
         if (data && data.status === "success") {
-            _activeRecommendationsData = data;
-            renderBestPicksUI(data, false);
-            return;
+            const total = (data.best_intraday_picks?.length || 0) + 
+                          (data.best_swing_shares?.length || 0) + 
+                          (data.best_positional_picks?.length || 0) + 
+                          (data.best_long_term_compounders?.length || 0) +
+                          (data.best_fno_strategies?.length || 0) +
+                          (data.best_etfs?.length || 0);
+            if (total > 0) {
+                _activeRecommendationsData = data;
+                renderBestPicksUI(data, false);
+                return;
+            }
+            throw new Error("Zero picks in live response, falling back to cached baseline");
         }
         throw new Error(data?.message || "Failed to load live recommendations");
     } catch (e) {
@@ -97,11 +117,9 @@ function filterPicksSubTab(filter) {
     _currentPicksFilter = filter;
     document.querySelectorAll(".picks-filter-btn").forEach(btn => {
         if (btn.dataset.filter === filter) {
-            btn.classList.add("active", "bg-white", "text-[#1c1c1e]", "font-semibold", "shadow-xs");
-            btn.classList.remove("text-[#6e6e73]");
+            btn.classList.add("active");
         } else {
-            btn.classList.remove("active", "bg-white", "text-[#1c1c1e]", "font-semibold", "shadow-xs");
-            btn.classList.add("text-[#6e6e73]");
+            btn.classList.remove("active");
         }
     });
 
@@ -112,11 +130,9 @@ function filterPicksSubTab(filter) {
         }
         document.querySelectorAll(".style-btn").forEach(btn => {
             if (btn.dataset.style === filter) {
-                btn.classList.add("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
-                btn.classList.remove("text-[#636366]");
+                btn.classList.add("active");
             } else {
-                btn.classList.remove("active", "bg-white", "text-[#1d1d1f]", "font-semibold", "shadow-sm");
-                btn.classList.add("text-[#636366]");
+                btn.classList.remove("active");
             }
         });
     }
@@ -161,20 +177,36 @@ function renderBestPicksUI(data, isFallback = false) {
             ` : ''}
 
             <!-- PICKS SUB-TOOLBAR (Filter Pills + Capital Allocation Strip) -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-[rgba(0,0,0,0.06)] shadow-xs">
-                <div class="flex items-center macos-segmented-track overflow-x-auto max-w-full gap-1 p-1" style="-webkit-overflow-scrolling: touch;">
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'all' ? 'active' : ''}" data-filter="all" onclick="filterPicksSubTab('all')">🌟 All Picks</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'intraday' ? 'active' : ''}" data-filter="intraday" onclick="filterPicksSubTab('intraday')">⚡ Intraday (${intraday.length})</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'swing' ? 'active' : ''}" data-filter="swing" onclick="filterPicksSubTab('swing')">🚀 Swing (${breakouts.length})</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'positional' ? 'active' : ''}" data-filter="positional" onclick="filterPicksSubTab('positional')">📈 Positional (${positional.length})</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'compounder' ? 'active' : ''}" data-filter="compounder" onclick="filterPicksSubTab('compounder')">💎 Compounders (${compounders.length})</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'fno' ? 'active' : ''}" data-filter="fno" onclick="filterPicksSubTab('fno')">📋 F&O (${fno.length})</button>
-                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'etf' ? 'active' : ''}" data-filter="etf" onclick="filterPicksSubTab('etf')">📉 ETFs (${etfs.length})</button>
-                </div>
+            <div class="macos-card p-3 flex flex-wrap items-center justify-between gap-3">
+                <nav class="flex items-center macos-segmented-track overflow-x-auto max-w-full gap-1 p-1" style="-webkit-overflow-scrolling: touch;">
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'all' ? 'active' : ''}" data-filter="all" onclick="filterPicksSubTab('all')">
+                        <span class="text-xs">🌟</span> <span>All Picks</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'intraday' ? 'active' : ''}" data-filter="intraday" onclick="filterPicksSubTab('intraday')">
+                        <span class="text-xs">⚡</span> <span>Intraday</span> <span class="mono opacity-80 text-[10.5px]">(${intraday.length})</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'swing' ? 'active' : ''}" data-filter="swing" onclick="filterPicksSubTab('swing')">
+                        <span class="text-xs">🚀</span> <span>Swing</span> <span class="mono opacity-80 text-[10.5px]">(${breakouts.length})</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'positional' ? 'active' : ''}" data-filter="positional" onclick="filterPicksSubTab('positional')">
+                        <span class="text-xs">📈</span> <span>Positional</span> <span class="mono opacity-80 text-[10.5px]">(${positional.length})</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'compounder' ? 'active' : ''}" data-filter="compounder" onclick="filterPicksSubTab('compounder')">
+                        <span class="text-xs">💎</span> <span>Compounders</span> <span class="mono opacity-80 text-[10.5px]">(${compounders.length})</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'fno' ? 'active' : ''}" data-filter="fno" onclick="filterPicksSubTab('fno')">
+                        <span class="text-xs">📋</span> <span>F&O</span> <span class="mono opacity-80 text-[10.5px]">(${fno.length})</span>
+                    </button>
+                    <button class="picks-filter-btn shrink-0 ${_currentPicksFilter === 'etf' ? 'active' : ''}" data-filter="etf" onclick="filterPicksSubTab('etf')">
+                        <span class="text-xs">📉</span> <span>ETFs</span> <span class="mono opacity-80 text-[10.5px]">(${etfs.length})</span>
+                    </button>
+                </nav>
 
-                <div class="flex items-center gap-3 text-xs text-[#6e6e73]">
-                    <span class="font-medium">Macro Allocation:</span>
-                    <div class="flex items-center gap-1.5 font-bold mono">
+                <div class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-[#f2f2f7] dark:bg-[#151722] border border-black/5 dark:border-white/10 text-[#6e6e73] dark:text-[#a1a1aa] shadow-2xs">
+                    <span class="font-semibold text-[#1c1c1e] dark:text-white flex items-center gap-1">
+                        <span>⚖️</span> <span>Allocation:</span>
+                    </span>
+                    <div class="flex items-center gap-1.5 font-bold mono text-[11px]">
                         <span class="text-[#007aff]">60% Equity</span> • 
                         <span class="text-[#ff9500]">25% Gold</span> • 
                         <span class="text-[#34c759]">15% Cash</span>
@@ -224,7 +256,7 @@ function renderBestPicksUI(data, isFallback = false) {
                                 </div>
 
                                 <div class="p-1.5 rounded bg-[#f5f5f7] border border-[rgba(0,0,0,0.05)] text-[10.5px] flex items-center justify-between text-[#555] mb-2">
-                                    <span>VWAP: <strong class="text-[#007aff] mono">₹${item.vwap}</strong></span>
+                                    <span>VWAP: <strong class="text-[#007aff] mono">₹${fmtPrice(item.vwap)}</strong></span>
                                     <span>Status: <strong class="text-[#1e7e34]">Price > VWAP</strong></span>
                                     <span>Square-Off: <strong class="text-[#ea580c]">15:15</strong></span>
                                 </div>
@@ -232,21 +264,21 @@ function renderBestPicksUI(data, isFallback = false) {
                                 <div class="grid grid-cols-3 gap-2 my-2 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">Buy Price</span>
-                                        <span class="font-bold text-[#1c1c1e] mono">₹${item.cmp}</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${fmtPrice(item.cmp)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#b32020] block font-medium">Stop-Loss (0.8x ATR)</span>
-                                        <span class="font-bold text-[#b32020] mono">₹${item.stop_loss}</span>
+                                        <span class="font-bold text-[#b32020] mono">₹${fmtPrice(item.stop_loss)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#1e7e34] block font-medium">Target 1 (1:2 R:R)</span>
-                                        <span class="font-bold text-[#1e7e34] mono">₹${item.target} (+${item.target_pct}%)</span>
+                                        <span class="font-bold text-[#1e7e34] mono">₹${fmtPrice(item.target)} (+${Number(item.target_pct).toFixed(1)}%)</span>
                                     </div>
                                 </div>
 
                                 <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
-                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${item.target_2} (+${item.target_2_pct}%)</strong></span>
-                                    <span>Vol Surge: <strong class="text-[#1c1c1e] mono">${item.vol_surge}x</strong></span>
+                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${fmtPrice(item.target_2)} (+${Number(item.target_2_pct).toFixed(1)}%)</strong></span>
+                                    <span>Vol Surge: <strong class="text-[#1c1c1e] mono">${Number(item.vol_surge).toFixed(1)}x</strong></span>
                                     <span>Qty: <strong class="text-[#007aff] mono">${item.shares_qty} shares</strong></span>
                                 </div>
 
@@ -258,10 +290,10 @@ function renderBestPicksUI(data, isFallback = false) {
                                     <span>📐</span> View Math & VWAP
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${item.cmp}, ${item.stop_loss}, ${item.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${Number(item.cmp).toFixed(2)}, ${Number(item.stop_loss).toFixed(2)}, ${Number(item.target).toFixed(2)})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="logPickToJournal('${item.symbol}', ${item.cmp}, ${item.shares_qty || 10}, ${item.stop_loss}, ${item.target}, 'Intraday')" class="btn-log" title="Log trade in personal journal">
+                                    <button onclick="logPickToJournal('${item.symbol}', ${Number(item.cmp).toFixed(2)}, ${item.shares_qty || 10}, ${Number(item.stop_loss).toFixed(2)}, ${Number(item.target).toFixed(2)}, 'Intraday')" class="btn-log" title="Log trade in personal journal">
                                         <span>🎯</span> <span>Log</span>
                                     </button>
                                     <button onclick="inspectPickOnChart(_activeRecommendationsData.best_intraday_picks[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
@@ -319,7 +351,7 @@ function renderBestPicksUI(data, isFallback = false) {
                                     ${item.legs.map(leg => `
                                         <div class="flex justify-between items-center text-[11px]">
                                             <span class="font-bold ${leg.action === 'BUY' ? 'text-[#007aff]' : 'text-[#d9383a]'}">${leg.action} ${leg.strike} ${leg.type}</span>
-                                            <span class="mono text-[#48484a]">₹${leg.est_price}</span>
+                                            <span class="mono text-[#48484a]">₹${fmtPrice(leg.est_price)}</span>
                                         </div>
                                     `).join("")}
                                 </div>
@@ -328,11 +360,11 @@ function renderBestPicksUI(data, isFallback = false) {
                                 <div class="grid grid-cols-3 gap-1.5 p-2 rounded-lg bg-[#fafafc] border border-[rgba(0,0,0,0.05)] text-center text-[11px]">
                                     <div>
                                         <span class="text-[9.5px] text-[#8e8e93] block">Max Risk</span>
-                                        <span class="font-bold text-[#d9383a] mono">₹${item.max_loss_per_lot}</span>
+                                        <span class="font-bold text-[#d9383a] mono">₹${fmtPrice(item.max_loss_per_lot, 0)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#8e8e93] block">Max Reward</span>
-                                        <span class="font-bold text-[#28a745] mono">₹${item.max_profit_per_lot}</span>
+                                        <span class="font-bold text-[#28a745] mono">₹${fmtPrice(item.max_profit_per_lot, 0)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#8e8e93] block">R:R Ratio</span>
@@ -396,21 +428,21 @@ function renderBestPicksUI(data, isFallback = false) {
                                 <div class="grid grid-cols-3 gap-2 my-2.5 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">Buy Zone</span>
-                                        <span class="font-bold text-[#1c1c1e] mono">₹${b.cmp}</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${fmtPrice(b.cmp)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#b32020] block font-medium">Stop-Loss (1.5x ATR)</span>
-                                        <span class="font-bold text-[#b32020] mono">₹${b.stop_loss}</span>
+                                        <span class="font-bold text-[#b32020] mono">₹${fmtPrice(b.stop_loss)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#1e7e34] block font-medium">Target 1 (1:2 R:R)</span>
-                                        <span class="font-bold text-[#1e7e34] mono">₹${b.target} (+${b.target_pct}%)</span>
+                                        <span class="font-bold text-[#1e7e34] mono">₹${fmtPrice(b.target)} (+${Number(b.target_pct).toFixed(1)}%)</span>
                                     </div>
                                 </div>
 
                                 <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
-                                    <span>Vol Surge: <strong class="text-[#1c1c1e] mono">${b.vol_surge}x</strong></span>
-                                    <span>Delivery: <strong class="text-[#1e7e34] mono">${b.delivery_pct}%</strong></span>
+                                    <span>Vol Surge: <strong class="text-[#1c1c1e] mono">${Number(b.vol_surge).toFixed(1)}x</strong></span>
+                                    <span>Delivery: <strong class="text-[#1e7e34] mono">${Number(b.delivery_pct).toFixed(1)}%</strong></span>
                                     <span>Recommended: <strong class="text-[#007aff] mono">${b.shares_qty} shares</strong></span>
                                 </div>
 
@@ -422,10 +454,10 @@ function renderBestPicksUI(data, isFallback = false) {
                                     <span>📐</span> View Math & ATR
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${b.symbol}', ${b.shares_qty || 10}, ${b.cmp}, ${b.stop_loss}, ${b.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${b.symbol}', ${b.shares_qty || 10}, ${Number(b.cmp).toFixed(2)}, ${Number(b.stop_loss).toFixed(2)}, ${Number(b.target).toFixed(2)})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="logPickToJournal('${b.symbol}', ${b.cmp}, ${b.shares_qty || 10}, ${b.stop_loss}, ${b.target}, 'Swing')" class="btn-log" title="Log trade in personal journal">
+                                    <button onclick="logPickToJournal('${b.symbol}', ${Number(b.cmp).toFixed(2)}, ${b.shares_qty || 10}, ${Number(b.stop_loss).toFixed(2)}, ${Number(b.target).toFixed(2)}, 'Swing')" class="btn-log" title="Log trade in personal journal">
                                         <span>🎯</span> <span>Log</span>
                                     </button>
                                     <button onclick="inspectPickOnChart(_activeRecommendationsData.best_swing_shares[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
@@ -479,29 +511,29 @@ function renderBestPicksUI(data, isFallback = false) {
                                 </div>
 
                                 <div class="p-1.5 rounded bg-[#f5f5f7] border border-[rgba(0,0,0,0.05)] text-[10.5px] flex items-center justify-between text-[#555] mb-2">
-                                    <span>50 SMA: <strong class="text-[#007aff] mono">₹${item.sma_50}</strong></span>
-                                    <span>200 SMA: <strong class="text-[#48484a] mono">₹${item.sma_200}</strong></span>
+                                    <span>50 SMA: <strong class="text-[#007aff] mono">₹${fmtPrice(item.sma_50)}</strong></span>
+                                    <span>200 SMA: <strong class="text-[#48484a] mono">₹${fmtPrice(item.sma_200)}</strong></span>
                                     <span>Horizon: <strong class="text-[#7e22ce]">${item.holding_time}</strong></span>
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-2 my-2 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">Buy Zone</span>
-                                        <span class="font-bold text-[#1c1c1e] mono">₹${item.cmp}</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${fmtPrice(item.cmp)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#b32020] block font-medium">Trailing SL (50 SMA)</span>
-                                        <span class="font-bold text-[#b32020] mono">₹${item.stop_loss}</span>
+                                        <span class="font-bold text-[#b32020] mono">₹${fmtPrice(item.stop_loss)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#1e7e34] block font-medium">Target 1 (1:2 R:R)</span>
-                                        <span class="font-bold text-[#1e7e34] mono">₹${item.target} (+${item.target_pct}%)</span>
+                                        <span class="font-bold text-[#1e7e34] mono">₹${fmtPrice(item.target)} (+${Number(item.target_pct).toFixed(1)}%)</span>
                                     </div>
                                 </div>
 
                                 <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
-                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${item.target_2} (+${item.target_2_pct}%)</strong></span>
-                                    <span>Delivery: <strong class="text-[#1e7e34] mono">${item.delivery_pct}%</strong></span>
+                                    <span>Target 2: <strong class="text-[#1e7e34] mono">₹${fmtPrice(item.target_2)} (+${Number(item.target_2_pct).toFixed(1)}%)</strong></span>
+                                    <span>Delivery: <strong class="text-[#1e7e34] mono">${Number(item.delivery_pct).toFixed(1)}%</strong></span>
                                     <span>Qty: <strong class="text-[#007aff] mono">${item.shares_qty} shares</strong></span>
                                 </div>
 
@@ -513,10 +545,10 @@ function renderBestPicksUI(data, isFallback = false) {
                                     <span>📐</span> View Math & 50 SMA
                                 </button>
                                 <div class="flex items-center gap-1.5">
-                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${item.cmp}, ${item.stop_loss}, ${item.target})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
+                                    <button onclick="openBrokerOrderModal('${item.symbol}', ${item.shares_qty || 10}, ${Number(item.cmp).toFixed(2)}, ${Number(item.stop_loss).toFixed(2)}, ${Number(item.target).toFixed(2)})" class="btn-broker" title="Execute on Zerodha Kite or Dhan">
                                         <span>⚡</span> <span>Broker</span>
                                     </button>
-                                    <button onclick="logPickToJournal('${item.symbol}', ${item.cmp}, ${item.shares_qty || 10}, ${item.stop_loss}, ${item.target}, 'Positional')" class="btn-log" title="Log trade in personal journal">
+                                    <button onclick="logPickToJournal('${item.symbol}', ${Number(item.cmp).toFixed(2)}, ${item.shares_qty || 10}, ${Number(item.stop_loss).toFixed(2)}, ${Number(item.target).toFixed(2)}, 'Positional')" class="btn-log" title="Log trade in personal journal">
                                         <span>🎯</span> <span>Log</span>
                                     </button>
                                     <button onclick="inspectPickOnChart(_activeRecommendationsData.best_positional_picks[${idx}])" class="btn-primary px-2.5 py-1 text-[11px] cursor-pointer" title="Load chart">
@@ -569,7 +601,7 @@ function renderBestPicksUI(data, isFallback = false) {
                                 <div class="grid grid-cols-3 gap-2 my-2.5 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">Price (CMP)</span>
-                                        <span class="font-bold text-[#1c1c1e] mono">₹${c.cmp}</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${fmtPrice(c.cmp)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#1e7e34] block font-medium">ROE</span>
@@ -583,7 +615,7 @@ function renderBestPicksUI(data, isFallback = false) {
 
                                 <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] mb-2 px-1">
                                     <span>Debt/Equity: <strong class="text-[#1c1c1e] mono">${c.debt_equity}</strong></span>
-                                    <span>DCF Fair: <strong class="text-[#1e7e34] mono">₹${c.dcf_fair_value}</strong></span>
+                                    <span>DCF Fair: <strong class="text-[#1e7e34] mono">₹${fmtPrice(c.dcf_fair_value)}</strong></span>
                                     <span>Margin: <strong class="text-[#007aff] mono">${c.margin_of_safety}</strong></span>
                                 </div>
 
@@ -642,7 +674,7 @@ function renderBestPicksUI(data, isFallback = false) {
                                 <div class="grid grid-cols-3 gap-2 my-2.5 p-2.5 rounded-lg bg-white border border-[rgba(0,0,0,0.06)] text-xs">
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">Price (CMP)</span>
-                                        <span class="font-bold text-[#1c1c1e] mono">₹${e.cmp}</span>
+                                        <span class="font-bold text-[#1c1c1e] mono">₹${fmtPrice(e.cmp)}</span>
                                     </div>
                                     <div>
                                         <span class="text-[9.5px] text-[#86868b] block font-medium">200 DMA Dist</span>
@@ -772,7 +804,7 @@ async function logPickToJournal(symbol, cmp, qty, sl, target, style = "Swing") {
         });
         const data = await res.json();
         if (data.status === "success") {
-            showNotification(`🎉 Logged ${symbol.replace('.NS', '')} (${qty} shares @ ₹${cmp}) to Journal`, "success");
+            showNotification(`🎉 Logged ${symbol.replace('.NS', '')} (${qty} shares @ ₹${fmtPrice(cmp)}) to Journal`, "success");
         } else {
             showNotification(`Failed to log trade: ${data.message || 'Error'}`, "error");
         }

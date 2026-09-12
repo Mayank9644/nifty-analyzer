@@ -11,6 +11,7 @@ from data.fetcher import get_stock_history
 from analysis.technical import calculate_ema
 
 _breadth_cache = TTLCache(maxsize=5, ttl=300)
+_BREADTH_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="BreadthWorker")
 
 
 def _eval_breadth_single(s):
@@ -28,10 +29,20 @@ def _eval_breadth_single(s):
         ema50 = float(calculate_ema(close, 50).iloc[-1])
         ema200 = float(calculate_ema(close, 200).iloc[-1]) if len(df) >= 200 else ema50
 
-        high_52w = float(df["High"].max())
-        low_52w = float(df["Low"].min())
+        # Institutional 252 trading day lookback for 52-week extremes
+        window_252 = df.tail(252)
+        high_52w = float(window_252["High"].max())
+        low_52w = float(window_252["Low"].min())
         is_52w_high = latest >= (high_52w * 0.985)
         is_52w_low = latest <= (low_52w * 1.015)
+
+        # Smart Money Accumulation: price above 20 EMA with expanding short-term volume
+        if "Volume" in df and len(df["Volume"]) >= 20:
+            vol_5 = float(df["Volume"].tail(5).mean())
+            vol_20 = float(df["Volume"].tail(20).mean())
+            is_accumulating = (latest >= ema20) and (vol_5 >= vol_20)
+        else:
+            is_accumulating = latest >= ema20
 
         return {
             "symbol": sym,
@@ -40,6 +51,7 @@ def _eval_breadth_single(s):
             "above_20": latest >= ema20,
             "above_50": latest >= ema50,
             "above_200": latest >= ema200,
+            "is_accumulating": is_accumulating,
             "is_52w_high": is_52w_high,
             "is_52w_low": is_52w_low
         }
@@ -54,6 +66,7 @@ def calculate_market_breadth() -> dict:
     above_20 = 0
     above_50 = 0
     above_200 = 0
+    accumulating = 0
     advances = 0
     declines = 0
     unchanged = 0
@@ -61,26 +74,34 @@ def calculate_market_breadth() -> dict:
     lows_52w = 0
     total = 0
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(_eval_breadth_single, s) for s in NIFTY_50_STOCKS]
-        for f in concurrent.futures.as_completed(futures):
-            res = f.result()
-            if res:
-                total += 1
-                if res["adv"]: advances += 1
-                elif res["dec"]: declines += 1
-                else: unchanged += 1
+    futures = [_BREADTH_EXECUTOR.submit(_eval_breadth_single, s) for s in NIFTY_50_STOCKS]
+    try:
+        for f in concurrent.futures.as_completed(futures, timeout=10.0):
+            try:
+                res = f.result()
+                if res:
+                    total += 1
+                    if res["adv"]: advances += 1
+                    elif res["dec"]: declines += 1
+                    else: unchanged += 1
 
-                if res["above_20"]: above_20 += 1
-                if res["above_50"]: above_50 += 1
-                if res["above_200"]: above_200 += 1
-                if res["is_52w_high"]: highs_52w += 1
-                if res["is_52w_low"]: lows_52w += 1
+                    if res["above_20"]: above_20 += 1
+                    if res["above_50"]: above_50 += 1
+                    if res["above_200"]: above_200 += 1
+                    if res["is_accumulating"]: accumulating += 1
+                    if res["is_52w_high"]: highs_52w += 1
+                    if res["is_52w_low"]: lows_52w += 1
+            except Exception:
+                pass
+    except concurrent.futures.TimeoutError:
+        for f in futures:
+            f.cancel()
 
     total = max(total, 1)
     pct_20 = round((above_20 / total) * 100, 1)
     pct_50 = round((above_50 / total) * 100, 1)
     pct_200 = round((above_200 / total) * 100, 1)
+    pct_accumulating = round((accumulating / total) * 100, 1)
     ad_ratio = round(advances / max(declines, 1), 2)
     net_expansion = highs_52w - lows_52w
 
@@ -112,6 +133,7 @@ def calculate_market_breadth() -> dict:
             "pct_above_20ema": pct_20,
             "pct_above_50ema": pct_50,
             "pct_above_200ema": pct_200,
+            "pct_accumulating": pct_accumulating,
         },
         "advance_decline": {
             "advances": advances,
