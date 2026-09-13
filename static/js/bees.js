@@ -681,10 +681,14 @@ function renderDonchianRatioChart(history) {
 
     _beesRatioChart.timeScale().fitContent();
 
-    window.addEventListener("resize", () => {
+    if (window._beesResizeHandler) {
+        window.removeEventListener("resize", window._beesResizeHandler);
+    }
+    window._beesResizeHandler = () => {
         if (_beesRatioChart && container) {
             _beesRatioChart.applyOptions({ width: container.clientWidth });
         }
-    });
+    };
+    window.addEventListener("resize", window._beesResizeHandler);
 }
 window.renderDonchianRatioChart = renderDonchianRatioChart;

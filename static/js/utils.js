@@ -21,6 +21,17 @@ const JARGON_DICTIONARY = {
     "Option Greeks": "Mathematical risk measures: Delta (price move), Gamma (acceleration), Theta (daily time decay loss), Vega (volatility impact)."
 };
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+window.escapeHtml = escapeHtml;
+
 function formatINR(val) {
     if (val === null || val === undefined || isNaN(val)) return "₹0.00";
     return new Intl.NumberFormat('en-IN', {

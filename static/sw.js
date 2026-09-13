@@ -13,6 +13,13 @@ const STATIC_ASSETS = [
   '/static/js/broker_bridge.js',
   '/static/js/alerts.js',
   '/static/js/premarket.js',
+  '/static/js/options_charts.js',
+  '/static/js/scanner.js',
+  '/static/js/screener.js',
+  '/static/js/ipo.js',
+  '/static/js/calendar.js',
+  '/static/js/etf.js',
+  '/static/js/bees.js',
   '/static/js/app.js'
 ];
 

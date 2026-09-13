@@ -374,19 +374,36 @@ def generate_signals(
     atr = float(risk_levels.get("atr") or (current_price * 0.02))
     atr = max(atr, current_price * 0.005)
 
-    stop_loss = round(max(0.01, current_price - (params["stop_atr_mult"] * atr)), 2)
-    entry_low = round(max(0.01, current_price - (params["entry_range_atr"] * atr)), 2)
-    entry_high = round(current_price + (params["entry_range_atr"] * atr), 2)
+    is_short = total_score < 0
 
-    # 3-Tier Multi-Tranche Targets
-    target1 = round(current_price + (params["target1_mult"] * atr), 2)
-    target2 = round(current_price + (params["target2_mult"] * atr), 2)
-    target3 = round(current_price + (params["target3_mult"] * atr), 2)
+    if is_short:
+        # Bearish / Short Setup
+        stop_loss = round(current_price + (params["stop_atr_mult"] * atr), 2)
+        entry_low = round(max(0.01, current_price - (params["entry_range_atr"] * atr)), 2)
+        entry_high = round(current_price + (params["entry_range_atr"] * atr), 2)
+        target1 = round(max(0.01, current_price - (params["target1_mult"] * atr)), 2)
+        target2 = round(max(0.01, current_price - (params["target2_mult"] * atr)), 2)
+        target3 = round(max(0.01, current_price - (params["target3_mult"] * atr)), 2)
 
-    sl_pct = round(((current_price - stop_loss) / current_price * 100), 2) if current_price > 0 else 0.0
-    t1_pct = round(((target1 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
-    t2_pct = round(((target2 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
-    t3_pct = round(((target3 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        sl_pct = round(((stop_loss - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        t1_pct = round(((current_price - target1) / current_price * 100), 2) if current_price > 0 else 0.0
+        t2_pct = round(((current_price - target2) / current_price * 100), 2) if current_price > 0 else 0.0
+        t3_pct = round(((current_price - target3) / current_price * 100), 2) if current_price > 0 else 0.0
+        direction = "SHORT / SELL"
+    else:
+        # Bullish / Long Setup
+        stop_loss = round(max(0.01, current_price - (params["stop_atr_mult"] * atr)), 2)
+        entry_low = round(max(0.01, current_price - (params["entry_range_atr"] * atr)), 2)
+        entry_high = round(current_price + (params["entry_range_atr"] * atr), 2)
+        target1 = round(current_price + (params["target1_mult"] * atr), 2)
+        target2 = round(current_price + (params["target2_mult"] * atr), 2)
+        target3 = round(current_price + (params["target3_mult"] * atr), 2)
+
+        sl_pct = round(((current_price - stop_loss) / current_price * 100), 2) if current_price > 0 else 0.0
+        t1_pct = round(((target1 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        t2_pct = round(((target2 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        t3_pct = round(((target3 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        direction = "LONG / BUY"
 
     t1_r = round(params.get("target1_mult", 1.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
     t2_r = round(params.get("target2_mult", 2.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
@@ -408,10 +425,11 @@ def generate_signals(
         },
         "signals": signals_list,
         "trade_plan": {
+            "direction": direction,
             "style": style,
             "time_horizon": params["horizon"],
             "entry_price": round(current_price, 2),
-            "entry_range": [round(current_price - (params["entry_range_atr"] * atr), 2), round(current_price + (params["entry_range_atr"] * atr), 2)],
+            "entry_range": [entry_low, entry_high],
             "stop_loss": stop_loss,
             "stop_loss_pct": sl_pct,
             "target_1": target1,

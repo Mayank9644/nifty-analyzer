@@ -39,7 +39,7 @@ def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_s
         if near_52w_high and dist_52w_high > 15.0:
             return None
 
-        df = get_stock_history(sym, period="6mo", interval="1d")
+        df = get_stock_history(sym, period="1y", interval="1d")
         if df.empty or len(df) < 25:
             return None
 

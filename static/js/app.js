@@ -2033,7 +2033,24 @@ let _userWatchlist = [
     { symbol: "HDFCBANK.NS", name: "HDFC Bank", price: 1720.50, change: "-0.15%" }
 ];
 
-function initWatchlist() {
+async function initWatchlist() {
+    try {
+        const res = await fetch("/api/watchlist");
+        const data = await res.json();
+        if (data.status === "success" && Array.isArray(data.watchlist)) {
+            _userWatchlist = data.watchlist.map(item => ({
+                symbol: item.symbol,
+                name: item.name,
+                price: item.price,
+                change: `${item.change_pct >= 0 ? '+' : ''}${item.change_pct}%`
+            }));
+            saveWatchlistLocal();
+            renderWatchlistUI();
+            return;
+        }
+    } catch (e) {
+        console.warn("Watchlist server fetch failed, loading local:", e);
+    }
     try {
         const saved = localStorage.getItem("market_watchlist");
         if (saved) {
@@ -2043,11 +2060,10 @@ function initWatchlist() {
     renderWatchlistUI();
 }
 
-function saveWatchlist() {
+function saveWatchlistLocal() {
     try {
         localStorage.setItem("market_watchlist", JSON.stringify(_userWatchlist));
     } catch (e) {}
-    renderWatchlistUI();
 }
 
 function toggleWatchlistDrawer() {
@@ -2090,15 +2106,15 @@ function renderWatchlistUI() {
     list.innerHTML = _userWatchlist.map((item, idx) => {
         const isGreen = !String(item.change).startsWith("-");
         return `
-            <div class="p-3 rounded-xl bg-white hover:bg-[#f2f2f7] border border-[rgba(0,0,0,0.06)] shadow-xs transition-all flex items-center justify-between group cursor-pointer" onclick="selectSearchedStock('${item.symbol}')">
+            <div class="p-3 rounded-xl bg-white hover:bg-[#f2f2f7] border border-[rgba(0,0,0,0.06)] shadow-xs transition-all flex items-center justify-between group cursor-pointer" onclick="selectSearchedStock('${escapeHtml(item.symbol)}')">
                 <div class="flex-1 min-w-0 pr-2">
-                    <div class="font-semibold text-xs text-[#1c1c1e] truncate">${item.name || item.symbol}</div>
-                    <div class="text-[10px] text-[#6e6e73] mono">${item.symbol}</div>
+                    <div class="font-semibold text-xs text-[#1c1c1e] truncate">${escapeHtml(item.name || item.symbol)}</div>
+                    <div class="text-[10px] text-[#6e6e73] mono">${escapeHtml(item.symbol)}</div>
                 </div>
                 <div class="text-right flex items-center space-x-2">
                     <div>
                         <div class="font-semibold text-xs mono text-[#1c1c1e]">₹${typeof item.price === 'number' ? item.price.toLocaleString('en-IN') : item.price}</div>
-                        <div class="text-[10px] font-semibold mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${item.change || '0.00%'}</div>
+                        <div class="text-[10px] font-semibold mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${escapeHtml(item.change || '0.00%')}</div>
                     </div>
                     <button onclick="event.stopPropagation(); removeStockFromWatchlist(${idx});" title="Remove from Watchlist" class="text-[#8e8e93] hover:text-[#b32020] p-1 rounded hover:bg-[#e8e8ed] text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                         ✕
@@ -2109,11 +2125,11 @@ function renderWatchlistUI() {
     }).join("");
 }
 
-function pinCurrentStockToWatchlist() {
+async function pinCurrentStockToWatchlist() {
     const sym = appState.currentSymbol;
     if (!sym) return;
     if (_userWatchlist.some(x => x.symbol === sym)) {
-        alert(`${sym} is already in your watchlist.`);
+        showNotification(`${sym} is already in your watchlist.`, "info");
         return;
     }
     const currentPrice = appState.currentStockData?.current_price || 0;
@@ -2126,12 +2142,37 @@ function pinCurrentStockToWatchlist() {
         price: currentPrice,
         change: `${changePct >= 0 ? '+' : ''}${changePct}%`
     });
-    saveWatchlist();
+    saveWatchlistLocal();
+    renderWatchlistUI();
+    showNotification(`Added ${sym} to Watchlist`, "success");
+
+    try {
+        await fetch("/api/watchlist/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol: sym })
+        });
+    } catch (e) {
+        console.warn("Watchlist add server sync failed:", e);
+    }
 }
 
-function removeStockFromWatchlist(idx) {
+async function removeStockFromWatchlist(idx) {
+    const item = _userWatchlist[idx];
+    const sym = item?.symbol;
     _userWatchlist.splice(idx, 1);
-    saveWatchlist();
+    saveWatchlistLocal();
+    renderWatchlistUI();
+
+    if (sym) {
+        try {
+            await fetch(`/api/watchlist/remove/${encodeURIComponent(sym)}`, {
+                method: "POST"
+            });
+        } catch (e) {
+            console.warn("Watchlist remove server sync failed:", e);
+        }
+    }
 }
 
 async function refreshWatchlistPrices() {
@@ -2379,6 +2420,7 @@ function playChimeSound(type = "success") {
         osc2.start(now + 0.1);
         osc1.stop(now + 0.35);
         osc2.stop(now + 0.35);
+        setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1000);
     } catch (e) {
         // Safe fallback if audio context restricted
     }
@@ -2392,7 +2434,7 @@ function updateLiveTickerTape(data) {
     const nifty = data.indices.nifty;
     const bank = data.indices.bank_nifty;
     const comms = data.commodities || [];
-    const usdinr = data.usd_inr || 94.47;
+    const usdinr = data.usd_inr || 86.50;
 
     if (nifty) {
         const elP = document.getElementById("ttNifty");
@@ -2513,7 +2555,7 @@ const COMMAND_PALETTE_ACTIONS = [
     { id: "act-calc", title: "Open Position Size & Risk Calculator", group: "Workstation Tools", icon: "🧮", action: () => openPositionCalcModal() },
     { id: "act-watchlist", title: "Toggle Watchlist Drawer (W)", group: "Workstation Tools", icon: "⭐️", action: () => toggleWatchlistDrawer() },
     { id: "act-rr", title: "Toggle Chart Risk/Reward Planner", group: "Workstation Tools", icon: "🎯", action: () => { switchTab("stocks"); if (typeof toggleRiskRewardPlanner === "function") toggleRiskRewardPlanner(); } },
-    { id: "act-clear-recents", title: "Clear Recent Search History", group: "Workstation Tools", icon: "✕", action: () => clearSearchHistory() },
+    { id: "act-clear-recents", title: "Clear Recent Search History", group: "Workstation Tools", icon: "✕", action: () => clearRecentSearches() },
     { id: "act-shortcuts", title: "View Keyboard Shortcuts (? )", group: "Workstation Tools", icon: "⌨️", action: () => openShortcutsModal() },
 ];
 

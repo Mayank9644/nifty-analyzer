@@ -154,32 +154,51 @@ function renderScannerTable(candidates, capital, riskPct) {
 }
 
 
-async function takeTradeFromScanner(symbol, entryPrice, qty, sl, t1, t2) {
-    try {
-        const res = await fetch("/api/journal/add", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                symbol: symbol,
-                entry_price: entryPrice,
-                quantity: qty,
-                stop_loss: sl,
-                target_1: t1,
-                target_2: t2,
-                style: "SEPA Breakout",
-                notes: "Taken from Alpha-Momentum Scanner"
-            })
-        });
-        const data = await res.json();
+function takeTradeFromScanner(symbol, entryPrice, qty, sl, t1, t2) {
+    if (typeof openManualTradeModal === "function") {
+        openManualTradeModal();
+        setTimeout(() => {
+            const s = document.getElementById("mt_symbol");
+            const e = document.getElementById("mt_entry");
+            const q = document.getElementById("mt_qty");
+            const slEl = document.getElementById("mt_sl");
+            const t1El = document.getElementById("mt_t1");
+            const t2El = document.getElementById("mt_t2");
+            const noteEl = document.getElementById("mt_notes");
+            if (s) s.value = symbol;
+            if (e) e.value = entryPrice;
+            if (q) q.value = qty;
+            if (slEl) slEl.value = sl;
+            if (t1El) t1El.value = t1;
+            if (t2El) t2El.value = t2;
+            if (noteEl) noteEl.value = "Added from scanner / analysis";
+        }, 50);
+        return;
+    }
+    // Fallback direct API logging if modal not in DOM
+    fetch("/api/journal/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            symbol: symbol,
+            entry_price: entryPrice,
+            quantity: qty,
+            stop_loss: sl,
+            target_1: t1,
+            target_2: t2,
+            style: "SEPA Breakout",
+            notes: "Taken from Alpha-Momentum Scanner"
+        })
+    }).then(r => r.json()).then(data => {
         if (data.status === "success") {
             showNotification(`🎉 Position logged: ${symbol.replace('.NS', '')} (${qty} shares @ ₹${entryPrice})`, "success");
         } else {
             showNotification(`Failed to log trade: ${data.message || 'Error'}`, "error");
         }
-    } catch (e) {
+    }).catch(e => {
         console.error("Error adding trade:", e);
         showNotification("Failed to add trade to journal", "error");
-    }
+    });
 }
 
 window.runLiveScanner = runLiveScanner;

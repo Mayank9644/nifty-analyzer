@@ -199,9 +199,9 @@ def evaluate_multitimeframe_confluence(symbol: str, daily_df: pd.DataFrame = Non
 def _fallback_timeframe(name: str) -> dict:
     return {
         "timeframe": name,
-        "status": "BULLISH",
-        "color": "#10B981",
-        "icon": "🟢",
-        "detail": "Trend aligned with 20 EMA",
-        "is_bull": True
+        "status": "NEUTRAL",
+        "color": "#F59E0B",
+        "icon": "⚪",
+        "detail": "Data unavailable / Consolidation",
+        "is_bull": False
     }

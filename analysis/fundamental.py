@@ -275,27 +275,54 @@ def calculate_piotroski_f_score(info: dict) -> dict:
 
 def calculate_altman_z_score(info: dict) -> dict:
     """
-    Altman Z-Score financial distress estimator.
+    Altman Z''-Score Financial Distress Model (Emerging Markets & General Equities).
+    Formula: Z'' = 6.56*X1 + 3.26*X2 + 6.72*X3 + 1.05*X4
+    - X1: Working Capital / Total Assets (derived via Current Ratio)
+    - X2: Cumulative Profitability (derived via ROE proxy)
+    - X3: Operating Return (derived via Operating Margin)
+    - X4: Book Equity / Total Liabilities (derived via Debt-to-Equity)
     """
-    de = info.get("debt_to_equity", 0.5)
-    roe = info.get("roe", 15.0)
-    z_val = round(1.5 + (roe * 0.12) - (de * 0.7), 2)
-    z_val = max(0.6, min(6.0, z_val))
+    de = float(info.get("debt_to_equity") or 0.5)
+    roe = float(info.get("roe") or 15.0) / 100.0
+    cr = float(info.get("current_ratio") or 1.35)
+    op_margin = float(info.get("operating_margins") or 0.14)
 
-    if z_val > 2.9:
+    # X1: Working Capital / Total Assets proxy
+    x1 = max(-0.4, min(0.5, (cr - 1.0) / max(cr, 0.5)))
+    # X2: Cumulative Retained Earnings proxy
+    x2 = max(-0.2, min(0.4, roe * 0.7))
+    # X3: EBIT / Total Assets proxy
+    x3 = max(-0.1, min(0.3, op_margin * 0.8))
+    # X4: Net Worth / Total Liabilities
+    x4 = max(0.1, min(4.0, 1.0 / max(de, 0.05)))
+
+    z_raw = (6.56 * x1) + (3.26 * x2) + (6.72 * x3) + (1.05 * x4)
+    z_val = round(max(0.2, min(8.5, z_raw)), 2)
+
+    if z_val > 2.60:
         zone = "Safe Zone (Low Default Risk)"
         zone_color = "#10B981"
-    elif z_val >= 1.8:
+        badge = "🛡️ Financially Sound"
+    elif z_val >= 1.10:
         zone = "Grey Zone (Moderate Caution)"
         zone_color = "#F59E0B"
+        badge = "⚠️ Monitor Leverage"
     else:
         zone = "Distress Zone (High Vulnerability)"
         zone_color = "#EF4444"
+        badge = "🚨 Credit Distress Risk"
 
     return {
         "z_score": z_val,
         "zone": zone,
-        "color": zone_color
+        "color": zone_color,
+        "badge": badge,
+        "components": {
+            "x1_liquidity": round(x1, 2),
+            "x2_retained_earnings": round(x2, 2),
+            "x3_operating_margin": round(x3, 2),
+            "x4_solvency_ratio": round(x4, 2)
+        }
     }
 
 

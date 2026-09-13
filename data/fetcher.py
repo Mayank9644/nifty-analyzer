@@ -789,7 +789,7 @@ def get_stock_info(symbol: str) -> dict:
     raw_dy = raw_info.get("dividendYield")
     if raw_dy is not None and not np.isnan(float(raw_dy)):
         dy_float = float(raw_dy)
-        dividend_yield = round(dy_float, 2) if dy_float > 0.05 else round(dy_float * 100.0, 2)
+        dividend_yield = round(dy_float * 100.0, 2) if dy_float < 1.0 else round(dy_float, 2)
     else:
         dividend_yield = fallback.get("div_yield", 0.0) if fallback else 0.0
 

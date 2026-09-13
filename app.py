@@ -44,7 +44,13 @@ from analysis.journal import (
     bulk_import_trades_from_csv,
     get_active_portfolio_summary
 )
-from data.database import db_get_active_trades, db_get_all_trades
+from data.database import (
+    db_get_active_trades,
+    db_get_all_trades,
+    db_get_watchlist,
+    db_add_to_watchlist,
+    db_remove_from_watchlist
+)
 from analysis.backtest import run_strategy_backtest
 from analysis.screener import run_stock_screener
 from analysis.ipo import get_ipo_tracker_data
@@ -767,6 +773,12 @@ def api_journal_advice(trade_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/favicon.ico")
+def serve_favicon():
+    """Serve Favicon."""
+    return send_from_directory("static", "favicon.ico", mimetype="image/x-icon")
+
+
 @app.route("/manifest.json")
 def serve_manifest():
     """Serve PWA Web App Manifest."""
@@ -935,14 +947,74 @@ def api_stock_delivery(symbol: str):
     return jsonify(get_delivery_volume_analysis(symbol, hist, info))
 
 
+@app.route("/api/watchlist", methods=["GET"])
+def api_get_watchlist():
+    """Returns watchlist with live ticker details (LTP, change, high, low)."""
+    try:
+        symbols = db_get_watchlist("Default")
+        items = []
+        for sym in symbols:
+            info = get_stock_info(sym)
+            cmp = float(info.get("current_price") or info.get("previous_close") or 0.0)
+            prev = float(info.get("previous_close") or cmp or 1.0)
+            chg = round(cmp - prev, 2)
+            chg_pct = round((chg / prev) * 100.0, 2) if prev > 0 else 0.0
+            items.append({
+                "symbol": sym,
+                "code": sym.replace(".NS", ""),
+                "name": info.get("name") or sym.replace(".NS", ""),
+                "sector": info.get("sector") or "Equity",
+                "price": cmp,
+                "change": chg,
+                "change_pct": chg_pct,
+                "day_high": float(info.get("day_high") or cmp),
+                "day_low": float(info.get("day_low") or cmp)
+            })
+        return jsonify({"status": "success", "watchlist": items})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/watchlist/add", methods=["POST"])
+def api_add_watchlist():
+    """Adds a ticker to the user watchlist."""
+    try:
+        data = request.get_json() or {}
+        sym = data.get("symbol", "").strip().upper()
+        if not sym:
+            return jsonify({"status": "error", "message": "Symbol is required"}), 400
+        symbols = db_add_to_watchlist(sym, "Default")
+        return jsonify({"status": "success", "message": f"{sym} added to Watchlist", "symbols": symbols})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/watchlist/remove/<path:symbol>", methods=["DELETE", "POST"])
+def api_remove_watchlist(symbol: str):
+    """Removes a ticker from the user watchlist."""
+    try:
+        symbols = db_remove_from_watchlist(symbol, "Default")
+        return jsonify({"status": "success", "message": f"{symbol} removed from Watchlist", "symbols": symbols})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route("/api/cache/stats")
 def api_cache_stats():
     """Returns status metrics of the in-memory warm cache."""
     return jsonify(get_cache_stats())
 
 
-# Start background cache warmer daemon for sub-5ms stock loading
-start_cache_warmer(fetch_stock_bundle_data)
+def _should_run_background_warmer():
+    """Ensures only a single worker runs background scrapers in multi-worker Gunicorn setups."""
+    try:
+        import fcntl
+        lock_file = open("/tmp/nifty_warmer.lock", "w")
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _should_run_background_warmer._lock_ref = lock_file
+        return True
+    except (IOError, OSError, ImportError):
+        return False
 
 
 def _prewarm_recommendations_and_screener():
@@ -968,7 +1040,9 @@ def _prewarm_recommendations_and_screener():
 
 
 import threading
-threading.Thread(target=_prewarm_recommendations_and_screener, daemon=True).start()
+if _should_run_background_warmer():
+    start_cache_warmer(fetch_stock_bundle_data)
+    threading.Thread(target=_prewarm_recommendations_and_screener, daemon=True).start()
 
 
 if __name__ == "__main__":

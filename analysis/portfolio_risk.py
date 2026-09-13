@@ -85,8 +85,19 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
     capital_base = max(total_portfolio_capital, total_invested, 1.0)
     portfolio_risk_pct = round((total_open_risk / capital_base) * 100, 2) if capital_base > 0 else 0.0
 
-    # Institutional Parametric Value at Risk (VaR): 1.5% daily volatility baseline proxy
-    daily_vol_proxy = 0.015
+    # Dynamic Position-Weighted Volatility for Parametric VaR:
+    # Uses position stop-loss distance (implied daily vol proxy) weighted by allocation
+    weighted_vol_sum = 0.0
+    for s in stock_items:
+        mv = s["market_value"]
+        if mv > 0 and s["open_risk"] > 0:
+            # Implied daily volatility: stop loss distance normalized by swing multiple
+            implied_daily_vol = max(0.008, min(0.045, (s["open_risk"] / mv) * 0.35))
+        else:
+            implied_daily_vol = 0.015  # standard bluechip default
+        weighted_vol_sum += implied_daily_vol * (mv / total_current_val) if total_current_val > 0 else 0.015
+
+    daily_vol_proxy = max(0.009, min(0.040, weighted_vol_sum)) if weighted_vol_sum > 0 else 0.015
     var_95_inr = round(total_current_val * daily_vol_proxy * 1.645, 2)
     var_95_pct = round((var_95_inr / capital_base) * 100, 2) if capital_base > 0 else 0.0
     var_99_inr = round(total_current_val * daily_vol_proxy * 2.326, 2)

@@ -86,7 +86,7 @@ def analyze_commodity(symbol: str) -> dict:
     if cmp <= 0:
         cmp = float(info.get("price_usd") or 0.0)
 
-    atr_val = technicals.get("atr", {}).get("value")
+    atr_val = technicals.get("risk_levels", {}).get("atr") or technicals.get("atr", {}).get("value")
     if not atr_val or atr_val <= 0:
         atr_val = round(cmp * 0.015, 2)
 

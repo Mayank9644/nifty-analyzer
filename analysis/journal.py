@@ -105,6 +105,25 @@ def get_active_trades() -> list:
     return results
 
 
+def _calculate_trade_friction(symbol: str, code: str, buy_val: float, sell_val: float) -> tuple:
+    """Computes exact statutory Indian trade friction with differentiated ETF treatment."""
+    sym_upper = str(symbol or "").upper()
+    code_upper = str(code or "").upper()
+    is_etf = sym_upper.endswith("BEES.NS") or "BEES" in code_upper or sym_upper.endswith("ETF.NS")
+
+    if is_etf:
+        # Indian Finance Act: ETFs incur 0.001% (0.1 bps) STT on Sell side only (0% on buy)
+        stt = (0.1 / 10000.0) * sell_val
+    else:
+        # Standard NSE Delivery STT: 0.10% (10 bps) on both buy and sell
+        stt = (STT_DELIVERY_BPS / 10000.0) * (buy_val + sell_val)
+
+    turnover_fee = (EXCHANGE_TURNOVER_BPS / 10000.0) * (buy_val + sell_val)
+    brokerage = BROKERAGE_PER_ORDER_INR * 2.0  # Buy + Sell
+    friction = stt + turnover_fee + brokerage
+    return friction, stt
+
+
 def close_trade(trade_id: str, exit_price: float = None, reason: str = "Manual Exit", exit_tags: str = None) -> bool:
     """Closes an active trade in SQLite with institutional friction deduction."""
     active = db_get_active_trades()
@@ -112,21 +131,13 @@ def close_trade(trade_id: str, exit_price: float = None, reason: str = "Manual E
     if not target:
         return False
 
-    if exit_price is None:
-        info = get_stock_info(target["symbol"])
-        exit_price = float(info.get("current_price") or target["entry_price"])
-
-    # Compute net realized return with statutory Indian friction deductions
     entry = float(target["entry_price"])
     qty = int(target["quantity"])
     buy_val = entry * qty
     sell_val = float(exit_price) * qty
     gross_pnl = (float(exit_price) - entry) * qty
 
-    stt = (STT_DELIVERY_BPS / 10000.0) * (buy_val + sell_val)
-    turnover_fee = (EXCHANGE_TURNOVER_BPS / 10000.0) * (buy_val + sell_val)
-    brokerage = BROKERAGE_PER_ORDER_INR * 2.0  # Buy + Sell
-    friction = stt + turnover_fee + brokerage
+    friction, _ = _calculate_trade_friction(target.get("symbol"), target.get("code"), buy_val, sell_val)
 
     net_pnl = round(gross_pnl - friction, 2)
     net_pnl_pct = round((net_pnl / buy_val) * 100.0, 2) if buy_val > 0 else 0.0
@@ -203,10 +214,7 @@ def execute_partial_exit(trade_id: str, exit_qty: int, exit_price: float = None,
     sell_val = exit_price * exit_qty
     gross_pnl = (exit_price - entry) * exit_qty
 
-    stt = (STT_DELIVERY_BPS / 10000.0) * (buy_val + sell_val)
-    turnover_fee = (EXCHANGE_TURNOVER_BPS / 10000.0) * (buy_val + sell_val)
-    brokerage = BROKERAGE_PER_ORDER_INR * 2.0  # Buy + Sell
-    friction = stt + turnover_fee + brokerage
+    friction, _ = _calculate_trade_friction(target.get("symbol"), target.get("code"), buy_val, sell_val)
 
     net_pnl = round(gross_pnl - friction, 2)
     net_pnl_pct = round((net_pnl / buy_val) * 100.0, 2) if buy_val > 0 else 0.0

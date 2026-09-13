@@ -73,7 +73,20 @@ def analyze_option_chain(chain_data: dict) -> dict:
     pe_ois = []
 
     processed_chain = []
-    time_to_exp = 7 / 365.0
+    expiry_str = str(chain_data.get("expiry_date") or chain_data.get("expiry") or "")
+    days_to_exp = 7.0
+    if expiry_str:
+        for fmt in ("%Y-%m-%d", "%d-%b-%Y", "%d-%m-%Y"):
+            try:
+                from datetime import datetime
+                exp_dt = datetime.strptime(expiry_str.strip(), fmt)
+                delta_days = (exp_dt.date() - datetime.now().date()).days
+                days_to_exp = max(0.5, float(delta_days))
+                break
+            except Exception:
+                pass
+
+    time_to_exp = days_to_exp / 365.0
 
     for item in records:
         strike = float(item.get("strikePrice", 0) or 0)

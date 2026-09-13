@@ -47,6 +47,7 @@ function playAlertChime() {
         osc2.start();
         osc1.stop(ctx.currentTime + 0.65);
         osc2.stop(ctx.currentTime + 0.65);
+        setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1000);
     } catch (e) {
         console.warn("Audio chime prevented by autoplay policy:", e);
     }

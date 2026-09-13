@@ -15,9 +15,9 @@ DEFAULT_BENCHMARK = "^NSEI"      # Nifty 50
 DEFAULT_BANKNIFTY = "^NSEBANK"   # Nifty Bank
 
 # Macro Economic & Risk-Free Rates
-DEFAULT_USD_INR = 94.47          # Dynamic USD/INR baseline
-USD_INR_ELEVATED_THRESHOLD = 83.8  # Threshold above which INR weakness cues cautious sentiment
-USD_INR_STRESSED_THRESHOLD = 83.9  # Threshold above which INR weakness cues bearish pressure
+DEFAULT_USD_INR = 86.50          # Dynamic USD/INR baseline
+USD_INR_ELEVATED_THRESHOLD = 86.0  # Threshold above which INR weakness cues cautious sentiment
+USD_INR_STRESSED_THRESHOLD = 87.5  # Threshold above which INR weakness cues bearish pressure
 RISK_FREE_RATE = 0.065           # 6.50% RBI Repo Rate hurdle for Sortino / Sharpe
 
 # Institutional Risk & Exposure Ceilings

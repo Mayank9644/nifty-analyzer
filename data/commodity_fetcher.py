@@ -89,13 +89,13 @@ def get_commodity_info(symbol: str) -> dict:
     # Calculate INR price
     # Gold: GC=F is in USD per Troy Ounce (31.1035 grams).
     # India standard MCX quote is per 10 grams in INR.
-    # Formula: (USD_per_oz / 31.1035 * 10) * USD_INR * 1.15 (approx custom duty & local taxes)
+    # Formula: (USD_per_oz / 31.1035 * 10) * USD_INR * 1.09 (6% custom duty + 3% GST per Union Budget 2024)
     price_inr = current_usd * usd_inr
     if meta["code"] == "GOLD":
-        price_inr = (current_usd / 31.1035 * 10) * usd_inr * 1.15
+        price_inr = (current_usd / 31.1035 * 10) * usd_inr * 1.09
         unit_display = "per 10 grams (approx MCX)"
     elif meta["code"] == "SILVER":
-        price_inr = (current_usd / 31.1035 * 1000) * usd_inr * 1.15
+        price_inr = (current_usd / 31.1035 * 1000) * usd_inr * 1.09
         unit_display = "per 1 kg (approx MCX)"
     elif meta["code"] == "CRUDEOIL":
         price_inr = current_usd * usd_inr
@@ -190,9 +190,9 @@ def get_commodity_history(symbol: str, period: str = "1y", interval: str = "1d")
             # Convert to INR per standard unit if metal
             multiplier = 1.0
             if meta and meta["code"] == "GOLD":
-                multiplier = (10 / 31.1035) * usd_inr * 1.15
+                multiplier = (10 / 31.1035) * usd_inr * 1.09
             elif meta and meta["code"] == "SILVER":
-                multiplier = (1000 / 31.1035) * usd_inr * 1.15
+                multiplier = (1000 / 31.1035) * usd_inr * 1.09
             elif meta and meta["code"] == "CRUDEOIL":
                 multiplier = usd_inr
             elif meta and meta["code"] == "COPPER":

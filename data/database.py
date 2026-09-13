@@ -304,8 +304,20 @@ def db_partial_exit(trade_id: str, exit_qty: int, exit_price: float, exit_date: 
         closed_trade_id = f"{trade_id}_exit_{int(datetime.now().timestamp()*1000)}_{uuid.uuid4().hex[:6]}"
         existing_tags = trade.get("tags") or ""
         final_tags = f"{existing_tags}, {exit_tags}".strip(", ") if exit_tags else existing_tags
-        if "Partial Exit" not in final_tags:
-            final_tags = f"{final_tags}, Partial Exit".strip(", ")
+        try:
+            realized_pct = float(realized_pct) if realized_pct is not None else None
+        except (ValueError, TypeError):
+            realized_pct = None
+
+        entry_price = float(trade["entry_price"])
+        if realized_pnl is None and realized_pct is not None:
+            realized_pnl = round((entry_price * (realized_pct / 100.0)) * exit_qty, 2)
+        elif realized_pnl is not None and realized_pct is None:
+            capital = entry_price * exit_qty
+            realized_pct = round((realized_pnl / capital) * 100.0, 2) if capital > 0 else 0.0
+        elif realized_pnl is None and realized_pct is None:
+            realized_pnl = round((exit_price - entry_price) * exit_qty, 2)
+            realized_pct = round(((exit_price - entry_price) / entry_price) * 100.0, 2) if entry_price > 0 else 0.0
 
         conn.execute("""
             INSERT INTO trade_journal
@@ -385,6 +397,65 @@ def db_clear_journal(scope: str = "all") -> int:
         print(f"Failed to sync legacy JSON on journal clear: {e}")
 
     return deleted_count
+
+
+DEFAULT_WATCHLIST_SYMBOLS = [
+    "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS", "NIFTYBEES.NS", "GOLDBEES.NS"
+]
+
+
+def db_get_watchlist(name: str = "Default") -> list:
+    """Returns list of ticker symbols in the designated watchlist."""
+    with get_connection() as conn:
+        cursor = conn.execute("SELECT symbols FROM watchlists WHERE name = ?;", (name,))
+        row = cursor.fetchone()
+        if not row:
+            initial = list(DEFAULT_WATCHLIST_SYMBOLS)
+            conn.execute(
+                "INSERT INTO watchlists (id, name, symbols) VALUES (?, ?, ?);",
+                (f"wl_{int(datetime.now().timestamp())}", name, json.dumps(initial))
+            )
+            conn.commit()
+            return initial
+
+        try:
+            symbols = json.loads(row["symbols"])
+            return symbols if isinstance(symbols, list) else []
+        except Exception:
+            return list(DEFAULT_WATCHLIST_SYMBOLS)
+
+
+def db_add_to_watchlist(symbol: str, name: str = "Default") -> list:
+    """Adds a ticker symbol to the watchlist."""
+    sym = symbol.strip().upper()
+    if not sym.endswith(".NS") and not sym.startswith("^") and "=" not in sym:
+        sym = f"{sym}.NS"
+
+    symbols = db_get_watchlist(name)
+    if sym not in symbols:
+        symbols.append(sym)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE watchlists SET symbols = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?;",
+                (json.dumps(symbols), name)
+            )
+            conn.commit()
+    return symbols
+
+
+def db_remove_from_watchlist(symbol: str, name: str = "Default") -> list:
+    """Removes a ticker symbol from the watchlist."""
+    sym = symbol.strip().upper()
+    clean_sym = sym.replace(".NS", "")
+    symbols = db_get_watchlist(name)
+    symbols = [s for s in symbols if s != sym and s != f"{clean_sym}.NS" and s != clean_sym]
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE watchlists SET symbols = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?;",
+            (json.dumps(symbols), name)
+        )
+        conn.commit()
+    return symbols
 
 
 # Initialize tables upon module load

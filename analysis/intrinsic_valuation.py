@@ -28,12 +28,21 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
     if cmp <= 0:
         return {"status": "unavailable", "message": "Price data required for valuation."}
 
-    # 1. Dynamic WACC (Cost of Equity): Ke = Rf + Beta * ERP
-    # Anchored to config.RISK_FREE_RATE (6.50% RBI Repo Rate)
+    # 1. Dynamic WACC (Weighted Average Cost of Capital):
+    # Ke = Rf + Beta * ERP (Cost of Equity)
+    # Kd = 8.5% benchmark corporate borrowing; Tax rate = 25%
     rf = float(RISK_FREE_RATE)
     erp = 0.05  # 5.0% Indian Equity Risk Premium
     bounded_beta = max(0.65, min(beta, 1.60))
-    discount_rate = round(rf + (bounded_beta * erp), 4)
+    ke = rf + (bounded_beta * erp)
+
+    de = float(info.get("debt_to_equity") or 0.0)
+    w_equity = 1.0 / (1.0 + max(de, 0.0))
+    w_debt = 1.0 - w_equity
+    kd_after_tax = 0.085 * (1.0 - 0.25)  # 6.375% post-tax debt cost
+
+    wacc = (w_equity * ke) + (w_debt * kd_after_tax)
+    discount_rate = round(max(0.075, min(0.16, wacc)), 4)
     terminal_growth = 0.045  # 4.5% India long-term GDP terminal rate
 
     # Estimate FCF per share
@@ -48,7 +57,9 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
         fcf_per_share = 0.0
 
     # 5-year projected growth rate (clamped between 6% and 18%)
-    g = max(min(max(revenue_growth, earnings_growth) / 100.0, 0.18), 0.06)
+    rg_norm = revenue_growth * 100.0 if 0.0 < revenue_growth <= 1.0 else revenue_growth
+    eg_norm = earnings_growth * 100.0 if 0.0 < earnings_growth <= 1.0 else earnings_growth
+    g = max(min(max(rg_norm, eg_norm) / 100.0, 0.18), 0.06)
 
     dcf_fair_value = 0.0
     if fcf_per_share > 0:
@@ -72,7 +83,7 @@ def calculate_intrinsic_valuation(info: dict) -> dict:
             graham_number = round(math.sqrt(graham_val), 2)
 
     # 3. Peter Lynch Fair Value Formula: EPS * Growth Rate
-    lynch_growth = max(min(earnings_growth, 25.0), 8.0)
+    lynch_growth = max(min(eg_norm, 25.0), 8.0)
     lynch_fair_value = round(eps * lynch_growth, 2) if eps > 0 else 0.0
 
     # 4. Triangulated Consensus Fair Value
