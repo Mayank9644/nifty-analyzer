@@ -10,12 +10,188 @@ import json
 import uuid
 from datetime import datetime
 
+import requests
+
 DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "trading_platform.db"))
 LEGACY_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trade_journal.json")
 
+_TURSO_CLIENT = None
+_CURRENT_TURSO_CONFIG = None
+
+
+class DictRow(dict):
+    """Row wrapper that supports dict key access, positional integer indexing, and dict(row)."""
+    def __init__(self, cols, values):
+        super().__init__(zip(cols, values))
+        self._values = tuple(values)
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._values[item]
+        return super().__getitem__(item)
+
+
+class TursoCursor:
+    """Cursor wrapper for Turso query results."""
+    def __init__(self, cols=(), rows=(), rowcount=0, lastrowid=None):
+        self.cols = tuple(cols)
+        self.rows = [DictRow(self.cols, r) for r in rows]
+        self._idx = 0
+        self.rowcount = rowcount
+        self.lastrowid = lastrowid
+        self.description = [(c, None, None, None, None, None, None) for c in self.cols]
+
+    def fetchone(self):
+        if self._idx < len(self.rows):
+            row = self.rows[self._idx]
+            self._idx += 1
+            return row
+        return None
+
+    def fetchall(self):
+        remaining = self.rows[self._idx:]
+        self._idx = len(self.rows)
+        return remaining
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+
+class TursoHttpClient:
+    """Synchronous Turso Cloud HTTP Client using Hrana protocol v2 over requests."""
+    def __init__(self, url: str, token: str):
+        self.url = url.rstrip("/")
+        if self.url.startswith("libsql://"):
+            self.url = "https://" + self.url[len("libsql://"):]
+        self.token = token
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json"
+        })
+
+    def execute(self, sql: str, params=()):
+        clean_sql = sql.strip()
+        if clean_sql.upper().startswith("PRAGMA"):
+            return TursoCursor()
+
+        if params is None:
+            params = ()
+        elif isinstance(params, (tuple, list)):
+            params = list(params)
+        else:
+            params = [params]
+
+        args = [self._to_hrana_val(p) for p in params]
+        payload = {
+            "requests": [
+                {
+                    "type": "execute",
+                    "stmt": {
+                        "sql": clean_sql,
+                        "args": args
+                    }
+                },
+                {"type": "close"}
+            ]
+        }
+
+        endpoint = f"{self.url}/v2/pipeline"
+        resp = self.session.post(endpoint, json=payload, timeout=15)
+        if not resp.ok:
+            raise RuntimeError(f"Turso HTTP error [{resp.status_code}]: {resp.text}")
+
+        data = resp.json()
+        results = data.get("results", [])
+        if not results:
+            return TursoCursor()
+
+        first_res = results[0]
+        if first_res.get("type") == "error":
+            err_msg = first_res.get("error", {}).get("message", "Unknown Turso error")
+            raise RuntimeError(f"Turso SQL error: {err_msg}")
+
+        exec_res = first_res.get("response", {}).get("result", {})
+        cols = [c.get("name", "") for c in exec_res.get("cols", [])]
+        raw_rows = exec_res.get("rows", [])
+        rows = [[self._from_hrana_cell(cell) for cell in r] for r in raw_rows]
+        affected = exec_res.get("affected_row_count", len(rows))
+        last_id = exec_res.get("last_insert_rowid")
+
+        return TursoCursor(cols=cols, rows=rows, rowcount=affected, lastrowid=last_id)
+
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def close(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def _to_hrana_val(self, v):
+        if v is None:
+            return {"type": "null"}
+        elif isinstance(v, bool):
+            return {"type": "integer", "value": "1" if v else "0"}
+        elif isinstance(v, int):
+            return {"type": "integer", "value": str(v)}
+        elif isinstance(v, float):
+            return {"type": "float", "value": v}
+        else:
+            return {"type": "text", "value": str(v)}
+
+    def _from_hrana_cell(self, cell):
+        if not isinstance(cell, dict):
+            return cell
+        t = cell.get("type")
+        if t == "null":
+            return None
+        elif t == "integer":
+            try:
+                return int(cell.get("value", 0))
+            except (ValueError, TypeError):
+                return 0
+        elif t == "float":
+            try:
+                return float(cell.get("value", 0.0))
+            except (ValueError, TypeError):
+                return 0.0
+        elif t == "text":
+            return cell.get("value", "")
+        return cell.get("value")
+
+
+def is_turso_enabled() -> bool:
+    """Checks if Turso cloud database is configured and available."""
+    url = os.environ.get("TURSO_DATABASE_URL", "").strip()
+    token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
+    return bool(url and token)
+
+
+def get_turso_client():
+    """Returns singleton Turso client."""
+    global _TURSO_CLIENT, _CURRENT_TURSO_CONFIG
+    url = os.environ.get("TURSO_DATABASE_URL", "").strip()
+    token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
+    config_key = (url, token)
+    if _TURSO_CLIENT is None or _CURRENT_TURSO_CONFIG != config_key:
+        _TURSO_CLIENT = TursoHttpClient(url, token)
+        _CURRENT_TURSO_CONFIG = config_key
+    return _TURSO_CLIENT
+
 
 def get_connection():
-    """Returns a SQLite connection with dict-like row factory and WAL mode for high concurrency."""
+    """Returns a SQLite connection or Turso Cloud connection depending on environment configuration."""
+    if is_turso_enabled():
+        return get_turso_client()
+
     conn = sqlite3.connect(DB_PATH, timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
@@ -65,7 +241,7 @@ def init_db():
         try:
             conn.execute("ALTER TABLE trade_journal ADD COLUMN tags TEXT DEFAULT '';")
             conn.commit()
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, Exception):
             pass
 
     _migrate_legacy_json_if_needed()
