@@ -21,11 +21,20 @@
         tailwind.config = {
             darkMode: ['class', '[data-theme="dark"]'],
             theme: {
-                extend: {}
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+                    }
+                }
             }
         };
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Geist Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- TradingView Lightweight Charts -->
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <!-- TradingView Advanced Charting Widget API -->
@@ -33,7 +42,7 @@
     <!-- Chart.js for Radar and Doughnut charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- macOS Design System CSS -->
-    <link rel="stylesheet" href="/static/css/style.css?v=20260912_v4">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260924_v1">
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#007aff">
@@ -1834,6 +1843,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Dynamic Tail-Risk Macro Hedge Advisor (Gold & Silver BeES) -->
+                <div id="portfolioMacroHedgeContainer" class="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/5 to-yellow-500/5 border border-amber-500/15 space-y-2.5">
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🛡️</span>
+                            <span class="font-bold text-[#48484a] text-xs">Dynamic Macro Tail-Risk Hedge (Precious Metals)</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold border border-amber-500/20">Non-Correlated Shock Absorber</span>
+                        </div>
+                        <span id="macroHedgeTargetVal" class="mono text-xs font-bold text-amber-700 dark:text-amber-400">Targeting ~15% Hedge</span>
+                    </div>
+                    <div id="macroHedgeDetails" class="text-xs text-[#6e6e73]">
+                        Calculating portfolio precious metals hedge allocation...
+                    </div>
+                </div>
             </div>
 
             <!-- ETF Allocation & Shift Advisor Banner -->
@@ -1880,6 +1904,27 @@
                     <span class="text-[10.5px] text-[#6e6e73]">P&amp;L impact by execution psychology</span>
                 </div>
                 <div id="journalDisciplineTags"></div>
+            </div>
+
+            <!-- Trader Behavioral Diagnostics & Cognitive Surveillance -->
+            <div id="traderDiagnosticsCard" class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl p-2 rounded-xl bg-indigo-500/10 text-indigo-600">🧠</span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-[#1c1c1e]">Trader Behavioral Diagnostics &amp; Psychological Edge</h3>
+                                <span id="dispositionBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    Surveillance Active
+                                </span>
+                            </div>
+                            <p class="text-xs text-[#6e6e73] mt-0.5">Automated detection of the Disposition Effect (holding losers vs winners), Exit Efficiency vs Target 1, and win rates by strategy</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="traderDiagnosticsContent" class="space-y-4">
+                    <div class="text-[11px] text-[#8e8e93]">Analyzing execution patterns...</div>
+                </div>
             </div>
 
             <!-- Closed Trades History -->

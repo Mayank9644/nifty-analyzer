@@ -916,3 +916,123 @@ def get_trade_recommendation(symbol: str) -> dict:
             "notes": rationale
         }
     }
+
+
+def compute_trader_behavior_diagnostics() -> dict:
+    """
+    Computes deep behavioral analytics across active and historical journal trades:
+    - Average holding duration of winning vs losing trades (Disposition Effect)
+    - Exit efficiency vs planned Target 1 and Target 2
+    - Performance breakdown by trading style (Swing vs Positional vs Intraday)
+    - Automated behavioral coaching nudges
+    """
+    data = db_get_all_trades()
+    active = data.get("active_trades", [])
+    closed = data.get("closed_trades", [])
+
+    total_closed = len(closed)
+    total_active = len(active)
+
+    def _parse_days(d1_str, d2_str):
+        try:
+            d1 = datetime.strptime(d1_str, "%Y-%m-%d")
+            d2 = datetime.strptime(d2_str, "%Y-%m-%d")
+            return max(0, (d2 - d1).days)
+        except Exception:
+            return 1
+
+    win_days = []
+    loss_days = []
+    style_stats = {}
+    exit_efficiencies = []
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    for t in closed:
+        pnl = float(t.get("pnl") or 0.0)
+        entry_d = t.get("entry_date") or today_str
+        exit_d = t.get("exit_date") or today_str
+        days = _parse_days(entry_d, exit_d)
+
+        style = t.get("style", "Swing")
+        if style not in style_stats:
+            style_stats[style] = {"total": 0, "wins": 0, "losses": 0, "pnl": 0.0}
+        style_stats[style]["total"] += 1
+        style_stats[style]["pnl"] = round(style_stats[style]["pnl"] + pnl, 2)
+
+        if pnl > 0:
+            win_days.append(days)
+            style_stats[style]["wins"] += 1
+            entry_p = float(t.get("entry_price") or 1.0)
+            exit_p = float(t.get("exit_price") or entry_p)
+            target1 = float(t.get("target_1") or entry_p)
+            if target1 > entry_p:
+                planned_gain = target1 - entry_p
+                actual_gain = exit_p - entry_p
+                efficiency = min(200.0, max(0.0, (actual_gain / planned_gain) * 100.0))
+                exit_efficiencies.append(efficiency)
+        else:
+            loss_days.append(days)
+            style_stats[style]["losses"] += 1
+
+    # Active hold duration
+    active_days = [_parse_days(t.get("entry_date") or today_str, today_str) for t in active]
+    avg_active_days = round(sum(active_days) / len(active_days), 1) if active_days else 0.0
+
+    avg_win_hold = round(sum(win_days) / len(win_days), 1) if win_days else 0.0
+    avg_loss_hold = round(sum(loss_days) / len(loss_days), 1) if loss_days else 0.0
+    avg_exit_efficiency = round(sum(exit_efficiencies) / len(exit_efficiencies), 1) if exit_efficiencies else 100.0
+
+    # Behavioral nudges
+    nudges = []
+    if avg_loss_hold > (avg_win_hold * 1.5) and len(loss_days) >= 2:
+        nudges.append({
+            "type": "warning",
+            "title": "Disposition Effect Detected",
+            "message": f"You hold losing positions for an average of {avg_loss_hold} days vs {avg_win_hold} days for winners. Cut losing trades faster at planned Stop Loss.",
+            "icon": "⚠️"
+        })
+    elif avg_win_hold >= avg_loss_hold and len(win_days) >= 2:
+        nudges.append({
+            "type": "success",
+            "title": "Disciplined Hold Duration",
+            "message": f"You give winners room to run ({avg_win_hold} days avg hold) and cut losers promptly ({avg_loss_hold} days).",
+            "icon": "🛡️"
+        })
+
+    if avg_exit_efficiency < 70.0 and len(exit_efficiencies) >= 2:
+        nudges.append({
+            "type": "caution",
+            "title": "Early Profit Taking",
+            "message": f"Your average exit captures {avg_exit_efficiency}% of Target 1. Trailing stops could help you capture more trend extension.",
+            "icon": "📈"
+        })
+    else:
+        nudges.append({
+            "type": "info",
+            "title": "Target Discipline",
+            "message": "Continue using 3-tier tranches (T1 50% de-risk, T2 30% profit, T3 20% runner) to maximize risk-reward.",
+            "icon": "🎯"
+        })
+
+    formatted_styles = []
+    for s_name, s_data in style_stats.items():
+        wr = round((s_data["wins"] / s_data["total"]) * 100.0, 1) if s_data["total"] > 0 else 0.0
+        formatted_styles.append({
+            "style": s_name,
+            "total_trades": s_data["total"],
+            "win_rate": wr,
+            "net_pnl": s_data["pnl"]
+        })
+
+    return {
+        "status": "success",
+        "total_active_trades": total_active,
+        "total_closed_trades": total_closed,
+        "avg_active_hold_days": avg_active_days,
+        "avg_winner_hold_days": avg_win_hold,
+        "avg_loser_hold_days": avg_loss_hold,
+        "avg_exit_efficiency_pct": avg_exit_efficiency,
+        "style_breakdown": formatted_styles,
+        "behavioral_nudges": nudges
+    }

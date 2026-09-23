@@ -1258,6 +1258,132 @@ function renderSignalsBox(signals, styleInfo) {
         }
     }
 
+    // Probabilistic Target Cone
+    let probConeHtml = "";
+    if (sig.probability_cone && sig.probability_cone.cones) {
+        const pc = sig.probability_cone;
+        const pTarget = pc.p_target_before_sl || 50;
+        const pRisk = Math.round((100 - pTarget) * 10) / 10;
+        const pTargetColor = pTarget >= 60 ? "#1e7e34" : (pTarget >= 45 ? "#b35900" : "#b32020");
+        const c5 = pc.cones["5d"] || {};
+        const c10 = pc.cones["10d"] || {};
+        const c20 = pc.cones["20d"] || {};
+
+        probConeHtml = `
+            <div class="double-bezel">
+                <div class="double-bezel-inner p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] pb-2.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">🎲</span>
+                            <div>
+                                <div class="text-xs font-bold text-[#1c1c1e] flex items-center gap-1.5">
+                                    <span>Probabilistic Target Cone</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">Geometric Brownian Motion</span>
+                                </div>
+                                <div class="text-[10.5px] text-[#6e6e73]">First-Passage Barrier Likelihood &amp; Volatility Bounds</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 text-right">
+                            <div>
+                                <span class="text-[10px] text-[#8e8e93] block">Annualized Vol (σ)</span>
+                                <span class="mono text-xs font-bold text-[#1c1c1e]">${pc.annualized_volatility_pct || 0}%</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-[#8e8e93] block">Annualized Drift (μ)</span>
+                                <span class="mono text-xs font-bold text-[#007aff]">${pc.annualized_drift_pct >= 0 ? '+' : ''}${pc.annualized_drift_pct || 0}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target 1 vs Stop Loss Probability Gauge -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-medium text-[#1c1c1e]">Target 1 Hit Likelihood (before Stop-Loss):</span>
+                            <span class="mono font-bold" style="color: ${pTargetColor};">${pTarget}%</span>
+                        </div>
+                        <div class="w-full bg-red-500/20 rounded-full h-2.5 overflow-hidden flex">
+                            <div class="h-2.5 transition-all duration-500 rounded-l-full" style="width: ${pTarget}%; background-color: ${pTargetColor};"></div>
+                            <div class="h-2.5 bg-red-500/60 transition-all duration-500 rounded-r-full" style="width: ${pRisk}%;"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-[#8e8e93]">
+                            <span>P(Hit Target 1 first): <strong class="text-[#1c1c1e]">${pTarget}%</strong></span>
+                            <span>P(Hit Stop Loss first): <strong class="text-[#b32020]">${pRisk}%</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Forward Multi-Horizon Price Cones -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1">
+                        <div class="macos-box p-2.5 text-center">
+                            <div class="text-[10px] uppercase font-bold text-[#6e6e73]">5-Day Horizon</div>
+                            <div class="mono font-bold text-[#1c1c1e] mt-1 text-sm">₹${c5.expected || '—'}</div>
+                            <div class="text-[9.5px] text-[#8e8e93] mt-1">68% Band: ₹${c5.lower_1sigma || '—'} – ₹${c5.upper_1sigma || '—'}</div>
+                            <div class="text-[9px] text-[#a1a1a6]">95% Band: ₹${c5.lower_2sigma || '—'} – ₹${c5.upper_2sigma || '—'}</div>
+                        </div>
+                        <div class="macos-box p-2.5 text-center">
+                            <div class="text-[10px] uppercase font-bold text-[#6e6e73]">10-Day Horizon</div>
+                            <div class="mono font-bold text-[#1c1c1e] mt-1 text-sm">₹${c10.expected || '—'}</div>
+                            <div class="text-[9.5px] text-[#8e8e93] mt-1">68% Band: ₹${c10.lower_1sigma || '—'} – ₹${c10.upper_1sigma || '—'}</div>
+                            <div class="text-[9px] text-[#a1a1a6]">95% Band: ₹${c10.lower_2sigma || '—'} – ₹${c10.upper_2sigma || '—'}</div>
+                        </div>
+                        <div class="macos-box p-2.5 text-center">
+                            <div class="text-[10px] uppercase font-bold text-[#6e6e73]">20-Day Horizon</div>
+                            <div class="mono font-bold text-[#1c1c1e] mt-1 text-sm">₹${c20.expected || '—'}</div>
+                            <div class="text-[9.5px] text-[#8e8e93] mt-1">68% Band: ₹${c20.lower_1sigma || '—'} – ₹${c20.upper_1sigma || '—'}</div>
+                            <div class="text-[9px] text-[#a1a1a6]">95% Band: ₹${c20.lower_2sigma || '—'} – ₹${c20.upper_2sigma || '—'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Transparent Factor Attribution (SHAP-Style)
+    let attributionHtml = "";
+    if (Array.isArray(sig.attribution_breakdown) && sig.attribution_breakdown.length > 0) {
+        attributionHtml = `
+            <div class="double-bezel">
+                <div class="double-bezel-inner p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] pb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">⚡</span>
+                            <div>
+                                <span class="text-xs font-bold text-[#1c1c1e]">Factor Attribution Breakdown</span>
+                                <span class="text-[10px] text-[#6e6e73] block">Transparent multi-factor weight contribution towards trade conviction</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">SHAP-Style Attribution</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        ${sig.attribution_breakdown.map(f => {
+                            const isBull = f.points > 0;
+                            const isBear = f.points < 0;
+                            const badgeColor = isBull ? "bg-[#edf7ee] text-[#1e7e34] border-[#c6e8cc]" : (isBear ? "bg-[#fdf0f0] text-[#b32020] border-[#f7c8c8]" : "bg-[#f5f5f7] text-[#6e6e73] border-[#e2e2e7]");
+                            const barColor = isBull ? "#28a745" : (isBear ? "#d9383a" : "#8e8e93");
+                            const barPct = Math.min(Math.max(Math.abs(f.points) * 25, 12), 100);
+
+                            return `
+                                <div class="macos-box p-2.5 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-semibold text-[#1c1c1e]">${f.category}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="mono text-[11px] font-bold" style="color: ${barColor};">${f.points > 0 ? '+' : ''}${f.points} pts</span>
+                                            <span class="text-[9.5px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}">${f.verdict}</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-black/5 dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                        <div class="h-1.5 rounded-full transition-all duration-500" style="width: ${barPct}%; background-color: ${barColor};"></div>
+                                    </div>
+                                    <p class="text-[10.5px] text-[#6e6e73] truncate" title="${f.summary || ''}">${f.summary || ''}</p>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     container.innerHTML = `
         <div class="macos-card p-5 space-y-4">
             <!-- Header Verdict -->
@@ -1317,6 +1443,12 @@ function renderSignalsBox(signals, styleInfo) {
                     <div class="text-base font-bold text-[#007aff] mono mt-0.5">${plan.risk_reward}</div>
                 </div>
             </div>
+
+            <!-- Probabilistic Target Cone -->
+            ${probConeHtml}
+
+            <!-- Factor Attribution Breakdown -->
+            ${attributionHtml}
 
             <!-- Plain English Indicators Checklist -->
             <div>

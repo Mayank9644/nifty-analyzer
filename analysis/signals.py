@@ -5,6 +5,7 @@ Entry Ranges, 3-Tier Target Profit Matrices, and Portfolio Risk Guards.
 """
 
 from config import STYLE_EXECUTION_PARAMS, MAX_SINGLE_STOCK_CAP_PCT, MAX_PORTFOLIO_RISK_PCT
+from analysis.probability_cone import calculate_probability_cone
 
 
 def generate_signals(
@@ -408,6 +409,38 @@ def generate_signals(
     t1_r = round(params.get("target1_mult", 1.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
     t2_r = round(params.get("target2_mult", 2.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
 
+    # Compute Probabilistic Target Cone & First-Passage Likelihood
+    hist_df = technicals.get("df") if isinstance(technicals, dict) else None
+    prob_cone = calculate_probability_cone(
+        current_price=current_price,
+        stop_loss=stop_loss,
+        target_1=target1,
+        df=hist_df,
+        is_short=is_short
+    )
+
+    # Compute Transparent Signal Factor Attribution (SHAP-style decomposition)
+    category_map = {
+        "Trend Structure": [s for s in signals_list if "Moving Average" in s["name"] or "ADX" in s["name"]],
+        "Momentum Velocity": [s for s in signals_list if "RSI" in s["name"] or "MACD" in s["name"]],
+        "Volatility & Range": [s for s in signals_list if "Bollinger" in s["name"] or "VWAP" in s["name"]],
+        "Institutional Volume": [s for s in signals_list if "Volume" in s["name"]],
+        "Fundamental Quality": [s for s in signals_list if "Business Health" in s["name"]],
+        "Options Sentiment": [s for s in signals_list if "Options" in s["name"] or "PCR" in s["name"]]
+    }
+    attribution_factors = []
+    for cat_name, items in category_map.items():
+        if items:
+            cat_pts = sum(i.get("weight", 0) for i in items)
+            cat_verdict = "BULLISH" if cat_pts > 0 else ("BEARISH" if cat_pts < 0 else "NEUTRAL")
+            attribution_factors.append({
+                "category": cat_name,
+                "points": cat_pts,
+                "verdict": cat_verdict,
+                "indicators": [i["name"] for i in items],
+                "summary": items[0].get("explanation", "")
+            })
+
     return {
         "verdict": final_verdict,
         "color": final_color,
@@ -424,6 +457,8 @@ def generate_signals(
             "factors": confidence_factors[:4]
         },
         "signals": signals_list,
+        "attribution_breakdown": attribution_factors,
+        "probability_cone": prob_cone,
         "trade_plan": {
             "direction": direction,
             "style": style,

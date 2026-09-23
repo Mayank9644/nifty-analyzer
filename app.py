@@ -42,7 +42,8 @@ from analysis.journal import (
     execute_partial_exit,
     auto_calculate_risk_parameters,
     bulk_import_trades_from_csv,
-    get_active_portfolio_summary
+    get_active_portfolio_summary,
+    compute_trader_behavior_diagnostics
 )
 from data.database import (
     db_get_active_trades,
@@ -112,6 +113,53 @@ app.json = SafeJSONProvider(app)
 
 # Initialize HTTP Gzip & Brotli compression
 Compress(app)
+
+import re
+import time
+from collections import defaultdict
+
+# In-memory Token Bucket rate limiter (180 requests/min per IP)
+_IP_REQUEST_LOG = defaultdict(list)
+_RATE_LIMIT_WINDOW = 60
+_MAX_REQUESTS_PER_WINDOW = 180
+
+def _check_rate_limit(ip: str) -> bool:
+    now = time.time()
+    timestamps = _IP_REQUEST_LOG[ip]
+    _IP_REQUEST_LOG[ip] = [t for t in timestamps if now - t < _RATE_LIMIT_WINDOW]
+    if len(_IP_REQUEST_LOG[ip]) >= _MAX_REQUESTS_PER_WINDOW:
+        return False
+    _IP_REQUEST_LOG[ip].append(now)
+    return True
+
+TICKER_REGEX = re.compile(r"^[A-Z0-9^=._-]{1,25}$", re.IGNORECASE)
+
+def validate_ticker_symbol(sym: str) -> bool:
+    """Sanitizes ticker symbols preventing command or path injections."""
+    if not sym or not isinstance(sym, str):
+        return False
+    return bool(TICKER_REGEX.match(sym.strip()))
+
+@app.before_request
+def before_request_security():
+    if request.path.startswith("/api/"):
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
+        if not _check_rate_limit(client_ip):
+            return jsonify({"status": "error", "message": "Rate limit exceeded. Please wait a moment."}), 429
+
+@app.after_request
+def add_security_headers(response):
+    """Hardens HTTP response with enterprise security headers."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://s3.tradingview.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "connect-src 'self' https:;"
+    )
+    return response
 
 def get_cached_benchmark_history(benchmark_sym, period="1y", interval="1d"):
     """Caches benchmark index history to avoid redundant multi-megabyte queries on every stock lookup."""
@@ -240,6 +288,9 @@ def api_stock_detail(symbol: str):
     - Expert strategy match & radar data
     - Delivery volume % radar
     """
+    if not validate_ticker_symbol(symbol):
+        return jsonify({"status": "error", "message": "Invalid ticker symbol format"}), 400
+
     style = request.args.get("style", "swing")
     period = request.args.get("period", "1y")
     interval = request.args.get("interval", "1d")
@@ -649,6 +700,16 @@ def api_journal_analytics():
     try:
         analytics = get_journal_analytics()
         return jsonify(analytics)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/journal/diagnostics")
+def api_journal_diagnostics():
+    """Trader behavior coaching diagnostics and execution metrics."""
+    try:
+        diagnostics = compute_trader_behavior_diagnostics()
+        return jsonify(diagnostics)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

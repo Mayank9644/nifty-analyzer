@@ -161,6 +161,9 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
         risk_color = "#10B981"
         risk_badge = "🛡️ Controlled Risk"
 
+    # Macro Hedging Guidance
+    macro_hedge = calculate_macro_hedge_ratio(total_current_val)
+
     return {
         "status": "success",
         "has_positions": True,
@@ -179,5 +182,33 @@ def calculate_portfolio_risk(total_portfolio_capital: float = 1000000.0) -> dict
         "capital_base": round(capital_base, 2),
         "sector_breakdown": sector_breakdown,
         "stock_allocations": stock_allocations,
-        "warnings": warnings
+        "warnings": warnings,
+        "macro_hedge": macro_hedge
+    }
+
+
+def calculate_macro_hedge_ratio(total_equity_value: float) -> dict:
+    """
+    Computes institutional macro hedging allocations using Gold BeES and Silver BeES.
+    Standard risk parity allocation: 15% Gold tail-risk hedge for Indian equities.
+    """
+    if total_equity_value <= 0:
+        return {
+            "status": "neutral",
+            "recommendation": "No active equity exposure requiring hedging."
+        }
+
+    gold_hedge_target_inr = round(total_equity_value * 0.15, 2)
+    silver_hedge_target_inr = round(total_equity_value * 0.05, 2)
+    est_gold_price = 125.0
+    est_silver_price = 95.0
+
+    return {
+        "status": "active",
+        "total_equity_value": round(total_equity_value, 2),
+        "gold_hedge_value_inr": gold_hedge_target_inr,
+        "suggested_goldbees_units": int(gold_hedge_target_inr / est_gold_price),
+        "silver_hedge_value_inr": silver_hedge_target_inr,
+        "suggested_silverbees_units": int(silver_hedge_target_inr / est_silver_price),
+        "hedge_rationale": "Holding ~15% GOLDBEES provides an empirical non-correlated drawdown shock-absorber against NIFTY equity pullbacks."
     }

@@ -11,12 +11,13 @@ let _journalEquityChart = null;
 
 async function loadTradeJournal() {
     try {
-        const [activeRes, analyticsRes, riskRes, etfStatusRes, statsRes] = await Promise.all([
+        const [activeRes, analyticsRes, riskRes, etfStatusRes, statsRes, diagRes] = await Promise.all([
             fetch("/api/journal/active").then(r => r.json()).catch(() => null),
             fetch("/api/journal/analytics").then(r => r.json()).catch(() => null),
             fetch("/api/portfolio/risk").then(r => r.json()).catch(() => null),
             fetch("/api/etf/journal-status").then(r => r.json()).catch(() => null),
-            fetch("/api/journal/stats").then(r => r.json()).catch(() => null)
+            fetch("/api/journal/stats").then(r => r.json()).catch(() => null),
+            fetch("/api/journal/diagnostics").then(r => r.json()).catch(() => null)
         ]);
 
         if (activeRes && activeRes.status === "success") {
@@ -33,6 +34,10 @@ async function loadTradeJournal() {
 
         if (riskRes && riskRes.status === "success") {
             renderPortfolioRiskRadar(riskRes);
+        }
+
+        if (diagRes && diagRes.status === "success") {
+            renderTraderDiagnostics(diagRes);
         }
 
         if (etfStatusRes && etfStatusRes.status === "success") {
@@ -58,6 +63,8 @@ function renderPortfolioRiskRadar(risk) {
     const warnContainer = document.getElementById("portfolioRiskWarningsContainer");
     const sectorContainer = document.getElementById("riskSectorBarsContainer");
     const stockContainer = document.getElementById("riskStockBarsContainer");
+    const macroHedgeDetails = document.getElementById("macroHedgeDetails");
+    const macroHedgeTargetVal = document.getElementById("macroHedgeTargetVal");
 
     if (badge) {
         badge.textContent = risk.risk_badge || risk.risk_rating;
@@ -132,6 +139,105 @@ function renderPortfolioRiskRadar(risk) {
             }).join("");
         }
     }
+
+    // Macro Precious Metals Hedge
+    if (macroHedgeDetails && risk.macro_hedge) {
+        const mh = risk.macro_hedge;
+        if (macroHedgeTargetVal) {
+            const totHedge = (mh.gold_hedge_value_inr || 0) + (mh.silver_hedge_value_inr || 0);
+            macroHedgeTargetVal.textContent = `₹${Math.round(totHedge).toLocaleString('en-IN')} Total Protective Allocation`;
+        }
+        macroHedgeDetails.innerHTML = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div class="macos-box p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[#1c1c1e] text-xs">🟡 GOLDBEES.NS (Gold ETF)</div>
+                        <div class="text-[10px] text-[#6e6e73]">Allocation: ₹${Math.round(mh.gold_hedge_value_inr || 0).toLocaleString('en-IN')}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="mono text-xs font-bold text-amber-700 dark:text-amber-400">${mh.suggested_goldbees_units || 0} Units</span>
+                        <span class="text-[9.5px] text-[#8e8e93] block">~15% of Equity</span>
+                    </div>
+                </div>
+                <div class="macos-box p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[#1c1c1e] text-xs">⚪ SILVERBEES.NS (Silver ETF)</div>
+                        <div class="text-[10px] text-[#6e6e73]">Allocation: ₹${Math.round(mh.silver_hedge_value_inr || 0).toLocaleString('en-IN')}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="mono text-xs font-bold text-slate-700 dark:text-slate-300">${mh.suggested_silverbees_units || 0} Units</span>
+                        <span class="text-[9.5px] text-[#8e8e93] block">~5% of Equity</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-[10.5px] text-[#6e6e73] mt-2 italic">${mh.hedge_rationale || ''}</p>
+        `;
+    }
+}
+
+function renderTraderDiagnostics(diag) {
+    const card = document.getElementById("traderDiagnosticsCard");
+    const container = document.getElementById("traderDiagnosticsContent");
+    const badge = document.getElementById("dispositionBadge");
+    if (!card || !container || !diag) return;
+
+    const winHold = diag.avg_winner_hold_days || 0;
+    const loseHold = diag.avg_loser_hold_days || 0;
+    const activeHold = diag.avg_active_hold_days || 0;
+    const exitEff = diag.avg_exit_efficiency_pct !== undefined ? diag.avg_exit_efficiency_pct : 100;
+    
+    // Disposition Effect check
+    let dispositionStatus = "Surveillance Active";
+    let badgeClass = "bg-blue-50 text-blue-700 border-blue-200";
+    if (winHold > 0 && loseHold > winHold * 1.5) {
+        dispositionStatus = "⚠️ Disposition Risk (Holding Losers Too Long)";
+        badgeClass = "bg-rose-50 text-rose-700 border-rose-200";
+    } else if (winHold > 0 && loseHold > 0 && loseHold <= winHold) {
+        dispositionStatus = "✅ Healthy Execution (Cutting Losers Faster)";
+        badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+    }
+
+    if (badge) {
+        badge.textContent = dispositionStatus;
+        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass}`;
+    }
+
+    const nudgesHtml = (diag.behavioral_nudges || []).map(n => `
+        <div class="p-3 rounded-xl border ${n.type === 'warning' ? 'bg-amber-50/70 border-amber-200 text-amber-900' : 'bg-blue-50/70 border-blue-200 text-blue-900'} text-xs flex items-start gap-2.5">
+            <span class="text-base flex-shrink-0 mt-0.5">${n.icon || '💡'}</span>
+            <div>
+                <span class="font-bold block">${n.title}</span>
+                <span class="text-[11px] opacity-90 leading-relaxed mt-0.5 block">${n.message}</span>
+            </div>
+        </div>
+    `).join("");
+
+    container.innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="macos-box p-3">
+                <span class="text-[10.5px] text-[#6e6e73] font-medium block">Avg Hold (Winners)</span>
+                <span class="mono text-base font-bold text-emerald-700 block mt-0.5">${winHold > 0 ? winHold + ' Days' : '—'}</span>
+                <span class="text-[9.5px] text-[#8e8e93]">Letting winners run</span>
+            </div>
+            <div class="macos-box p-3">
+                <span class="text-[10.5px] text-[#6e6e73] font-medium block">Avg Hold (Losers)</span>
+                <span class="mono text-base font-bold ${loseHold > winHold && winHold > 0 ? 'text-rose-600' : 'text-[#1c1c1e]'} block mt-0.5">${loseHold > 0 ? loseHold + ' Days' : '—'}</span>
+                <span class="text-[9.5px] text-[#8e8e93]">Cutting losses quickly</span>
+            </div>
+            <div class="macos-box p-3">
+                <span class="text-[10.5px] text-[#6e6e73] font-medium block">Active Portfolio Age</span>
+                <span class="mono text-base font-bold text-[#007aff] block mt-0.5">${activeHold} Days</span>
+                <span class="text-[9.5px] text-[#8e8e93]">${diag.total_active_trades || 0} active positions</span>
+            </div>
+            <div class="macos-box p-3">
+                <span class="text-[10.5px] text-[#6e6e73] font-medium block">Exit Target Efficiency</span>
+                <span class="mono text-base font-bold text-[#1c1c1e] block mt-0.5">${exitEff}%</span>
+                <span class="text-[9.5px] text-[#8e8e93]">Captured vs Target 1</span>
+            </div>
+        </div>
+
+        ${nudgesHtml ? `<div class="space-y-2 pt-1">${nudgesHtml}</div>` : ''}
+    `;
 }
 
 function renderJournalEtfRebalance(status) {
