@@ -852,14 +852,14 @@ function openCloseTradeModal(tradeId, currentPrice) {
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Quantity to Exit *</label>
                         <input id="ctm_qty" type="number" min="1" max="${totalQty}" value="${totalQty}"
                             oninput="updateCloseModalPreview(${entryPrice}, ${totalQty})"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                         <span class="text-[9.5px] text-[#86868b] mt-0.5 block">Max holding: ${totalQty} units</span>
                     </div>
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Exit Price (₹) *</label>
                         <input id="ctm_price" type="number" step="0.01" value="${curPrice.toFixed(2)}"
                             oninput="updateCloseModalPreview(${entryPrice}, ${totalQty})"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                         <span class="text-[9.5px] text-[#86868b] mt-0.5 block">Default: Current Market Price</span>
                     </div>
                 </div>
@@ -1632,7 +1632,7 @@ function openManualTradeModal() {
                         </label>
                         <div class="relative">
                             <input id="mt_symbol" type="text" placeholder="Type stock or ETF name (e.g. NIFTYBEES, RELIANCE)..." autocomplete="off"
-                                class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 pr-9 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all font-medium uppercase placeholder:normal-case placeholder:text-xs"
+                                class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 pr-9 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all font-medium uppercase placeholder:normal-case placeholder:text-xs"
                                 oninput="handleManualSymbolSearch(this.value)"
                                 onkeydown="handleManualSearchKeydown(event)"
                                 onfocus="handleManualSymbolSearch(this.value)"
@@ -1651,7 +1651,7 @@ function openManualTradeModal() {
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Trade Entry Date *</label>
                         <input id="mt_date" type="date" value="${today}"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                         <span class="text-[9px] text-[#86868b] mt-1 block">Position opening date</span>
                     </div>
                 </div>
@@ -1664,16 +1664,16 @@ function openManualTradeModal() {
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Buy Price (₹) *</label>
                         <input id="mt_entry" type="number" step="0.01" placeholder="e.g. 272.50"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Quantity *</label>
                         <input id="mt_qty" type="number" placeholder="e.g. 100"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Trade Type</label>
-                        <select id="mt_style" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all">
+                        <select id="mt_style" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all">
                             <option value="ETF">ETF / All-Weather</option>
                             <option value="Swing">Swing Trade</option>
                             <option value="Positional">Positional</option>
@@ -1688,17 +1688,17 @@ function openManualTradeModal() {
                     <div>
                         <label class="text-[10px] text-[#b32020] uppercase tracking-wider block mb-1 font-semibold">Stop Loss (₹)</label>
                         <input id="mt_sl" type="number" step="0.01" placeholder="e.g. 260.25"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#f5c6cb] dark:border-rose-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#b32020] dark:text-rose-400 outline-none focus:border-[#b32020] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#f5c6cb] dark:border-rose-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#b32020] dark:text-rose-400 outline-none focus:border-[#b32020] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                     <div>
                         <label class="text-[10px] text-[#1e7e34] uppercase tracking-wider block mb-1 font-semibold">Target 1 (₹)</label>
                         <input id="mt_t1" type="number" step="0.01" placeholder="e.g. 294.30"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#c3e6cb] dark:border-emerald-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1e7e34] dark:text-emerald-400 outline-none focus:border-[#1e7e34] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#c3e6cb] dark:border-emerald-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#1e7e34] dark:text-emerald-400 outline-none focus:border-[#1e7e34] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                     <div>
                         <label class="text-[10px] text-[#007aff] uppercase tracking-wider block mb-1 font-semibold">Target 2 (₹)</label>
                         <input id="mt_t2" type="number" step="0.01" placeholder="e.g. 313.40"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#b9d7fb] dark:border-blue-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#007aff] dark:text-blue-400 outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[#b9d7fb] dark:border-blue-900/40 rounded-lg px-3 py-2 text-sm font-semibold mono text-[#007aff] dark:text-blue-400 outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                 </div>
 
@@ -1706,7 +1706,7 @@ function openManualTradeModal() {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Discipline / Setup Tag</label>
-                        <select id="mt_tags" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all">
+                        <select id="mt_tags" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all">
                             <option value="Followed Plan">Followed Plan</option>
                             <option value="ETF Allocation">ETF Allocation</option>
                             <option value="Breakout Entry">Breakout Entry</option>
@@ -1720,7 +1720,7 @@ function openManualTradeModal() {
                     <div>
                         <label class="text-[10px] text-[#6e6e73] dark:text-[#8e8e93] uppercase tracking-wider block mb-1 font-semibold">Notes / Rationale</label>
                         <input id="mt_notes" type="text" placeholder="e.g. All-Weather Allocation or Breakout"
-                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white transition-all" />
+                            class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[#1c1c1e] dark:text-white outline-none focus:border-[#007aff] focus:bg-white dark:focus:bg-[#1c1f2e] transition-all" />
                     </div>
                 </div>
             </div>
@@ -1762,6 +1762,7 @@ function closeManualModal() {
     if (modal) modal.remove();
 }
 window.closeManualModal = closeManualModal;
+window.closeManualTradeModal = closeManualModal;
 
 function handleManualSymbolSearch(val) {
     const sug = document.getElementById("mt_suggestions");

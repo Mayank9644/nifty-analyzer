@@ -157,28 +157,28 @@ function _renderScreenerRows(container, results) {
         const chgVal = Number(s.day_change_pct) || 0;
         const isGreen = chgVal >= 0;
         return `
-            <tr class="hover:bg-[#f8f8fa] transition-colors border-b border-[rgba(0,0,0,0.05)] cursor-pointer" onclick="selectSearchedStock('${s.symbol}')">
+            <tr class="hover:bg-[#f8f8fa] dark:hover:bg-white/5 transition-colors border-b border-[rgba(0,0,0,0.05)] dark:border-white/5 cursor-pointer" onclick="selectSearchedStock('${s.symbol}')">
                 <td class="px-4 py-3">
-                    <div class="font-semibold text-xs text-[#1c1c1e]">${s.code}</div>
-                    <div class="text-[10.5px] text-[#6e6e73] truncate max-w-[180px]">${s.name}</div>
+                    <div class="font-semibold text-xs text-[#1c1c1e] dark:text-[#f5f5f7]">${s.code}</div>
+                    <div class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6] truncate max-w-[180px]">${s.name}</div>
                 </td>
-                <td class="px-4 py-3 text-xs text-[#6e6e73]">
+                <td class="px-4 py-3 text-xs text-[#6e6e73] dark:text-[#a1a1a6]">
                     <span class="badge-stock">${s.sector}</span>
                 </td>
                 <td class="px-4 py-3 text-right">
-                    <div class="text-xs font-semibold mono text-[#1c1c1e]">${priceVal > 0 ? '₹' + priceVal.toLocaleString('en-IN') : '—'}</div>
+                    <div class="text-xs font-semibold mono text-[#1c1c1e] dark:text-[#f5f5f7]">${priceVal > 0 ? '₹' + priceVal.toLocaleString('en-IN') : '—'}</div>
                     <div class="text-[10.5px] font-medium mono ${isGreen ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
                         ${s.day_change_pct != null ? (isGreen ? '▲ +' : '▼ ') + chgVal + '%' : '—'}
                     </div>
                 </td>
-                <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e]">
+                <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e] dark:text-[#f5f5f7]">
                     ${s.pe_ratio > 0 ? s.pe_ratio + 'x' : '—'}
                 </td>
-                <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e]'}">
+                <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e] dark:text-[#f5f5f7]'}">
                     ${s.roe > 0 ? s.roe + '%' : '—'}
                 </td>
                 <td class="px-4 py-3 text-center mono text-xs font-medium">
-                    <span class="px-2 py-0.5 rounded-full ${s.rsi >= 70 ? 'bg-[#fdf0f0] text-[#b32020]' : (s.rsi <= 35 ? 'bg-[#edf7ee] text-[#1e7e34]' : 'bg-[#f5f5f7] text-[#1c1c1e]')}">
+                    <span class="px-2 py-0.5 rounded-full ${s.rsi >= 70 ? 'bg-[#fdf0f0] text-[#b32020]' : (s.rsi <= 35 ? 'bg-[#edf7ee] text-[#1e7e34]' : 'bg-[#f5f5f7] dark:bg-white/10 text-[#1c1c1e] dark:text-[#f5f5f7]')}">
                         ${s.rsi}
                     </span>
                 </td>

@@ -95,69 +95,69 @@ function createBrokerModalDOM() {
     div.id = "brokerExecutionModal";
     div.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 hidden";
     div.innerHTML = `
-        <div class="macos-card bg-white w-full max-w-lg p-6 space-y-4 shadow-2xl relative">
-            <button onclick="closeBrokerModal()" class="absolute top-4 right-4 text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold">✕</button>
+        <div class="macos-card bg-white dark:bg-[#151722] w-full max-w-lg p-6 space-y-4 shadow-2xl relative border dark:border-white/10">
+            <button onclick="closeBrokerModal()" class="absolute top-4 right-4 text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-lg font-bold">✕</button>
             
             <div class="flex items-center gap-3">
                 <span class="text-2xl p-2 rounded-xl bg-[#007aff]/10 text-[#007aff]">⚡</span>
                 <div>
-                    <h3 id="brokerModalTitle" class="text-base font-bold text-[#1c1c1e]">1-Click Broker Execution</h3>
-                    <p class="text-xs text-[#6e6e73]">Instant prefilled order tickets for leading Indian brokers</p>
+                    <h3 id="brokerModalTitle" class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">1-Click Broker Execution</h3>
+                    <p class="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">Instant prefilled order tickets for leading Indian brokers</p>
                 </div>
             </div>
 
-            <div id="brokerModalSummary" class="p-3 rounded-xl bg-[#f8f8fa] text-xs text-[#48484a] border border-[rgba(0,0,0,0.04)]">
+            <div id="brokerModalSummary" class="p-3 rounded-xl bg-[#f8f8fa] dark:bg-[#1c1f2e] text-xs text-[#48484a] dark:text-[#d1d1d6] border border-[rgba(0,0,0,0.04)] dark:border-white/10">
                 Preparing order ticket...
             </div>
 
             <!-- Parameters Adjuster -->
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                    <label class="text-[#6e6e73] font-medium block mb-1">Quantity</label>
-                    <input type="number" id="brokerModalQty" min="1" onchange="updateBrokerModalInputs()" class="w-full px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.12)] font-bold mono outline-none focus:border-[#007aff]">
+                    <label class="text-[#6e6e73] dark:text-[#a1a1a6] font-medium block mb-1">Quantity</label>
+                    <input type="number" id="brokerModalQty" min="1" onchange="updateBrokerModalInputs()" class="w-full px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#151722] dark:text-white font-bold mono outline-none focus:border-[#007aff]">
                 </div>
                 <div>
-                    <label class="text-[#6e6e73] font-medium block mb-1">Limit Price (₹)</label>
-                    <input type="number" id="brokerModalPrice" step="0.05" onchange="updateBrokerModalInputs()" class="w-full px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.12)] font-bold mono outline-none focus:border-[#007aff]">
+                    <label class="text-[#6e6e73] dark:text-[#a1a1a6] font-medium block mb-1">Limit Price (₹)</label>
+                    <input type="number" id="brokerModalPrice" step="0.05" onchange="updateBrokerModalInputs()" class="w-full px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#151722] dark:text-white font-bold mono outline-none focus:border-[#007aff]">
                 </div>
             </div>
 
             <!-- Broker 1-Click Cards -->
             <div class="space-y-2.5 pt-1">
-                <a id="brokerKiteLink" href="https://kite.zerodha.com" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3.5 rounded-xl border border-orange-200 bg-orange-50/60 hover:bg-orange-100/70 transition-all group">
+                <a id="brokerKiteLink" href="https://kite.zerodha.com" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3.5 rounded-xl border border-orange-200 dark:border-orange-800/40 bg-orange-50/60 dark:bg-orange-950/20 hover:bg-orange-100/70 dark:hover:bg-orange-900/30 transition-all group">
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">🪁</span>
                         <div>
-                            <div class="text-xs font-bold text-orange-950 flex items-center gap-1.5">
+                            <div class="text-xs font-bold text-orange-950 dark:text-orange-200 flex items-center gap-1.5">
                                 Execute on Zerodha Kite
-                                <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-orange-200 text-orange-800 font-semibold">1-Click Depth</span>
+                                <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-orange-200 dark:bg-orange-900/60 text-orange-800 dark:text-orange-300 font-semibold">1-Click Depth</span>
                             </div>
-                            <div class="text-[11px] text-orange-800/80">Opens Zerodha Kite with prefilled symbol & market depth</div>
+                            <div class="text-[11px] text-orange-800/80 dark:text-orange-300/80">Opens Zerodha Kite with prefilled symbol & market depth</div>
                         </div>
                     </div>
-                    <span class="text-orange-600 font-bold group-hover:translate-x-0.5 transition-transform">➔</span>
+                    <span class="text-orange-600 dark:text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">➔</span>
                 </a>
 
-                <a id="brokerDhanLink" href="https://web.dhan.co" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/70 transition-all group">
+                <a id="brokerDhanLink" href="https://web.dhan.co" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3.5 rounded-xl border border-purple-200 dark:border-purple-800/40 bg-purple-50/60 dark:bg-purple-950/20 hover:bg-purple-100/70 dark:hover:bg-purple-900/30 transition-all group">
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">🎯</span>
                         <div>
-                            <div class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                            <div class="text-xs font-bold text-purple-950 dark:text-purple-200 flex items-center gap-1.5">
                                 Execute on Dhan Web
-                                <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-purple-200 text-purple-800 font-semibold">Deep Link</span>
+                                <span class="px-1.5 py-0.5 rounded text-[9.5px] bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 font-semibold">Deep Link</span>
                             </div>
-                            <div class="text-[11px] text-purple-800/80">Pre-populates order ticket with exact quantity and price</div>
+                            <div class="text-[11px] text-purple-800/80 dark:text-purple-300/80">Pre-populates order ticket with exact quantity and price</div>
                         </div>
                     </div>
-                    <span class="text-purple-600 font-bold group-hover:translate-x-0.5 transition-transform">➔</span>
+                    <span class="text-purple-600 dark:text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">➔</span>
                 </a>
             </div>
 
             <!-- Webhook Payload for Algo Automation -->
-            <div class="pt-2 border-t border-[rgba(0,0,0,0.06)] space-y-1.5">
+            <div class="pt-2 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10 space-y-1.5">
                 <div class="flex justify-between items-center text-xs">
-                    <span class="font-semibold text-[#6e6e73]">Automated Webhook Payload (OpenAlgo / TV):</span>
-                    <button onclick="copyBrokerWebhookPayload()" class="text-[#007aff] hover:underline font-bold text-[11px] cursor-pointer">
+                    <span class="font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">Automated Webhook Payload (OpenAlgo / TV):</span>
+                    <button onclick="copyBrokerWebhookPayload()" class="text-[#007aff] dark:text-blue-400 hover:underline font-bold text-[11px] cursor-pointer">
                         📋 Copy JSON
                     </button>
                 </div>

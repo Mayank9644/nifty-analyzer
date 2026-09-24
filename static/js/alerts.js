@@ -185,17 +185,17 @@ function renderAlertListInModal() {
     container.innerHTML = alerts.map(a => {
         const isTriggered = a.triggered;
         return `
-            <div class="flex items-center justify-between p-2.5 rounded-xl border ${isTriggered ? 'bg-amber-50/50 border-amber-200' : 'bg-[#f8f8fa] border-[rgba(0,0,0,0.05)]'} text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl border ${isTriggered ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40' : 'bg-[#f8f8fa] dark:bg-[#1c1f2e] border-[rgba(0,0,0,0.05)] dark:border-white/10'} text-xs">
                 <div class="flex items-center gap-2.5">
                     <span class="text-sm">${isTriggered ? '⚡' : '🔔'}</span>
                     <div>
-                        <div class="font-bold text-[#1c1c1e] flex items-center gap-1.5">
+                        <div class="font-bold text-[#1c1c1e] dark:text-[#f5f5f7] flex items-center gap-1.5">
                             ${a.code}
-                            <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold ${a.condition === 'ABOVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold ${a.condition === 'ABOVE' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300'}">
                                 ${a.condition} ₹${a.targetPrice.toLocaleString('en-IN')}
                             </span>
                         </div>
-                        <div class="text-[10.5px] text-[#8e8e93]">
+                        <div class="text-[10.5px] text-[#8e8e93] dark:text-[#a1a1a6]">
                             ${isTriggered ? `Triggered at ${a.triggeredAt}` : `Created on ${a.created}`}
                         </div>
                     </div>
@@ -213,36 +213,36 @@ function createAlertModalDOM() {
     div.id = "alertWatchdogModal";
     div.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 hidden";
     div.innerHTML = `
-        <div class="macos-card bg-white w-full max-w-md p-6 space-y-4 shadow-2xl relative">
-            <button onclick="closeAlertManagerModal()" class="absolute top-4 right-4 text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold">✕</button>
+        <div class="macos-card bg-white dark:bg-[#151722] w-full max-w-md p-6 space-y-4 shadow-2xl relative border dark:border-white/10">
+            <button onclick="closeAlertManagerModal()" class="absolute top-4 right-4 text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-lg font-bold">✕</button>
             
             <div class="flex items-center gap-3">
-                <span class="text-2xl p-2 rounded-xl bg-amber-500/10 text-amber-600">🔔</span>
+                <span class="text-2xl p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">🔔</span>
                 <div>
-                    <h3 class="text-base font-bold text-[#1c1c1e]">Real-Time Alert Watchdog</h3>
-                    <p class="text-xs text-[#6e6e73]">Audio chime & visual notifications when targets trigger</p>
+                    <h3 class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">Real-Time Alert Watchdog</h3>
+                    <p class="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">Audio chime & visual notifications when targets trigger</p>
                 </div>
             </div>
 
             <!-- Create New Alert Card -->
-            <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.06)] space-y-2.5 text-xs">
-                <div class="font-semibold text-[#1c1c1e]">Set New Price Threshold</div>
+            <div class="p-3.5 rounded-xl bg-[#f8f8fa] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.06)] dark:border-white/10 space-y-2.5 text-xs">
+                <div class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">Set New Price Threshold</div>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
-                        <label class="text-[#6e6e73] block mb-1">Symbol</label>
-                        <input id="alertModalSymbol" type="text" placeholder="RELIANCE" class="w-full px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] font-bold uppercase outline-none focus:border-[#007aff]">
+                        <label class="text-[#6e6e73] dark:text-[#a1a1a6] block mb-1">Symbol</label>
+                        <input id="alertModalSymbol" type="text" placeholder="RELIANCE" class="w-full px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#151722] dark:text-white font-bold uppercase outline-none focus:border-[#007aff]">
                     </div>
                     <div>
-                        <label class="text-[#6e6e73] block mb-1">Condition</label>
-                        <select id="alertModalCondition" class="w-full px-2 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] font-semibold outline-none focus:border-[#007aff]">
+                        <label class="text-[#6e6e73] dark:text-[#a1a1a6] block mb-1">Condition</label>
+                        <select id="alertModalCondition" class="w-full px-2 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#151722] dark:text-white font-semibold outline-none focus:border-[#007aff]">
                             <option value="ABOVE">Price ≥</option>
                             <option value="BELOW">Price ≤</option>
                             <option value="52W_HIGH">52W Breakout</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[#6e6e73] block mb-1">Price (₹)</label>
-                        <input id="alertModalPrice" type="number" step="0.5" placeholder="2850" class="w-full px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] font-bold mono outline-none focus:border-[#007aff]">
+                        <label class="text-[#6e6e73] dark:text-[#a1a1a6] block mb-1">Price (₹)</label>
+                        <input id="alertModalPrice" type="number" step="0.5" placeholder="2850" class="w-full px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-[#151722] dark:text-white font-bold mono outline-none focus:border-[#007aff]">
                     </div>
                 </div>
                 <button onclick="handleCreateAlertSubmit()" class="w-full py-2 rounded-xl bg-[#007aff] hover:bg-[#0062cc] text-white font-bold text-xs transition-colors cursor-pointer">
@@ -253,8 +253,8 @@ function createAlertModalDOM() {
             <!-- Active Alerts List -->
             <div class="space-y-2">
                 <div class="flex justify-between items-center text-xs">
-                    <span class="font-semibold text-[#48484a]">Monitored Alerts</span>
-                    <button onclick="clearTriggeredAlerts()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-[11px] font-medium">Clear Triggered</button>
+                    <span class="font-semibold text-[#48484a] dark:text-[#d1d1d6]">Monitored Alerts</span>
+                    <button onclick="clearTriggeredAlerts()" class="text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-[11px] font-medium">Clear Triggered</button>
                 </div>
                 <div id="alertModalListContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
             </div>

@@ -29,30 +29,30 @@ function renderOptionsChainTable(containerId, optionsData) {
         const putWidth = maxPutOi > 0 ? Math.min((peOiNum / maxPutOi) * 100, 100) : 0;
 
         rowsHtml += `
-            <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors text-xs ${isATM ? 'bg-[#eef5fd]/70' : ''}">
+            <tr class="border-b border-[rgba(0,0,0,0.06)] dark:border-white/10 hover:bg-[#f5f5f7] dark:hover:bg-white/5 transition-colors text-xs ${isATM ? 'bg-[#eef5fd]/70 dark:bg-blue-950/40' : ''}">
                 <!-- CALLS -->
-                <td class="py-2.5 px-2 text-right relative text-[#1c1c1e] font-medium">
+                <td class="py-2.5 px-2 text-right relative text-[#1c1c1e] dark:text-[#f5f5f7] font-medium">
                     <div class="oi-bar oi-bar-call" style="width: ${callWidth}%"></div>
                     ${formatVolume(row.ce_oi)}
                 </td>
-                <td class="py-2.5 px-2 text-right text-[#6e6e73] hidden sm:table-cell">${row.ce_change_oi > 0 ? '+' : ''}${formatVolume(row.ce_change_oi)}</td>
-                <td class="py-2.5 px-2 text-right text-[#6e6e73] hidden md:table-cell">${row.ce_iv}%</td>
-                <td class="py-2.5 px-2 text-right text-[#1e7e34] hidden lg:table-cell">${row.ce_delta}</td>
-                <td class="py-2.5 px-3 text-right text-[#1e7e34] font-semibold mono">₹${row.ce_ltp}</td>
+                <td class="py-2.5 px-2 text-right text-[#6e6e73] dark:text-[#a1a1a6] hidden sm:table-cell">${row.ce_change_oi > 0 ? '+' : ''}${formatVolume(row.ce_change_oi)}</td>
+                <td class="py-2.5 px-2 text-right text-[#6e6e73] dark:text-[#a1a1a6] hidden md:table-cell">${row.ce_iv}%</td>
+                <td class="py-2.5 px-2 text-right text-[#1e7e34] dark:text-[#34c759] hidden lg:table-cell">${row.ce_delta}</td>
+                <td class="py-2.5 px-3 text-right text-[#1e7e34] dark:text-[#34c759] font-semibold mono">₹${row.ce_ltp}</td>
 
                 <!-- STRIKE -->
-                <td class="py-2.5 px-3 text-center font-bold bg-[#f8f8fa] border-x border-[rgba(0,0,0,0.08)] mono ${isATM ? 'text-[#007aff] bg-[#eef5fd]' : 'text-[#1c1c1e]'}">
+                <td class="py-2.5 px-3 text-center font-bold bg-[#f8f8fa] dark:bg-[#1c1f2e] border-x border-[rgba(0,0,0,0.08)] dark:border-white/10 mono ${isATM ? 'text-[#007aff] bg-[#eef5fd] dark:bg-blue-950/40' : 'text-[#1c1c1e] dark:text-[#f5f5f7]'}">
                     ${row.strike}
-                    ${isMaxPain ? '<span class="block text-[9px] text-[#8a4500] font-medium">MAX PAIN</span>' : ''}
+                    ${isMaxPain ? '<span class="block text-[9px] text-[#8a4500] dark:text-[#ffb340] font-medium">MAX PAIN</span>' : ''}
                     ${isATM ? '<span class="block text-[9px] text-[#007aff] font-medium">ATM</span>' : ''}
                 </td>
 
                 <!-- PUTS -->
-                <td class="py-2.5 px-3 text-left text-[#b32020] font-semibold mono">₹${row.pe_ltp}</td>
-                <td class="py-2.5 px-2 text-left text-[#b32020] hidden lg:table-cell">${row.pe_delta}</td>
-                <td class="py-2.5 px-2 text-left text-[#6e6e73] hidden md:table-cell">${row.pe_iv}%</td>
-                <td class="py-2.5 px-2 text-left text-[#6e6e73] hidden sm:table-cell">${row.pe_change_oi > 0 ? '+' : ''}${formatVolume(row.pe_change_oi)}</td>
-                <td class="py-2.5 px-2 text-left relative text-[#1c1c1e] font-medium">
+                <td class="py-2.5 px-3 text-left text-[#b32020] dark:text-[#ff6961] font-semibold mono">₹${row.pe_ltp}</td>
+                <td class="py-2.5 px-2 text-left text-[#b32020] dark:text-[#ff6961] hidden lg:table-cell">${row.pe_delta}</td>
+                <td class="py-2.5 px-2 text-left text-[#6e6e73] dark:text-[#a1a1a6] hidden md:table-cell">${row.pe_iv}%</td>
+                <td class="py-2.5 px-2 text-left text-[#6e6e73] dark:text-[#a1a1a6] hidden sm:table-cell">${row.pe_change_oi > 0 ? '+' : ''}${formatVolume(row.pe_change_oi)}</td>
+                <td class="py-2.5 px-2 text-left relative text-[#1c1c1e] dark:text-[#f5f5f7] font-medium">
                     <div class="oi-bar oi-bar-put" style="width: ${putWidth}%"></div>
                     ${formatVolume(row.pe_oi)}
                 </td>
@@ -64,19 +64,19 @@ function renderOptionsChainTable(containerId, optionsData) {
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[11px] uppercase tracking-wider border-b border-[rgba(0,0,0,0.08)]">
-                        <th colspan="5" class="py-2 px-3 text-center bg-[#edf7ee] text-[#1e7e34] border-r border-[rgba(0,0,0,0.08)] font-semibold">CALL OPTIONS (BULLS)</th>
-                        <th class="py-2 px-3 text-center bg-[#f5f5f7] text-[#007aff] font-bold">STRIKE</th>
-                        <th colspan="5" class="py-2 px-3 text-center bg-[#fdf0f0] text-[#b32020] border-l border-[rgba(0,0,0,0.08)] font-semibold">PUT OPTIONS (BEARS)</th>
+                    <tr class="text-[11px] uppercase tracking-wider border-b border-[rgba(0,0,0,0.08)] dark:border-white/10">
+                        <th colspan="5" class="py-2 px-3 text-center bg-[#edf7ee] text-[#1e7e34] border-r border-[rgba(0,0,0,0.08)] dark:border-white/10 font-semibold">CALL OPTIONS (BULLS)</th>
+                        <th class="py-2 px-3 text-center bg-[#f5f5f7] dark:bg-[#1c1f2e] text-[#007aff] font-bold">STRIKE</th>
+                        <th colspan="5" class="py-2 px-3 text-center bg-[#fdf0f0] text-[#b32020] border-l border-[rgba(0,0,0,0.08)] dark:border-white/10 font-semibold">PUT OPTIONS (BEARS)</th>
                     </tr>
-                    <tr class="bg-[#f8f8fa] text-[10px] text-[#6e6e73] border-b border-[rgba(0,0,0,0.08)]">
+                    <tr class="bg-[#f8f8fa] dark:bg-[#151722] text-[10px] text-[#6e6e73] dark:text-[#a1a1a6] border-b border-[rgba(0,0,0,0.08)] dark:border-white/10">
                         <th class="py-2 px-2 text-right">OI</th>
                         <th class="py-2 px-2 text-right hidden sm:table-cell">Chg OI</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">IV</th>
                         <th class="py-2 px-2 text-right hidden lg:table-cell">Delta</th>
-                        <th class="py-2 px-3 text-right text-[#1e7e34]">LTP</th>
-                        <th class="py-2 px-3 text-center bg-[#f5f5f7] border-x border-[rgba(0,0,0,0.08)]">PRICE</th>
-                        <th class="py-2 px-3 text-left text-[#b32020]">LTP</th>
+                        <th class="py-2 px-3 text-right text-[#1e7e34] dark:text-[#34c759]">LTP</th>
+                        <th class="py-2 px-3 text-center bg-[#f5f5f7] dark:bg-[#1c1f2e] border-x border-[rgba(0,0,0,0.08)] dark:border-white/10">PRICE</th>
+                        <th class="py-2 px-3 text-left text-[#b32020] dark:text-[#ff6961]">LTP</th>
                         <th class="py-2 px-2 text-left hidden lg:table-cell">Delta</th>
                         <th class="py-2 px-2 text-left hidden md:table-cell">IV</th>
                         <th class="py-2 px-2 text-left hidden sm:table-cell">Chg OI</th>
@@ -225,18 +225,18 @@ function renderPayoffChart(curve, spotPrice) {
             },
             scales: {
                 x: {
-                    grid: { color: "rgba(0,0,0,0.03)" },
+                    grid: { color: document.documentElement.getAttribute("data-theme") === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)" },
                     ticks: {
                         font: { size: 10 },
-                        color: "#8e8e93",
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#a1a1a6" : "#8e8e93",
                         callback: v => `₹${labels[v] || v}`
                     }
                 },
                 y: {
-                    grid: { color: "rgba(0,0,0,0.04)" },
+                    grid: { color: document.documentElement.getAttribute("data-theme") === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" },
                     ticks: {
                         font: { size: 10 },
-                        color: "#8e8e93",
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#a1a1a6" : "#8e8e93",
                         callback: v => `₹${v.toLocaleString("en-IN")}`
                     }
                 }

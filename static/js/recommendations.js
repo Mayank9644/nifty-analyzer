@@ -748,8 +748,8 @@ function openFormulaInspectionModal(category, index) {
     title.textContent = `📐 ${item.math_details.formula_name || 'Calculation Breakdown'}`;
 
     let detailsHtml = `
-        <div class="space-y-4 text-xs text-[#1c1c1e]">
-            <div class="p-3 bg-[#f5f5f7] rounded-xl border border-[rgba(0,0,0,0.06)]">
+        <div class="space-y-4 text-xs text-[#1c1c1e] dark:text-white">
+            <div class="p-3 bg-[#f5f5f7] dark:bg-white/5 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                 <span class="text-[10px] text-[#8e8e93] uppercase font-bold tracking-wider block">Security / Asset:</span>
                 <span class="text-sm font-bold">${item.underlying || item.code || item.name}</span>
             </div>
@@ -761,16 +761,16 @@ function openFormulaInspectionModal(category, index) {
         if (key === "formula_name") return;
         const label = key.replace(/_/g, " ").toUpperCase();
         detailsHtml += `
-            <div class="p-2.5 rounded-lg border border-[rgba(0,0,0,0.06)] bg-white">
+            <div class="p-2.5 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-white/10 bg-white dark:bg-white/5">
                 <span class="text-[10px] text-[#007aff] font-bold block mb-0.5">${label}</span>
-                <span class="mono font-semibold text-[#1c1c1e] text-[11.5px]">${val}</span>
+                <span class="mono font-semibold text-[#1c1c1e] dark:text-white text-[11.5px]">${val}</span>
             </div>
         `;
     });
 
     detailsHtml += `
             </div>
-            <div class="p-3 bg-[#edf7ee] rounded-xl border border-[#c6e8cc] text-[11px] text-[#1e7e34]">
+            <div class="p-3 bg-[#edf7ee] dark:bg-emerald-950/30 rounded-xl border border-[#c6e8cc] dark:border-emerald-800/40 text-[11px] text-[#1e7e34] dark:text-emerald-400">
                 ✅ <strong>Transparency Guarantee:</strong> This recommendation passed algorithmic quantitative filters without manual bias.
             </div>
         </div>

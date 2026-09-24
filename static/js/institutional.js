@@ -176,7 +176,7 @@ function renderFiiDiiCashFlows(cashFlows, summary) {
                     labels: {
                         boxWidth: 12,
                         font: { size: 11, family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto" },
-                        color: "#48484a"
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#d1d1d6" : "#48484a"
                     }
                 },
                 tooltip: {
@@ -194,7 +194,7 @@ function renderFiiDiiCashFlows(cashFlows, summary) {
                     ticks: { font: { size: 10 }, color: "#8e8e93" }
                 },
                 y: {
-                    grid: { color: "rgba(0,0,0,0.04)" },
+                    grid: { color: document.documentElement.getAttribute("data-theme") === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" },
                     ticks: {
                         font: { size: 10 },
                         color: "#8e8e93",
@@ -254,19 +254,19 @@ function renderDeliveryAccumulationTable(stocks) {
         const changeSign = isUp ? "+" : "";
 
         return `
-        <tr class="border-b border-[rgba(0,0,0,0.04)] hover:bg-[#fafafc] transition-colors text-xs">
+        <tr class="border-b border-[rgba(0,0,0,0.04)] dark:border-white/5 hover:bg-[#fafafc] dark:hover:bg-white/5 transition-colors text-xs">
             <td class="py-2.5 px-3 text-col">
-                <div class="font-bold text-[#1c1c1e]">${s.code}</div>
+                <div class="font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">${s.code}</div>
                 <div class="text-[10px] text-[#8e8e93]">${s.name}</div>
             </td>
-            <td class="py-2.5 px-3 text-col text-[#5a5a5f] text-[11px]">${s.sector || "Large Cap"}</td>
-            <td class="py-2.5 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(s.price || 0)}</td>
+            <td class="py-2.5 px-3 text-col text-[#5a5a5f] dark:text-[#a1a1a6] text-[11px]">${s.sector || "Large Cap"}</td>
+            <td class="py-2.5 px-3 num-col font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${formatINR(s.price || 0)}</td>
             <td class="py-2.5 px-3 num-col font-semibold ${changeClass}">${changeSign}${s.day_change_pct}%</td>
-            <td class="py-2.5 px-3 num-col font-semibold text-[#007aff]">${s.volume_surge}</td>
+            <td class="py-2.5 px-3 num-col font-semibold text-[#007aff] dark:text-blue-400">${s.volume_surge}</td>
             <td class="py-2.5 px-3 num-col">
                 <div class="flex items-center justify-end gap-2">
-                    <span class="font-bold mono text-[#1c1c1e]">${s.delivery_pct}%</span>
-                    <div class="w-14 bg-[#e5e5ea] rounded-full h-1.5 overflow-hidden">
+                    <span class="font-bold mono text-[#1c1c1e] dark:text-[#f5f5f7]">${s.delivery_pct}%</span>
+                    <div class="w-14 bg-[#e5e5ea] dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
                         <div class="h-1.5 rounded-full ${s.delivery_pct >= 50 ? 'bg-[#10b981]' : 'bg-[#007aff]'}" style="width: ${Math.min(100, s.delivery_pct)}%"></div>
                     </div>
                 </div>

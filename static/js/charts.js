@@ -461,6 +461,8 @@ function renderExpertRadarChart(canvasId, radarData) {
         radarStrategyChart.destroy();
     }
 
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
     radarStrategyChart = new Chart(ctx, {
         type: "radar",
         data: {
@@ -468,10 +470,10 @@ function renderExpertRadarChart(canvasId, radarData) {
             datasets: [{
                 label: "Expert Alignment Score (0-100)",
                 data: radarData.data,
-                backgroundColor: "rgba(0, 113, 227, 0.15)",
+                backgroundColor: isDark ? "rgba(0, 113, 227, 0.25)" : "rgba(0, 113, 227, 0.15)",
                 borderColor: "#0071e3",
                 pointBackgroundColor: "#0071e3",
-                pointBorderColor: "#fff",
+                pointBorderColor: isDark ? "#1c1f2e" : "#fff",
                 pointHoverBackgroundColor: "#fff",
                 pointHoverBorderColor: "#0071e3",
                 borderWidth: 2
@@ -482,9 +484,9 @@ function renderExpertRadarChart(canvasId, radarData) {
             maintainAspectRatio: false,
             scales: {
                 r: {
-                    angleLines: { color: "#e5e5ea" },
-                    grid: { color: "#e5e5ea" },
-                    pointLabels: { color: "#3a3a3c", font: { family: "-apple-system, BlinkMacSystemFont, sans-serif", size: 10, weight: "500" } },
+                    angleLines: { color: isDark ? "rgba(255,255,255,0.08)" : "#e5e5ea" },
+                    grid: { color: isDark ? "rgba(255,255,255,0.08)" : "#e5e5ea" },
+                    pointLabels: { color: isDark ? "#d1d1d6" : "#3a3a3c", font: { family: "-apple-system, BlinkMacSystemFont, sans-serif", size: 10, weight: "500" } },
                     ticks: { display: false, min: 0, max: 100, stepSize: 25 },
                     suggestedMin: 0,
                     suggestedMax: 100

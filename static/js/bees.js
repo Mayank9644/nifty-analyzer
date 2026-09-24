@@ -56,26 +56,26 @@ function renderBeesUI(data) {
     <div class="space-y-6">
 
         <!-- 1. EXECUTIVE "WHAT TO HOLD & WHEN TO SELL" DECISION HUB -->
-        <div class="macos-card p-6 space-y-5 border-2 ${isNifty ? 'border-[#10b981]/40' : 'border-[#f59e0b]/40'} bg-gradient-to-br ${isNifty ? 'from-white via-[#edf7ee]/25 to-white' : 'from-white via-[#fef6ed]/25 to-white'}">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] pb-4">
+        <div class="macos-card p-6 space-y-5 border-2 ${isNifty ? 'border-[#10b981]/40' : 'border-[#f59e0b]/40'} bg-gradient-to-br ${isNifty ? 'from-white via-[#edf7ee]/25 to-white dark:from-[#151722] dark:via-[#1c1f2e] dark:to-[#151722]' : 'from-white via-[#fef6ed]/25 to-white dark:from-[#151722] dark:via-[#1c1f2e] dark:to-[#151722]'}">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(0,0,0,0.06)] dark:border-white/10 pb-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
                         <span class="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${isNifty ? 'bg-[#10b981] text-white' : 'bg-[#f59e0b] text-white'}">
                             ${guide.current_stance || ('CURRENT STANCE: HOLD ' + data.recommended_etf)}
                         </span>
-                        <span class="text-xs font-semibold text-[#86868b]">Simplified ETF Holding Guide</span>
+                        <span class="text-xs font-semibold text-[#86868b] dark:text-[#a1a1a6]">Simplified ETF Holding Guide</span>
                     </div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-[#1c1c1e] flex items-center gap-2">
+                    <h2 class="text-xl sm:text-2xl font-bold text-[#1c1c1e] dark:text-[#f5f5f7] flex items-center gap-2">
                         <span>${guide.stance_icon || (isNifty ? '🇮🇳' : '🥇')}</span>
                         <span>${guide.hero_title || (isNifty ? 'Equities Leading Market (Bullish Uptrend)' : 'Gold Safe-Haven Leading (Defensive Regime)')}</span>
                     </h2>
                 </div>
-                <div class="flex items-center gap-2 bg-white/80 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[rgba(0,0,0,0.08)] shadow-sm">
+                <div class="flex items-center gap-2 bg-white/80 dark:bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[rgba(0,0,0,0.08)] dark:border-white/10 shadow-sm">
                     <div class="text-right text-xs">
-                        <span class="text-[10px] text-[#86868b] block font-medium uppercase tracking-wider">Live Prices (Max 2 Decimals)</span>
-                        <span class="font-bold mono text-[#1c1c1e]">NIFTYBEES ₹${fmtBeesPrice(n.price)}</span>
-                        <span class="text-[#86868b] mx-1">|</span>
-                        <span class="font-bold mono text-[#8a4500]">GOLDBEES ₹${fmtBeesPrice(g.price)}</span>
+                        <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block font-medium uppercase tracking-wider">Live Prices (Max 2 Decimals)</span>
+                        <span class="font-bold mono text-[#1c1c1e] dark:text-[#f5f5f7]">NIFTYBEES ₹${fmtBeesPrice(n.price)}</span>
+                        <span class="text-[#86868b] dark:text-[#a1a1a6] mx-1">|</span>
+                        <span class="font-bold mono text-[#8a4500] dark:text-amber-400">GOLDBEES ₹${fmtBeesPrice(g.price)}</span>
                     </div>
                 </div>
             </div>
@@ -83,63 +83,63 @@ function renderBeesUI(data) {
             <!-- 3 Plain-English Decision Pillars -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 <!-- Pillar 1: What to Hold -->
-                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                <div class="p-4 rounded-xl bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.08)] dark:border-white/10 shadow-sm flex flex-col justify-between space-y-2">
                     <div>
                         <div class="flex items-center gap-2 text-xs font-bold text-[#10b981] uppercase tracking-wider">
                             <span>📌</span> What to Hold Right Now
                         </div>
-                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">${data.recommended_etf}</h3>
-                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed">
+                        <h3 class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7] mt-1">${data.recommended_etf}</h3>
+                        <p class="text-xs text-[#48484a] dark:text-[#d1d1d6] mt-1.5 leading-relaxed">
                             ${guide.what_to_hold ? guide.what_to_hold.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : `Hold <strong>${data.recommended_etf}</strong> (₹${fmtBeesPrice(etf.price)}). Zero single-stock risk — you automatically participate in India's top companies with maximum safety.`}
                         </p>
                     </div>
-                    <div class="pt-2 text-[11px] font-semibold text-[#10b981] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                    <div class="pt-2 text-[11px] font-semibold text-[#10b981] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)] dark:border-white/5">
                         <span>✓</span> Zero balance-sheet or company fraud risk
                     </div>
                 </div>
 
                 <!-- Pillar 2: When to Sell -->
-                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                <div class="p-4 rounded-xl bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.08)] dark:border-white/10 shadow-sm flex flex-col justify-between space-y-2">
                     <div>
                         <div class="flex items-center gap-2 text-xs font-bold text-[#b32020] uppercase tracking-wider">
                             <span>🛑</span> When to Sell
                         </div>
-                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">${isNifty ? 'Exit / Shift Triggers' : 'Safe-Haven Exit Triggers'}</h3>
-                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed">
+                        <h3 class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7] mt-1">${isNifty ? 'Exit / Shift Triggers' : 'Safe-Haven Exit Triggers'}</h3>
+                        <p class="text-xs text-[#48484a] dark:text-[#d1d1d6] mt-1.5 leading-relaxed">
                             ${guide.when_to_sell || (isNifty ? `Sell NIFTYBEES only if it closes below 50-DMA (₹${fmtBeesPrice(n.sma50)}) for 2 days, or if Donchian ratio hits the Gold breakdown trigger.` : `Hold Gold until Equities reclaim their 50-DMA and 200-DMA with strong breakout volume.`)}
                         </p>
                     </div>
-                    <div class="pt-2 text-[11px] font-semibold text-[#6e6e73] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                    <div class="pt-2 text-[11px] font-semibold text-[#6e6e73] dark:text-[#a1a1a6] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)] dark:border-white/5">
                         <span>🛡️</span> No panic selling, rule-based execution
                     </div>
                 </div>
 
                 <!-- Pillar 3: When to Switch -->
-                <div class="p-4 rounded-xl bg-white border border-[rgba(0,0,0,0.08)] shadow-sm flex flex-col justify-between space-y-2">
+                <div class="p-4 rounded-xl bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.08)] dark:border-white/10 shadow-sm flex flex-col justify-between space-y-2">
                     <div>
-                        <div class="flex items-center gap-2 text-xs font-bold text-[#007aff] uppercase tracking-wider">
+                        <div class="flex items-center gap-2 text-xs font-bold text-[#007aff] dark:text-blue-400 uppercase tracking-wider">
                             <span>🔄</span> When to Switch (Shift Rules)
                         </div>
-                        <h3 class="text-base font-bold text-[#1c1c1e] mt-1">Nifty ⇋ Gold Rotation</h3>
-                        <p class="text-xs text-[#48484a] mt-1.5 leading-relaxed whitespace-pre-line">
+                        <h3 class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7] mt-1">Nifty ⇋ Gold Rotation</h3>
+                        <p class="text-xs text-[#48484a] dark:text-[#d1d1d6] mt-1.5 leading-relaxed whitespace-pre-line">
                             ${guide.when_to_switch || `• Shift to GOLDBEES: During equity bear markets to preserve capital.\n• Shift to NIFTYBEES: When equities break out to participate in bull compounding.`}
                         </p>
                     </div>
-                    <div class="pt-2 text-[11px] font-semibold text-[#007aff] flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)]">
+                    <div class="pt-2 text-[11px] font-semibold text-[#007aff] dark:text-blue-400 flex items-center gap-1 border-t border-[rgba(0,0,0,0.04)] dark:border-white/5">
                         <span>⚡</span> Only ~2 frictionless switches per year
                     </div>
                 </div>
             </div>
 
             <!-- All-Weather Target Allocation Bar -->
-            <div class="p-4 rounded-xl bg-white/70 border border-[rgba(0,0,0,0.06)] space-y-2.5">
+            <div class="p-4 rounded-xl bg-white/70 dark:bg-white/5 border border-[rgba(0,0,0,0.06)] dark:border-white/10 space-y-2.5">
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span class="font-bold text-[#1c1c1e] flex items-center gap-1.5">
+                    <span class="font-bold text-[#1c1c1e] dark:text-[#f5f5f7] flex items-center gap-1.5">
                         <span>🎯</span> Recommended All-Weather Portfolio Target Split
                     </span>
-                    <span class="text-[11px] text-[#86868b] font-medium">Auto-Adjusted to Market Regime</span>
+                    <span class="text-[11px] text-[#86868b] dark:text-[#a1a1a6] font-medium">Auto-Adjusted to Market Regime</span>
                 </div>
-                <div class="w-full bg-[#e5e5ea] rounded-full h-3 overflow-hidden flex shadow-inner">
+                <div class="w-full bg-[#e5e5ea] dark:bg-white/10 rounded-full h-3 overflow-hidden flex shadow-inner">
                     <div class="bg-[#007aff] h-full transition-all" style="width: ${isNifty ? '60%' : '25%'}" title="Equities: ${isNifty ? '60%' : '25%'}"></div>
                     <div class="bg-[#ff9500] h-full transition-all" style="width: ${isNifty ? '25%' : '65%'}" title="Gold: ${isNifty ? '25%' : '65%'}"></div>
                     <div class="bg-[#34c759] h-full transition-all" style="width: ${isNifty ? '15%' : '10%'}" title="Liquid / Cash: ${isNifty ? '15%' : '10%'}"></div>
@@ -147,18 +147,18 @@ function renderBeesUI(data) {
                 <div class="grid grid-cols-3 gap-2 text-[11px] pt-0.5">
                     <div class="flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#007aff] inline-block"></span>
-                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '60%' : '25%'} NIFTYBEES</span>
-                        <span class="text-[#86868b] hidden sm:inline">(Wealth Growth)</span>
+                        <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${isNifty ? '60%' : '25%'} NIFTYBEES</span>
+                        <span class="text-[#86868b] dark:text-[#a1a1a6] hidden sm:inline">(Wealth Growth)</span>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#ff9500] inline-block"></span>
-                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '25%' : '65%'} GOLDBEES</span>
-                        <span class="text-[#86868b] hidden sm:inline">(Crash Defense)</span>
+                        <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${isNifty ? '25%' : '65%'} GOLDBEES</span>
+                        <span class="text-[#86868b] dark:text-[#a1a1a6] hidden sm:inline">(Crash Defense)</span>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#34c759] inline-block"></span>
-                        <span class="font-semibold text-[#1c1c1e]">${isNifty ? '15%' : '10%'} LIQUIDBEES</span>
-                        <span class="text-[#86868b] hidden sm:inline">(Buy Dips Reserve)</span>
+                        <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${isNifty ? '15%' : '10%'} LIQUIDBEES</span>
+                        <span class="text-[#86868b] dark:text-[#a1a1a6] hidden sm:inline">(Buy Dips Reserve)</span>
                     </div>
                 </div>
             </div>
@@ -466,7 +466,7 @@ function renderBeesUI(data) {
                         <span class="inline-flex items-center gap-1 text-[#8e8e93] font-semibold"><span class="w-2.5 h-0.5 bg-[#8e8e93] rounded-full inline-block border-b border-dashed"></span> Midline</span>
                     </div>
                 </div>
-                <div id="beesRatioChartContainer" class="w-full h-[330px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                <div id="beesRatioChartContainer" class="w-full h-[330px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
             </div>
 
             <!-- 5-Year Quantitative Backtest Proof Card -->
@@ -618,7 +618,7 @@ function renderDonchianRatioChart(history) {
         width: container.clientWidth || 800,
         height: 330,
         layout: {
-            background: { color: isDark ? "#1c1c1e" : "#ffffff" },
+            background: { color: isDark ? "#151722" : "#ffffff" },
             textColor: isDark ? "#8e8e93" : "#6e6e73",
             fontSize: 11,
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"

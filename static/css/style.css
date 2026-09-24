@@ -423,7 +423,7 @@ button.btn-primary:hover {
 
 /* Secondary Button */
 .btn-secondary {
-    background-color: #ffffff !important;
+    background-color: var(--macos-card) !important;
     border: 1px solid var(--macos-border-strong) !important;
     color: var(--macos-label-primary) !important;
     border-radius: 8px !important;
@@ -501,36 +501,67 @@ button.btn-primary:hover {
 }
 
 /* Soft Tints */
-.bg-emerald-500\/20, .bg-emerald-900\/20, .bg-emerald-50 {
+.bg-emerald-500\/20, .bg-emerald-900\/20, .bg-emerald-50,
+.bg-\[\#edf7ee\] {
     background-color: var(--macos-green-tint) !important;
 }
-.bg-rose-500\/20, .bg-rose-950\/20, .bg-rose-50 {
-    background-color: var(--macos-red-tint) !important;
+.text-\[\#1e7e34\] {
+    color: var(--macos-green-text) !important;
 }
-.bg-amber-500\/20, .bg-amber-900\/20, .bg-amber-50 {
-    background-color: var(--macos-orange-tint) !important;
-}
-.bg-blue-500\/10, .bg-blue-600\/20, .bg-blue-50 {
-    background-color: var(--macos-blue-tint) !important;
-}
-
-/* Soft Borders */
-.border-emerald-500\/30, .border-emerald-800\/40, .border-emerald-200 {
+.border-emerald-500\/30, .border-emerald-800\/40, .border-emerald-200,
+.border-\[\#c6e8cc\] {
     border-color: var(--macos-green-border) !important;
 }
-.border-rose-500\/30, .border-rose-800\/50, .border-rose-200 {
+
+.bg-rose-500\/20, .bg-rose-950\/20, .bg-rose-50,
+.bg-\[\#fdf0f0\] {
+    background-color: var(--macos-red-tint) !important;
+}
+.text-\[\#b32020\] {
+    color: var(--macos-red-text) !important;
+}
+.border-rose-500\/30, .border-rose-800\/50, .border-rose-200,
+.border-\[\#f7c8c8\] {
     border-color: var(--macos-red-border) !important;
 }
-.border-amber-500\/30, .border-amber-800\/40, .border-amber-200 {
+
+.bg-amber-500\/20, .bg-amber-900\/20, .bg-amber-50,
+.bg-\[\#fef6ed\], .bg-\[\#fff7ed\] {
+    background-color: var(--macos-orange-tint) !important;
+}
+.text-\[\#8a4500\], .text-\[\#ea580c\] {
+    color: var(--macos-orange-text) !important;
+}
+.border-amber-500\/30, .border-amber-800\/40, .border-amber-200,
+.border-\[\#fcdcb8\], .border-\[\#fed7aa\] {
     border-color: var(--macos-orange-border) !important;
 }
-.border-blue-500\/30, .border-blue-800\/30, .border-blue-200 {
+
+.bg-blue-500\/10, .bg-blue-600\/20, .bg-blue-50,
+.bg-\[\#eff6ff\], .bg-\[\#eef5fd\] {
+    background-color: var(--macos-blue-tint) !important;
+}
+.text-\[\#0062cc\] {
+    color: var(--macos-blue) !important;
+}
+.border-blue-500\/30, .border-blue-800\/30, .border-blue-200,
+.border-\[\#bfdbfe\], .border-\[\#b9d7fb\] {
     border-color: var(--macos-blue-border) !important;
+}
+
+.bg-\[\#f3e8ff\], .bg-\[\#f9efff\] {
+    background-color: var(--macos-purple-tint) !important;
+}
+.text-\[\#7e22ce\], .text-\[\#8944ab\] {
+    color: var(--macos-purple) !important;
+}
+.border-\[\#e9d5ff\], .border-\[\#e5b3ff\] {
+    border-color: var(--macos-purple-border) !important;
 }
 
 /* Form inputs & selects */
 input[type="text"], input[type="number"], input[type="date"], select, textarea {
-    background-color: #ffffff !important;
+    background-color: var(--macos-card) !important;
     border: 1px solid var(--macos-border-strong) !important;
     border-radius: 8px !important;
     color: var(--macos-label-primary) !important;
@@ -543,13 +574,24 @@ input:focus, select:focus, textarea:focus {
     outline: none !important;
 }
 
+/* Explicit native option styling to prevent browser popup theme inversion on macOS */
+select option {
+    background-color: #ffffff;
+    color: #1c1c1e;
+}
+[data-theme="dark"] select option,
+html.dark select option {
+    background-color: #151722;
+    color: #f5f5f7;
+}
+
 /* Clean Tables */
 table {
     border-collapse: separate;
     border-spacing: 0;
 }
 table thead tr {
-    background-color: #f5f5f7 !important;
+    background-color: var(--macos-card-sub) !important;
 }
 table thead th {
     color: var(--macos-label-tertiary) !important;
@@ -563,7 +605,7 @@ table tbody tr {
     transition: background-color 0.12s ease !important;
 }
 table tbody tr:hover {
-    background-color: #f7f7fa !important;
+    background-color: var(--macos-card-hover) !important;
 }
 table tbody td {
     padding: 9px 12px !important;
@@ -575,10 +617,11 @@ table tbody td {
 .fixed.inset-0.z-\[100\] > div,
 #manualTradeModal > div > div,
 #positionAdviceModal > div {
-    background-color: #ffffff !important;
+    background-color: var(--macos-card) !important;
     border: 1px solid var(--macos-border-strong) !important;
     border-radius: 16px !important;
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.18), 0 6px 18px -4px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.25), 0 6px 18px -4px rgba(0, 0, 0, 0.12) !important;
+    color: var(--macos-label-primary) !important;
 }
 
 /* Ticker strip hidden (removed from UI per user request) */
@@ -590,7 +633,7 @@ table tbody td {
 
 /* Global loader */
 #globalLoader {
-    background-color: #ffffff !important;
+    background-color: var(--macos-card) !important;
     border: 1px solid var(--macos-blue-border) !important;
     border-radius: 12px !important;
     color: var(--macos-blue) !important;
@@ -605,10 +648,10 @@ table tbody td {
     opacity: 0;
     transition: opacity 0.18s ease;
     pointer-events: none;
-    background: #ffffff !important;
-    color: #1d1d1f !important;
+    background: var(--macos-card) !important;
+    color: var(--macos-label-primary) !important;
     border: 1px solid var(--macos-border-strong) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important;
     border-radius: 8px !important;
 }
 .has-tooltip:hover .tooltip-box {
@@ -819,17 +862,34 @@ html.dark .style-btn.active,
     color: var(--macos-label-quaternary) !important;
 }
 
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.04\)\],
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.05\)\],
 [data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.06\)\],
 [data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.07\)\],
 [data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.08\)\],
+[data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.1\)\],
 [data-theme="dark"] .border-\[rgba\(0\,0\,0\,0\.12\)\] {
     border-color: var(--macos-border) !important;
+}
+
+[data-theme="dark"] .macos-drawer,
+html.dark .macos-drawer {
+    background: rgba(21, 23, 34, 0.96) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.5) !important;
 }
 
 [data-theme="dark"] input#stockSearchInput {
     background-color: #171926 !important;
     color: #ffffff !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] input#stockSearchInput:focus,
+html.dark input#stockSearchInput:focus {
+    background-color: #1e2235 !important;
+    border-color: var(--macos-blue) !important;
+    box-shadow: 0 0 0 3.5px rgba(10, 132, 255, 0.25) !important;
 }
 
 [data-theme="dark"] #searchDropdown {

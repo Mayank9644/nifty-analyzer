@@ -29,7 +29,7 @@ async function loadEconomicCalendar() {
                             <span class="text-xl">📅</span>
                             <div>
                                 <div class="text-[11px] font-bold uppercase tracking-wider text-[#8e8e93]">${ev.category} • ${ev.country}</div>
-                                <h4 class="text-sm font-bold text-[#1c1c1e]">${ev.event}</h4>
+                                <h4 class="text-sm font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">${ev.event}</h4>
                             </div>
                         </div>
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-bold border ${ev.impact_badge}">
@@ -41,24 +41,24 @@ async function loadEconomicCalendar() {
                     <div class="grid grid-cols-3 gap-2 text-xs">
                         <div class="macos-box p-2.5">
                             <div class="text-[10px] text-[#8e8e93]">Scheduled Time</div>
-                            <div class="font-semibold text-[#1c1c1e]">${ev.date} (${ev.time})</div>
+                            <div class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${ev.date} (${ev.time})</div>
                         </div>
                         <div class="macos-box p-2.5">
                             <div class="text-[10px] text-[#8e8e93]">Market Consensus</div>
-                            <div class="font-semibold text-[#007aff]">${ev.forecast}</div>
+                            <div class="font-semibold text-[#007aff] dark:text-blue-400">${ev.forecast}</div>
                         </div>
                         <div class="macos-box p-2.5">
                             <div class="text-[10px] text-[#8e8e93]">Previous / History</div>
-                            <div class="font-semibold text-[#6e6e73]">${ev.previous}</div>
+                            <div class="font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">${ev.previous}</div>
                         </div>
                     </div>
 
                     <!-- Trader's Tactical Rule -->
-                    <div class="p-3 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.06)] text-xs text-[#1c1c1e] space-y-1">
-                        <div class="font-semibold text-[#1c1c1e] flex items-center gap-1.5 text-[11.5px]">
+                    <div class="p-3 rounded-xl bg-[#f8f8fa] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.06)] dark:border-white/10 text-xs text-[#1c1c1e] dark:text-[#f5f5f7] space-y-1">
+                        <div class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7] flex items-center gap-1.5 text-[11.5px]">
                             <span>💡</span> <span>Tactical Trading Rule & Volatility Strategy:</span>
                         </div>
-                        <p class="text-[11px] text-[#48484a] leading-relaxed">${ev.trader_action}</p>
+                        <p class="text-[11px] text-[#48484a] dark:text-[#d1d1d6] leading-relaxed">${ev.trader_action}</p>
                     </div>
                 </div>
             `;

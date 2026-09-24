@@ -47,22 +47,22 @@ function renderBacktestResults(data) {
     container.innerHTML = `
         <div class="space-y-5">
             <!-- Strategy Header Banner -->
-            <div class="p-4 rounded-2xl bg-[#eff6ff] border border-[#bfdbfe] flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="p-4 rounded-2xl bg-[#eff6ff] dark:bg-white/5 border border-[#bfdbfe] dark:border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div>
-                    <div class="font-bold text-[#1c1c1e] text-sm flex items-center gap-2">
+                    <div class="font-bold text-[#1c1c1e] dark:text-[#f5f5f7] text-sm flex items-center gap-2">
                         <span>🧪</span> ${data.strategy_name}
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-white text-[#007aff] font-semibold border border-[#b9d7fb]">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-white/10 text-[#007aff] dark:text-blue-300 font-semibold border border-[#b9d7fb] dark:border-blue-800/40">
                             ${data.symbol} (${data.period})
                         </span>
                     </div>
-                    <div class="text-[11px] text-[#6e6e73] mt-1">
-                        Frictions deducted: <span class="font-semibold text-[#1c1c1e]">${data.frictions_applied.stt_rate} STT</span> + 
-                        <span class="font-semibold text-[#1c1c1e]">${data.frictions_applied.brokerage}</span> + 
-                        <span class="font-semibold text-[#1c1c1e]">${data.frictions_applied.slippage}</span>
+                    <div class="text-[11px] text-[#6e6e73] dark:text-[#a1a1a6] mt-1">
+                        Frictions deducted: <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${data.frictions_applied.stt_rate} STT</span> + 
+                        <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${data.frictions_applied.brokerage}</span> + 
+                        <span class="font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${data.frictions_applied.slippage}</span>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block">Alpha vs Buy &amp; Hold</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block">Alpha vs Buy &amp; Hold</span>
                     <span class="text-base font-bold mono ${isAlphaPositive ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
                         ${isAlphaPositive ? '+' : ''}${data.alpha_pct}%
                     </span>
@@ -72,45 +72,45 @@ function renderBacktestResults(data) {
             <!-- 5-Grid Institutional Stat Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">Net Return</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block font-medium">Net Return</span>
                     <span class="text-xl font-bold mono ${isProfitable ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
                         ${isProfitable ? '+' : ''}${data.total_return_pct}%
                     </span>
-                    <span class="text-[10px] text-[#86868b] block mt-0.5">${isProfitable ? '+' : ''}₹${formatNumber(data.net_profit_inr, 0)}</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mt-0.5">${isProfitable ? '+' : ''}₹${formatNumber(data.net_profit_inr, 0)}</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">Win Rate</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block font-medium">Win Rate</span>
                     <span class="text-xl font-bold mono text-[#1e7e34]">${data.win_rate}%</span>
-                    <span class="text-[10px] text-[#86868b] block mt-0.5">${data.winning_trades}W / ${data.losing_trades}L (${data.total_trades} total)</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mt-0.5">${data.winning_trades}W / ${data.losing_trades}L (${data.total_trades} total)</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">Profit Factor</span>
-                    <span class="text-xl font-bold mono text-[#007aff]">${data.profit_factor}</span>
-                    <span class="text-[10px] text-[#86868b] block mt-0.5">Gross Win / Loss</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block font-medium">Profit Factor</span>
+                    <span class="text-xl font-bold mono text-[#007aff] dark:text-blue-400">${data.profit_factor}</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mt-0.5">Gross Win / Loss</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">Max Drawdown</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block font-medium">Max Drawdown</span>
                     <span class="text-xl font-bold mono text-[#b32020]">-${data.max_drawdown_pct}%</span>
-                    <span class="text-[10px] text-[#86868b] block mt-0.5">Peak-to-Trough</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mt-0.5">Peak-to-Trough</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">Stock Buy &amp; Hold</span>
-                    <span class="text-xl font-bold mono ${data.benchmark_return_pct >= 0 ? 'text-[#48484a]' : 'text-[#b32020]'}">
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] uppercase tracking-wider block font-medium">Stock Buy &amp; Hold</span>
+                    <span class="text-xl font-bold mono ${data.benchmark_return_pct >= 0 ? 'text-[#48484a] dark:text-[#d1d1d6]' : 'text-[#b32020]'}">
                         ${data.benchmark_return_pct > 0 ? '+' : ''}${data.benchmark_return_pct}%
                     </span>
-                    <span class="text-[10px] text-[#86868b] block mt-0.5">Passive Baseline</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mt-0.5">Passive Baseline</span>
                 </div>
             </div>
 
             <!-- Equity Curve vs Benchmark Chart -->
             <div class="macos-card p-5 space-y-3">
                 <div class="flex justify-between items-center">
-                    <h4 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider flex items-center gap-1.5">
+                    <h4 class="text-xs font-semibold text-[#1c1c1e] dark:text-[#f5f5f7] uppercase tracking-wider flex items-center gap-1.5">
                         <span>📈</span> Cumulative Equity Curve vs Buy &amp; Hold Baseline
                     </h4>
                     <div class="flex items-center gap-3 text-[11px]">
                         <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-[#007aff] inline-block rounded"></span> Strategy Net Equity</span>
-                        <span class="flex items-center gap-1.5 text-[#86868b]"><span class="w-3 h-0.5 bg-[#86868b] inline-block rounded"></span> Stock Buy &amp; Hold</span>
+                        <span class="flex items-center gap-1.5 text-[#86868b] dark:text-[#a1a1a6]"><span class="w-3 h-0.5 bg-[#86868b] inline-block rounded"></span> Stock Buy &amp; Hold</span>
                     </div>
                 </div>
                 <div class="w-full h-[260px]">
@@ -121,13 +121,13 @@ function renderBacktestResults(data) {
             <!-- Historical Trade Log with Frictions -->
             <div class="macos-card p-4 space-y-3">
                 <div class="flex justify-between items-center">
-                    <h4 class="text-xs font-semibold text-[#1c1c1e] uppercase tracking-wider">Simulated Execution Log (Last 20 Trades):</h4>
-                    <span class="text-[10px] text-[#86868b]">All figures net of taxes &amp; commissions</span>
+                    <h4 class="text-xs font-semibold text-[#1c1c1e] dark:text-[#f5f5f7] uppercase tracking-wider">Simulated Execution Log (Last 20 Trades):</h4>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6]">All figures net of taxes &amp; commissions</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr class="bg-[#f5f5f7] text-[#6e6e73] text-[10px] uppercase font-semibold border-b border-[rgba(0,0,0,0.08)]">
+                            <tr class="bg-[#f5f5f7] dark:bg-[#1a1c26] text-[#6e6e73] dark:text-[#a1a1a6] text-[10px] uppercase font-semibold border-b border-[rgba(0,0,0,0.08)] dark:border-white/10">
                                 <th class="py-2.5 px-3">Entry</th>
                                 <th class="py-2.5 px-3">Exit</th>
                                 <th class="py-2.5 px-3">Entry ₹</th>
@@ -141,20 +141,20 @@ function renderBacktestResults(data) {
                         </thead>
                         <tbody>
                             ${trades.map(t => `
-                                <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors">
-                                    <td class="py-2.5 px-3 text-[#1c1c1e] mono">${t.entry_date}</td>
-                                    <td class="py-2.5 px-3 text-[#1c1c1e] mono">${t.exit_date}</td>
-                                    <td class="py-2.5 px-3 text-[#1c1c1e] mono">₹${t.entry_price}</td>
-                                    <td class="py-2.5 px-3 text-[#1c1c1e] mono">₹${t.exit_price}</td>
-                                    <td class="py-2.5 px-3 text-[#6e6e73] mono">${t.quantity || '-'}</td>
-                                    <td class="py-2.5 px-3 text-[#86868b] mono">₹${t.friction_deducted || '0.00'}</td>
+                                <tr class="border-b border-[rgba(0,0,0,0.06)] dark:border-white/5 hover:bg-[#f5f5f7] dark:hover:bg-white/5 transition-colors">
+                                    <td class="py-2.5 px-3 text-[#1c1c1e] dark:text-[#f5f5f7] mono">${t.entry_date}</td>
+                                    <td class="py-2.5 px-3 text-[#1c1c1e] dark:text-[#f5f5f7] mono">${t.exit_date}</td>
+                                    <td class="py-2.5 px-3 text-[#1c1c1e] dark:text-[#f5f5f7] mono">₹${t.entry_price}</td>
+                                    <td class="py-2.5 px-3 text-[#1c1c1e] dark:text-[#f5f5f7] mono">₹${t.exit_price}</td>
+                                    <td class="py-2.5 px-3 text-[#6e6e73] dark:text-[#a1a1a6] mono">${t.quantity || '-'}</td>
+                                    <td class="py-2.5 px-3 text-[#86868b] dark:text-[#a1a1a6] mono">₹${t.friction_deducted || '0.00'}</td>
                                     <td class="py-2.5 px-3 font-bold mono ${t.is_win ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
                                         ${t.net_pnl > 0 ? '+' : ''}₹${formatNumber(t.net_pnl || 0, 0)}
                                     </td>
                                     <td class="py-2.5 px-3 font-bold mono ${t.is_win ? 'text-[#1e7e34]' : 'text-[#b32020]'}">
                                         ${t.return_pct > 0 ? '+' : ''}${t.return_pct}%
                                     </td>
-                                    <td class="py-2.5 px-3 text-[#6e6e73] text-[11px]">${t.reason}</td>
+                                    <td class="py-2.5 px-3 text-[#6e6e73] dark:text-[#a1a1a6] text-[11px]">${t.reason}</td>
                                 </tr>
                             `).join("")}
                         </tbody>
@@ -181,6 +181,7 @@ function renderBacktestEquityChart(curveData) {
     const equityPoints = curveData.map(d => d.equity);
     const benchmarkPoints = curveData.map(d => d.benchmark);
 
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const ctx = canvas.getContext("2d");
     _backtestChart = new Chart(ctx, {
         type: "line",
@@ -200,7 +201,7 @@ function renderBacktestEquityChart(curveData) {
                 {
                     label: "Stock Buy & Hold (₹)",
                     data: benchmarkPoints,
-                    borderColor: "#86868b",
+                    borderColor: isDark ? "#a1a1a6" : "#86868b",
                     borderDash: [4, 4],
                     fill: false,
                     tension: 0.1,
@@ -224,12 +225,13 @@ function renderBacktestEquityChart(curveData) {
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { maxTicksLimit: 8, font: { size: 10 } }
+                    ticks: { maxTicksLimit: 8, font: { size: 10 }, color: isDark ? "#8e8e93" : "#6e6e73" }
                 },
                 y: {
-                    grid: { color: "#f2f2f7" },
+                    grid: { color: isDark ? "rgba(255,255,255,0.06)" : "#f2f2f7" },
                     ticks: {
                         font: { size: 10 },
+                        color: isDark ? "#8e8e93" : "#6e6e73",
                         callback: (v) => `₹${formatNumber(v, 0)}`
                     }
                 }

@@ -78,12 +78,12 @@ function renderScannerTable(candidates, capital, riskPct) {
     let rowsHtml = candidates.map(c => {
         const s = c.sizing || {};
         return `
-            <tr class="border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f5f5f7] transition-colors text-xs text-[#1c1c1e]">
+            <tr class="border-b border-[rgba(0,0,0,0.06)] dark:border-white/5 hover:bg-[#f5f5f7] dark:hover:bg-white/5 transition-colors text-xs text-[#1c1c1e] dark:text-[#f5f5f7]">
                 <!-- Stock Details -->
                 <td class="py-3 px-3 text-col">
-                    <div class="font-bold text-[#1c1c1e]">${c.code}</div>
-                    <span class="text-[10px] text-[#86868b] block">${c.name}</span>
-                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#eef5fd] text-[#007aff] font-medium mt-0.5 inline-block">${c.pattern}</span>
+                    <div class="font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">${c.code}</div>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block">${c.name}</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#eef5fd] dark:bg-blue-900/30 text-[#007aff] dark:text-blue-300 font-medium mt-0.5 inline-block">${c.pattern}</span>
                 </td>
 
                 <!-- Alpha Score -->
@@ -94,22 +94,22 @@ function renderScannerTable(candidates, capital, riskPct) {
                 </td>
 
                 <!-- Price & Stops -->
-                <td class="py-3 px-3 num-col font-semibold text-[#1c1c1e]">${formatINR(c.current_price || 0)}</td>
+                <td class="py-3 px-3 num-col font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${formatINR(c.current_price || 0)}</td>
                 <td class="py-3 px-3 num-col text-[#b32020]">
                     ${formatINR(c.stop_loss || 0)}
-                    <span class="text-[10px] text-[#86868b] block font-normal">(-${c.stop_loss_pct}%)</span>
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block font-normal">(-${c.stop_loss_pct}%)</span>
                 </td>
 
                 <!-- Targets -->
                 <td class="py-3 px-3 num-col text-[#1e7e34] font-semibold">
-                    ${formatINR(c.target_2r || 0)} <span class="text-[10px] text-[#86868b] font-normal">(2R)</span>
+                    ${formatINR(c.target_2r || 0)} <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] font-normal">(2R)</span>
                     <span class="text-[10px] text-[#1e7e34] block font-normal">${formatINR(c.target_3r || 0)} (3R)</span>
                 </td>
 
                 <!-- Calculated Position Sizing -->
-                <td class="py-3 px-3 num-col bg-[#eef5fd]/60 border-x border-[rgba(0,0,0,0.06)]">
-                    <div class="font-bold text-[#007aff] text-sm">${s.shares_to_buy || 0} Shares</div>
-                    <span class="text-[10px] text-[#6e6e73] block">Capital: ${formatINR(s.position_value || 0)} (${s.position_pct_capital || 0}%)</span>
+                <td class="py-3 px-3 num-col bg-[#eef5fd]/60 dark:bg-white/5 border-x border-[rgba(0,0,0,0.06)] dark:border-white/5">
+                    <div class="font-bold text-[#007aff] dark:text-blue-400 text-sm">${s.shares_to_buy || 0} Shares</div>
+                    <span class="text-[10px] text-[#6e6e73] dark:text-[#a1a1a6] block">Capital: ${formatINR(s.position_value || 0)} (${s.position_pct_capital || 0}%)</span>
                     <span class="text-[9px] text-[#b32020] block">Max Risk: ${formatINR(s.max_risk_rupees || 0)}</span>
                 </td>
 
@@ -135,13 +135,13 @@ function renderScannerTable(candidates, capital, riskPct) {
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                    <tr class="bg-[#f5f5f7] text-[#6e6e73] text-[11px] font-semibold uppercase tracking-wider border-b border-[rgba(0,0,0,0.08)]">
+                    <tr class="bg-[#f5f5f7] dark:bg-[#1a1c26] text-[#6e6e73] dark:text-[#a1a1a6] text-[11px] font-semibold uppercase tracking-wider border-b border-[rgba(0,0,0,0.08)] dark:border-white/10">
                         <th class="py-2.5 px-3 text-col">Stock / Pattern</th>
                         <th class="py-2.5 px-2 badge-col">Alpha Score</th>
                         <th class="py-2.5 px-3 num-col">Entry (CMP)</th>
                         <th class="py-2.5 px-3 num-col">Stop-Loss (ATR)</th>
                         <th class="py-2.5 px-3 num-col">Targets (2R / 3R)</th>
-                        <th class="py-2.5 px-3 num-col bg-[#eef5fd] text-[#007aff] font-semibold border-x border-[rgba(0,0,0,0.08)]">Calculated Sizing</th>
+                        <th class="py-2.5 px-3 num-col bg-[#eef5fd] dark:bg-white/5 text-[#007aff] dark:text-blue-400 font-semibold border-x border-[rgba(0,0,0,0.08)] dark:border-white/10">Calculated Sizing</th>
                         <th class="py-2.5 px-3 badge-col">Action</th>
                     </tr>
                 </thead>

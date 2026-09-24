@@ -120,16 +120,40 @@ function renderSectorRrgGraph(sectors) {
             },
             scales: {
                 x: {
-                    title: { display: true, text: "Relative Strength Ratio (RS-Ratio vs Nifty 50)", font: { size: 11, weight: "bold" } },
+                    title: {
+                        display: true,
+                        text: "Relative Strength Ratio (RS-Ratio vs Nifty 50)",
+                        font: { size: 11, weight: "bold" },
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#d1d1d6" : "#48484a"
+                    },
+                    ticks: {
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#a1a1a6" : "#8e8e93"
+                    },
                     grid: {
-                        color: (ctx) => (ctx.tick && ctx.tick.value === 1.0 ? "#1c1c1e" : "#f2f2f7"),
+                        color: (ctx) => {
+                            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+                            if (ctx.tick && ctx.tick.value === 1.0) return isDark ? "rgba(255,255,255,0.4)" : "#1c1c1e";
+                            return isDark ? "rgba(255,255,255,0.06)" : "#f2f2f7";
+                        },
                         lineWidth: (ctx) => (ctx.tick && ctx.tick.value === 1.0 ? 1.5 : 1)
                     }
                 },
                 y: {
-                    title: { display: true, text: "Momentum of Relative Strength (RS-Momentum)", font: { size: 11, weight: "bold" } },
+                    title: {
+                        display: true,
+                        text: "Momentum of Relative Strength (RS-Momentum)",
+                        font: { size: 11, weight: "bold" },
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#d1d1d6" : "#48484a"
+                    },
+                    ticks: {
+                        color: document.documentElement.getAttribute("data-theme") === "dark" ? "#a1a1a6" : "#8e8e93"
+                    },
                     grid: {
-                        color: (ctx) => (ctx.tick && ctx.tick.value === 0.0 ? "#1c1c1e" : "#f2f2f7"),
+                        color: (ctx) => {
+                            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+                            if (ctx.tick && ctx.tick.value === 0.0) return isDark ? "rgba(255,255,255,0.4)" : "#1c1c1e";
+                            return isDark ? "rgba(255,255,255,0.06)" : "#f2f2f7";
+                        },
                         lineWidth: (ctx) => (ctx.tick && ctx.tick.value === 0.0 ? 1.5 : 1)
                     }
                 }

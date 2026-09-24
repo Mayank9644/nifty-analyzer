@@ -1412,7 +1412,7 @@ function renderSignalsBox(signals, styleInfo) {
                         <div class="font-bold text-xs flex items-center gap-2">
                             <span>AI Trade Confidence:</span>
                             <span class="mono text-sm">${conf.score}%</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-white font-semibold shadow-xs">(${conf.level})</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/80 dark:bg-white/10 text-inherit dark:text-white font-semibold shadow-xs">(${conf.level})</span>
                         </div>
                         <div class="text-[11px] opacity-90 mt-0.5">
                             ${(conf.factors || []).join(" • ")}
@@ -1849,7 +1849,7 @@ async function loadOptionsDashboard(symbol = "NIFTY") {
                             <span class="text-base">📍</span>
                             <span><strong>${symbol} Derivatives Radar:</strong> Max Pain pinned at <strong>₹${data.max_pain.strike}</strong> (${data.max_pain.distance_pts > 0 ? '+' : ''}${data.max_pain.distance_pts} pts) • PCR is <strong>${data.pcr.pcr_oi}</strong> (<span class="${isBull ? 'text-[#1e7e34]' : 'text-[#b32020]'}">${data.pcr.sentiment}</span>)</span>
                         </div>
-                        <span class="text-[10.5px] px-2.5 py-0.5 rounded-full bg-white text-[#007aff] font-bold border border-[#bfdbfe]">Live Open Interest</span>
+                        <span class="text-[10.5px] px-2.5 py-0.5 rounded-full bg-white dark:bg-white/10 text-[#007aff] dark:text-blue-300 font-bold border border-[#bfdbfe] dark:border-blue-800/40">Live Open Interest</span>
                     </div>
                 `;
             }
@@ -2516,6 +2516,7 @@ function setAppTheme(theme) {
 }
 window.setAppTheme = setAppTheme;
 window.toggleAppTheme = toggleAppTheme;
+window.toggleTheme = toggleAppTheme;
 
 /* =========================================================================
    WEB AUDIO API SYNTHESIZER (Apple-style Chimes)

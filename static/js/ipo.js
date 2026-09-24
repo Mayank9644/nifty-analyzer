@@ -31,8 +31,8 @@ async function loadIpoTracker() {
                         <div class="flex items-start justify-between gap-2">
                             <div>
                                 <span class="badge-stock text-[10px] uppercase font-bold">${ipo.category}</span>
-                                <h4 class="text-base font-bold text-[#1c1c1e] mt-1">${ipo.name}</h4>
-                                <p class="text-[11px] text-[#6e6e73] font-medium">${ipo.sector}</p>
+                                <h4 class="text-base font-bold text-[#1c1c1e] dark:text-[#f5f5f7] mt-1">${ipo.name}</h4>
+                                <p class="text-[11px] text-[#6e6e73] dark:text-[#a1a1a6] font-medium">${ipo.sector}</p>
                             </div>
                             <div class="text-right">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold mono bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
@@ -45,19 +45,19 @@ async function loadIpoTracker() {
                         <div class="grid grid-cols-2 gap-2.5 my-3.5">
                             <div class="macos-box p-2.5">
                                 <div class="text-[10.5px] text-[#8e8e93]">Price Band</div>
-                                <div class="text-xs font-semibold mono text-[#1c1c1e]">${ipo.price_band}</div>
+                                <div class="text-xs font-semibold mono text-[#1c1c1e] dark:text-[#f5f5f7]">${ipo.price_band}</div>
                             </div>
                             <div class="macos-box p-2.5">
                                 <div class="text-[10.5px] text-[#8e8e93]">Issue Size</div>
-                                <div class="text-xs font-semibold mono text-[#1c1c1e]">${ipo.issue_size}</div>
+                                <div class="text-xs font-semibold mono text-[#1c1c1e] dark:text-[#f5f5f7]">${ipo.issue_size}</div>
                             </div>
                             <div class="macos-box p-2.5">
                                 <div class="text-[10.5px] text-[#8e8e93]">Min Investment (1 Lot)</div>
-                                <div class="text-xs font-semibold mono text-[#1c1c1e]">₹${ipo.min_investment.toLocaleString('en-IN')} (${ipo.lot_size} shares)</div>
+                                <div class="text-xs font-semibold mono text-[#1c1c1e] dark:text-[#f5f5f7]">₹${ipo.min_investment.toLocaleString('en-IN')} (${ipo.lot_size} shares)</div>
                             </div>
                             <div class="macos-box p-2.5">
                                 <div class="text-[10.5px] text-[#8e8e93]">Dates (Open - Close)</div>
-                                <div class="text-xs font-semibold text-[#1c1c1e]">${ipo.open_date} to ${ipo.close_date}</div>
+                                <div class="text-xs font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${ipo.open_date} to ${ipo.close_date}</div>
                             </div>
                         </div>
 
@@ -70,9 +70,9 @@ async function loadIpoTracker() {
                         </div>
                     </div>
 
-                    <div class="pt-2 border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between text-[11px] text-[#6e6e73]">
-                        <span>Risk: <strong class="text-[#1c1c1e] font-semibold">${ipo.risk}</strong></span>
-                        <span>Subscription: <strong class="text-[#007aff] font-semibold">${ipo.subscription}</strong></span>
+                    <div class="pt-2 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10 flex items-center justify-between text-[11px] text-[#6e6e73] dark:text-[#a1a1a6]">
+                        <span>Risk: <strong class="text-[#1c1c1e] dark:text-[#f5f5f7] font-semibold">${ipo.risk}</strong></span>
+                        <span>Subscription: <strong class="text-[#007aff] dark:text-blue-400 font-semibold">${ipo.subscription}</strong></span>
                     </div>
                 </div>
             `;
@@ -84,13 +84,13 @@ async function loadIpoTracker() {
                 return `
                     <div class="macos-card p-4 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <h5 class="text-xs font-bold text-[#1c1c1e]">${r.name}</h5>
+                            <h5 class="text-xs font-bold text-[#1c1c1e] dark:text-[#f5f5f7]">${r.name}</h5>
                             <span class="badge-stock font-mono text-[10px]">${r.symbol}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 text-center text-xs">
                             <div class="macos-box p-2">
                                 <div class="text-[10px] text-[#8e8e93]">Issue Price</div>
-                                <div class="font-semibold mono text-[#1c1c1e]">₹${r.issue_price}</div>
+                                <div class="font-semibold mono text-[#1c1c1e] dark:text-[#f5f5f7]">₹${r.issue_price}</div>
                             </div>
                             <div class="macos-box p-2">
                                 <div class="text-[10px] text-[#8e8e93]">Listing Pop</div>
@@ -98,7 +98,7 @@ async function loadIpoTracker() {
                             </div>
                             <div class="macos-box p-2">
                                 <div class="text-[10px] text-[#8e8e93]">Current Price</div>
-                                <div class="font-semibold mono text-[#007aff]">₹${r.current_price}</div>
+                                <div class="font-semibold mono text-[#007aff] dark:text-blue-400">₹${r.current_price}</div>
                             </div>
                         </div>
                         <div class="text-center">

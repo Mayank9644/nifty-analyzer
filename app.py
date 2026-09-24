@@ -155,6 +155,8 @@ def add_security_headers(response):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://s3.tradingview.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; "
+        "frame-src 'self' https://s3.tradingview.com https://s.tradingview.com https://www.tradingview.com https://www.tradingview-widget.com; "
         "img-src 'self' data: https:; "
         "font-src 'self' data: https://fonts.gstatic.com; "
         "connect-src 'self' https:;"

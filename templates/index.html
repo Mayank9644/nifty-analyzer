@@ -241,7 +241,7 @@
                         <div class="text-right">
                             <div class="flex items-center justify-end gap-2.5">
                                 <div id="stockPrice" class="text-2xl lg:text-3xl font-bold text-[#1c1c1e] mono tracking-tight">—</div>
-                                <button onclick="refreshCurrentStock()" id="stockRefreshBtn" class="p-1.5 rounded-xl bg-white border border-[rgba(0,0,0,0.12)] text-[#6e6e73] hover:text-[#007aff] hover:bg-[#f2f2f7] shadow-xs transition-all cursor-pointer" title="Refresh live real-time price">
+                                <button onclick="refreshCurrentStock()" id="stockRefreshBtn" class="p-1.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 text-[#6e6e73] dark:text-[#a1a1a6] hover:text-[#007aff] hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] shadow-xs transition-all cursor-pointer" title="Refresh live real-time price">
                                     <svg id="stockRefreshSvg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                     </svg>
@@ -548,7 +548,7 @@
                                 </span>
                                 <span class="text-[10px] text-[#007aff] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] border border-[#bfdbfe]">26 Technicals Consensus</span>
                             </div>
-                            <div id="tvTechnicalGaugeContainer" class="w-full flex justify-center overflow-hidden min-h-[310px] rounded-lg bg-white">
+                            <div id="tvTechnicalGaugeContainer" class="w-full flex justify-center overflow-hidden min-h-[310px] rounded-lg bg-white dark:bg-[#151722]">
                                 <div class="text-[11px] text-[#8e8e93] flex items-center justify-center py-12">Loading TradingView Consensus Gauge...</div>
                             </div>
                         </div>
@@ -929,7 +929,7 @@
                         <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all">
                             🎯 Oversold Dips
                         </button>
-                        <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white border border-[rgba(0,0,0,0.12)] text-[#1c1c1e] hover:bg-[#f2f2f7] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
+                        <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
                             <span>📥</span> <span>Export CSV</span>
                         </button>
                     </div>
@@ -938,8 +938,8 @@
                 <!-- Filters Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
                     <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Sector Filter</label>
-                        <select id="screenerSectorSelect" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e]">
+                        <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Sector Filter</label>
+                        <select id="screenerSectorSelect" class="w-full bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                             <option value="All">All Sectors</option>
                             <option value="Financial Services">Financial Services</option>
                             <option value="Information Technology">Information Technology</option>
@@ -954,21 +954,21 @@
                     </div>
 
                     <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Max P/E Ratio (x)</label>
-                        <input type="number" id="screenerPeMax" placeholder="e.g. 35" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                        <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Max P/E Ratio (x)</label>
+                        <input type="number" id="screenerPeMax" placeholder="e.g. 35" class="w-full bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                     </div>
 
                     <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Min ROE (%)</label>
-                        <input type="number" id="screenerRoeMin" placeholder="e.g. 15" class="w-full bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e]">
+                        <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Min ROE (%)</label>
+                        <input type="number" id="screenerRoeMin" placeholder="e.g. 15" class="w-full bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-1.5 text-xs mono text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                     </div>
 
                     <div>
-                        <label class="block font-medium text-[#48484a] mb-1">RSI Range (14D)</label>
+                        <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">RSI Range (14D)</label>
                         <div class="flex items-center space-x-1.5">
-                            <input type="number" id="screenerRsiMin" placeholder="Min" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                            <input type="number" id="screenerRsiMin" placeholder="Min" class="w-1/2 bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                             <span class="text-[#8e8e93]">-</span>
-                            <input type="number" id="screenerRsiMax" placeholder="Max" class="w-1/2 bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e]">
+                            <input type="number" id="screenerRsiMax" placeholder="Max" class="w-1/2 bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-2 py-1.5 text-xs mono text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                         </div>
                     </div>
                 </div>
@@ -1447,7 +1447,7 @@
                 <!-- Commodity Candlestick Chart Target -->
                 <div>
                     <h4 class="text-xs font-semibold text-[#6e6e73] mb-2">Technical Futures Chart (Converted to ₹ INR)</h4>
-                    <div id="commodityChartContainer" class="w-full h-[400px] rounded-xl overflow-hidden bg-white border border-[rgba(0,0,0,0.06)]"></div>
+                    <div id="commodityChartContainer" class="w-full h-[400px] rounded-xl overflow-hidden bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
                 </div>
             </div>
         </div>
@@ -1528,33 +1528,33 @@
                         <!-- Lot Size Input -->
                         <div class="flex items-center space-x-1.5 macos-box px-2.5 py-1 text-xs">
                             <span class="text-[#6e6e73] text-[11px]">Qty / Lot:</span>
-                            <input type="number" id="payoffLotSizeInput" value="25" min="1" step="25" onchange="loadOptionsPayoff(null, this.value)" class="w-12 bg-transparent font-bold mono text-[#1c1c1e] outline-none">
+                            <input type="number" id="payoffLotSizeInput" value="25" min="1" step="25" onchange="loadOptionsPayoff(null, this.value)" class="w-12 bg-transparent font-bold mono text-[#1c1c1e] dark:text-white outline-none">
                         </div>
                     </div>
                 </div>
 
                 <!-- Payoff Metrics Strip (4 Equal Cards) -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                         <span class="text-[10px] text-[#1e7e34] block font-semibold uppercase tracking-wider">Max Profit</span>
                         <span id="payoffMaxProfit" class="text-base font-bold mono text-[#1e7e34] mt-0.5 block">₹0</span>
                     </div>
-                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                         <span class="text-[10px] text-[#b32020] block font-semibold uppercase tracking-wider">Max Loss</span>
                         <span id="payoffMaxLoss" class="text-base font-bold mono text-[#b32020] mt-0.5 block">₹0</span>
                     </div>
-                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                         <span class="text-[10px] text-[#0062cc] block font-semibold uppercase tracking-wider">Breakeven</span>
-                        <span id="payoffBreakeven" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">₹0</span>
+                        <span id="payoffBreakeven" class="text-base font-bold mono text-[#1c1c1e] dark:text-white mt-0.5 block">₹0</span>
                     </div>
-                    <div class="p-2.5 rounded-xl bg-white border border-[rgba(0,0,0,0.06)]">
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                         <span class="text-[10px] text-[#6e6e73] block font-semibold uppercase tracking-wider">Risk / Reward</span>
-                        <span id="payoffRiskReward" class="text-base font-bold mono text-[#1c1c1e] mt-0.5 block">1 : 1.6</span>
+                        <span id="payoffRiskReward" class="text-base font-bold mono text-[#1c1c1e] dark:text-white mt-0.5 block">1 : 1.6</span>
                     </div>
                 </div>
 
                 <!-- Payoff Curve Chart Canvas -->
-                <div class="w-full h-52 bg-white rounded-xl p-3 border border-[rgba(0,0,0,0.06)]">
+                <div class="w-full h-52 bg-white dark:bg-white/5 rounded-xl p-3 border border-[rgba(0,0,0,0.06)] dark:border-white/10">
                     <canvas id="optionsPayoffChartCanvas"></canvas>
                 </div>
 
@@ -1608,7 +1608,7 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="flex flex-col gap-1">
                             <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">I currently hold:</span>
-                            <select id="beesCurrentHolding" class="bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] font-semibold outline-none">
+                            <select id="beesCurrentHolding" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#1c1c1e] dark:text-[#f5f5f7] font-semibold outline-none">
                                 <option value="NONE">Nothing (New Allocation)</option>
                                 <option value="NIFTYBEES">📈 NIFTYBEES</option>
                                 <option value="GOLDBEES">🥇 GOLDBEES</option>
@@ -1617,10 +1617,10 @@
 
                         <div class="flex flex-col gap-1">
                             <span class="text-[10px] text-[#6e6e73] font-medium uppercase tracking-wider">My capital:</span>
-                            <div class="flex items-center bg-white border border-[rgba(0,0,0,0.12)] rounded-lg px-3 py-1.5">
+                            <div class="flex items-center bg-white dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg px-3 py-1.5">
                                 <span class="text-xs text-[#6e6e73] mr-1">₹</span>
                                 <input type="number" id="beesInvestmentInput" value="100000" step="10000"
-                                    class="bg-transparent text-xs text-[#1c1c1e] font-mono w-28 outline-none font-semibold" />
+                                    class="bg-transparent text-xs text-[#1c1c1e] dark:text-white font-mono w-28 outline-none font-semibold" />
                             </div>
                         </div>
 
@@ -1949,13 +1949,13 @@
                 </div>
 
                 <div class="flex items-center gap-2.5 flex-wrap">
-                    <select id="backtestStrategySelect" class="bg-white border border-[rgba(0,0,0,0.12)] px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] outline-none">
+                    <select id="backtestStrategySelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                         <option value="sepa" selected>SEPA V3 Trend & VCP</option>
                         <option value="supertrend">Supertrend (10, 3)</option>
                         <option value="rsi_pullback">RSI Pullback (200 DMA + RSI < 35)</option>
                         <option value="donchian">Donchian 20-Day Turtle</option>
                     </select>
-                    <select id="backtestSymbolSelect" class="bg-white border border-[rgba(0,0,0,0.12)] px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] mono outline-none">
+                    <select id="backtestSymbolSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
                         <option value="RELIANCE.NS">RELIANCE.NS</option>
                         <option value="TCS.NS">TCS.NS</option>
                         <option value="HDFCBANK.NS">HDFCBANK.NS</option>
@@ -1964,14 +1964,14 @@
                         <option value="SUNPHARMA.NS">SUNPHARMA.NS</option>
                         <option value="BEL.NS">BEL.NS</option>
                     </select>
-                    <select id="backtestPeriodSelect" class="bg-white border border-[rgba(0,0,0,0.12)] px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] mono outline-none">
+                    <select id="backtestPeriodSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
                         <option value="1y">1 Year</option>
                         <option value="3y" selected>3 Years</option>
                         <option value="5y">5 Years</option>
                     </select>
                     <div class="flex items-center gap-1.5 macos-box px-2.5 py-1 text-xs">
                         <span class="text-[#86868b]">₹</span>
-                        <input type="number" id="backtestCapitalInput" value="100000" step="10000" class="w-20 bg-transparent font-bold text-[#1c1c1e] mono outline-none" title="Initial Backtest Capital">
+                        <input type="number" id="backtestCapitalInput" value="100000" step="10000" class="w-20 bg-transparent font-bold text-[#1c1c1e] dark:text-white mono outline-none" title="Initial Backtest Capital">
                     </div>
                     <button onclick="runBacktest()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
                         <span>▶</span> <span>Run Backtest</span>
@@ -2002,34 +2002,34 @@
         <!-- =================================================================== -->
         <div id="positionCalcModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm hidden">
             <div class="macos-modal max-w-md w-full p-6 space-y-4">
-                <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] pb-3">
+                <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] dark:border-white/10 pb-3">
                     <div class="flex items-center space-x-2">
                         <span class="text-xl">🧮</span>
-                        <h3 class="text-base font-bold text-[#1c1c1e]">Position Sizing & Risk Calculator</h3>
+                        <h3 class="text-base font-bold text-[#1c1c1e] dark:text-white">Position Sizing & Risk Calculator</h3>
                     </div>
-                    <button onclick="closePositionCalcModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold">✕</button>
+                    <button onclick="closePositionCalcModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-lg font-bold">✕</button>
                 </div>
 
                 <div class="space-y-3 text-xs">
                     <div>
-                        <label class="block font-medium text-[#48484a] mb-1">Total Trading Capital (₹)</label>
-                        <input type="number" id="calcCapital" value="500000" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                        <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Total Trading Capital (₹)</label>
+                        <input type="number" id="calcCapital" value="500000" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs mono text-[#1c1c1e] dark:text-white outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Max Risk Per Trade (%)</label>
-                            <input type="number" id="calcRiskPct" value="1.5" step="0.1" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Max Risk Per Trade (%)</label>
+                            <input type="number" id="calcRiskPct" value="1.5" step="0.1" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs mono text-[#1c1c1e] dark:text-white outline-none">
                         </div>
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Entry Price (₹)</label>
-                            <input type="number" id="calcEntryPrice" value="2500" step="0.5" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Entry Price (₹)</label>
+                            <input type="number" id="calcEntryPrice" value="2500" step="0.5" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs mono text-[#1c1c1e] dark:text-white outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block font-medium text-[#b32020] mb-1">Stop-Loss Price (₹)</label>
-                        <input type="number" id="calcStopLoss" value="2425" step="0.5" class="w-full bg-[#f8f8fa] border border-[#f7c8c8] rounded-lg p-2 text-xs mono text-[#b32020]">
+                        <input type="number" id="calcStopLoss" value="2425" step="0.5" class="w-full bg-[#f8f8fa] dark:bg-rose-950/20 border border-[#f7c8c8] dark:border-rose-900/40 rounded-lg p-2 text-xs mono text-[#b32020] dark:text-rose-400 outline-none">
                     </div>
 
                     <button onclick="calculatePositionModal()" class="w-full btn-primary py-2.5 text-xs font-semibold mt-2">
@@ -2038,27 +2038,27 @@
                 </div>
 
                 <!-- Calculator Result Box -->
-                <div id="calcResultBox" class="hidden p-3.5 rounded-xl bg-[#eff6ff] border border-[#bfdbfe] space-y-2 text-xs">
+                <div id="calcResultBox" class="hidden p-3.5 rounded-xl bg-[#eff6ff] dark:bg-blue-950/40 border border-[#bfdbfe] dark:border-blue-800/40 space-y-2 text-xs">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <div class="text-[10.5px] text-[#6e6e73]">Suggested Quantity</div>
-                            <div id="calcQty" class="text-base font-bold mono text-[#007aff]">0 Shares</div>
+                            <div class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6]">Suggested Quantity</div>
+                            <div id="calcQty" class="text-base font-bold mono text-[#007aff] dark:text-blue-400">0 Shares</div>
                         </div>
                         <div>
-                            <div class="text-[10.5px] text-[#6e6e73]">Total Capital Deployed</div>
-                            <div id="calcTotalInv" class="text-base font-bold mono text-[#1c1c1e]">₹0</div>
+                            <div class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6]">Total Capital Deployed</div>
+                            <div id="calcTotalInv" class="text-base font-bold mono text-[#1c1c1e] dark:text-white">₹0</div>
                         </div>
                         <div>
                             <div class="text-[10.5px] text-[#b32020]">Strict Capital at Risk</div>
                             <div id="calcRiskAmt" class="text-sm font-bold mono text-[#b32020]">₹0</div>
                         </div>
                         <div>
-                            <div class="text-[10.5px] text-[#6e6e73]">Capital Allocated</div>
-                            <div id="calcAllocPct" class="text-sm font-bold mono text-[#1c1c1e]">0%</div>
+                            <div class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6]">Capital Allocated</div>
+                            <div id="calcAllocPct" class="text-sm font-bold mono text-[#1c1c1e] dark:text-white">0%</div>
                         </div>
                     </div>
-                    <p id="calcNote" class="text-[11px] text-[#0062cc] leading-relaxed pt-1 border-t border-[#bfdbfe]"></p>
-                    <div class="pt-2 border-t border-[#bfdbfe] flex justify-end">
+                    <p id="calcNote" class="text-[11px] text-[#0062cc] dark:text-blue-300 leading-relaxed pt-1 border-t border-[#bfdbfe] dark:border-blue-800/40"></p>
+                    <div class="pt-2 border-t border-[#bfdbfe] dark:border-blue-800/40 flex justify-end">
                         <button onclick="executeCalculatedPositionOnBroker()" class="px-3 py-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
                             <span>⚡</span> <span>Execute Calculated Shares on Broker</span>
                         </button>
@@ -2087,14 +2087,14 @@
                     <!-- Order parameters prefill -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Stock / Asset</label>
-                            <input type="text" id="brokerModalSymbol" readonly class="w-full bg-[#f0f0f3] font-bold text-[#1c1c1e] rounded-lg p-2 mono outline-none">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Stock / Asset</label>
+                            <input type="text" id="brokerModalSymbol" readonly class="w-full bg-[#f0f0f3] dark:bg-white/10 font-bold text-[#1c1c1e] dark:text-white rounded-lg p-2 mono outline-none">
                         </div>
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Exchange & Product</label>
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Exchange & Product</label>
                             <div class="flex items-center space-x-2">
-                                <span class="px-2.5 py-2 rounded-lg bg-[#f0f0f3] font-bold text-[#1c1c1e] text-xs">NSE</span>
-                                <select id="brokerModalProduct" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs text-[#1c1c1e]">
+                                <span class="px-2.5 py-2 rounded-lg bg-[#f0f0f3] dark:bg-white/10 font-bold text-[#1c1c1e] dark:text-white text-xs">NSE</span>
+                                <select id="brokerModalProduct" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                                     <option value="CNC">CNC (Delivery / Swing)</option>
                                     <option value="MIS">MIS (Intraday)</option>
                                 </select>
@@ -2104,16 +2104,16 @@
 
                     <div class="grid grid-cols-3 gap-2.5">
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Quantity</label>
-                            <input type="number" id="brokerModalQty" value="10" min="1" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Quantity</label>
+                            <input type="number" id="brokerModalQty" value="10" min="1" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs mono text-[#1c1c1e] dark:text-white outline-none">
                         </div>
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Entry Price (₹)</label>
-                            <input type="number" id="brokerModalPrice" value="0.0" step="0.5" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs mono text-[#1c1c1e]">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Entry Price (₹)</label>
+                            <input type="number" id="brokerModalPrice" value="0.0" step="0.5" oninput="updateBrokerLinks()" class="w-full bg-[#f8f8fa] dark:bg-white/5 border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs mono text-[#1c1c1e] dark:text-white outline-none">
                         </div>
                         <div>
-                            <label class="block font-medium text-[#48484a] mb-1">Order Type</label>
-                            <select id="brokerModalOrderType" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] border border-[rgba(0,0,0,0.12)] rounded-lg p-2 text-xs text-[#1c1c1e]">
+                            <label class="block font-medium text-[#48484a] dark:text-[#d1d1d6] mb-1">Order Type</label>
+                            <select id="brokerModalOrderType" onchange="updateBrokerLinks()" class="w-full bg-[#f8f8fa] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-lg p-2 text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
                                 <option value="LIMIT">LIMIT</option>
                                 <option value="MARKET">MARKET</option>
                             </select>
@@ -2179,7 +2179,7 @@
         </div>
 
         <!-- Add Current Stock to Watchlist Button -->
-        <div class="px-4 py-2.5 bg-white border-b border-[rgba(0,0,0,0.06)] flex items-center justify-between text-xs">
+        <div class="px-4 py-2.5 bg-white dark:bg-[#151722] border-b border-[rgba(0,0,0,0.06)] dark:border-white/10 flex items-center justify-between text-xs">
             <span class="text-[#6e6e73] text-[11px] truncate max-w-[210px]" id="drawerCurrentStockLabel">Currently: RELIANCE.NS</span>
             <button id="pinCurrentStockBtn" onclick="pinCurrentStockToWatchlist()" class="px-2.5 py-1 rounded-lg bg-[#007aff]/10 text-[#007aff] hover:bg-[#007aff]/20 font-semibold text-[11px] transition-all flex items-center gap-1 cursor-pointer">
                 <span>➕</span> <span>Pin to List</span>
@@ -2198,44 +2198,44 @@
     <!-- macOS KEYBOARD SHORTCUTS CHEAT SHEET MODAL -->
     <div id="shortcutsModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="macos-card w-full max-w-md p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] pb-3">
+            <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] dark:border-white/10 pb-3">
                 <div class="flex items-center space-x-2">
                     <span class="text-xl">⌨️</span>
                     <div>
-                        <h3 class="text-sm font-bold text-[#1c1c1e] leading-tight">Keyboard Shortcuts</h3>
+                        <h3 class="text-sm font-bold text-[#1c1c1e] dark:text-white leading-tight">Keyboard Shortcuts</h3>
                         <p class="text-[10.5px] text-[#6e6e73]">Navigate Market Analysis like a native macOS app</p>
                     </div>
                 </div>
-                <button onclick="closeShortcutsModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold cursor-pointer">✕</button>
+                <button onclick="closeShortcutsModal()" class="text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-lg font-bold cursor-pointer">✕</button>
             </div>
 
-            <div class="space-y-2 text-xs text-[#1c1c1e]">
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Spotlight Search (Focus Search Input)</span>
+            <div class="space-y-2 text-xs text-[#1c1c1e] dark:text-[#f5f5f7]">
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)] dark:border-white/5">
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Spotlight Search (Focus Search Input)</span>
                     <kbd class="macos-kbd">/</kbd>
                 </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Toggle Slide-Over Watchlist Drawer</span>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)] dark:border-white/5">
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Toggle Slide-Over Watchlist Drawer</span>
                     <kbd class="macos-kbd">W</kbd>
                 </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Open Position Sizing Calculator</span>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)] dark:border-white/5">
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Open Position Sizing Calculator</span>
                     <kbd class="macos-kbd">C</kbd>
                 </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Direct Tab Jump (Stocks, Picks, Screener...)</span>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)] dark:border-white/5">
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Direct Tab Jump (Stocks, Picks, Screener...)</span>
                     <div class="flex items-center space-x-1">
                         <kbd class="macos-kbd">1</kbd>
                         <span class="text-[#8e8e93] text-[10px]">to</span>
                         <kbd class="macos-kbd">9</kbd>
                     </div>
                 </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)]">
-                    <span class="text-[#48484a]">Close Any Active Modal, Drawer or Search</span>
+                <div class="flex items-center justify-between py-1.5 border-b border-[rgba(0,0,0,0.04)] dark:border-white/5">
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Close Any Active Modal, Drawer or Search</span>
                     <kbd class="macos-kbd">Esc</kbd>
                 </div>
                 <div class="flex items-center justify-between py-1.5">
-                    <span class="text-[#48484a]">Open this Keyboard Shortcuts Cheat Sheet</span>
+                    <span class="text-[#48484a] dark:text-[#d1d1d6]">Open this Keyboard Shortcuts Cheat Sheet</span>
                     <kbd class="macos-kbd">?</kbd>
                 </div>
             </div>
@@ -2264,7 +2264,7 @@
             <div id="commandPaletteResults" class="command-palette-results">
                 <!-- Dynamically populated commands and stocks -->
             </div>
-            <div class="px-4 py-2 bg-[#f8f8fa] border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between text-[11px] text-[#8e8e93]">
+            <div class="px-4 py-2 bg-[#f8f8fa] dark:bg-[#151722] border-t border-[rgba(0,0,0,0.06)] dark:border-white/10 flex items-center justify-between text-[11px] text-[#8e8e93]">
                 <div class="flex items-center gap-2">
                     <span>Use <kbd class="macos-kbd text-[9px] py-0 px-1">↑</kbd> <kbd class="macos-kbd text-[9px] py-0 px-1">↓</kbd> to navigate</span>
                     <span>•</span>
@@ -2278,27 +2278,27 @@
     <!-- MATHEMATICAL FORMULA INSPECTION MODAL -->
     <div id="formulaInspectionModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="macos-card w-full max-w-lg p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] pb-3">
+            <div class="flex items-center justify-between border-b border-[rgba(0,0,0,0.06)] dark:border-white/10 pb-3">
                 <div class="flex items-center space-x-2">
                     <span class="text-xl">📐</span>
                     <div>
-                        <h3 id="formulaModalTitle" class="text-sm font-bold text-[#1c1c1e] leading-tight">Mathematical Formula Inspection</h3>
+                        <h3 id="formulaModalTitle" class="text-sm font-bold text-[#1c1c1e] dark:text-white leading-tight">Mathematical Formula Inspection</h3>
                         <p class="text-[10.5px] text-[#6e6e73]">Exact parameters, institutional weights &amp; quantitative derivation</p>
                     </div>
                 </div>
-                <button onclick="document.getElementById('formulaInspectionModal').classList.add('hidden')" class="text-[#8e8e93] hover:text-[#1c1c1e] text-lg font-bold cursor-pointer">✕</button>
+                <button onclick="document.getElementById('formulaInspectionModal').classList.add('hidden')" class="text-[#8e8e93] hover:text-[#1c1c1e] dark:hover:text-white text-lg font-bold cursor-pointer">✕</button>
             </div>
-            <div id="formulaModalContent" class="space-y-3 text-xs text-[#1c1c1e]">
+            <div id="formulaModalContent" class="space-y-3 text-xs text-[#1c1c1e] dark:text-white">
                 <!-- Populated dynamically by recommendations.js -->
             </div>
-            <div class="pt-2 text-center border-t border-[rgba(0,0,0,0.06)]">
+            <div class="pt-2 text-center border-t border-[rgba(0,0,0,0.06)] dark:border-white/10">
                 <button onclick="document.getElementById('formulaInspectionModal').classList.add('hidden')" class="btn-primary w-full py-2 text-xs cursor-pointer">Got It</button>
             </div>
         </div>
     </div>
 
     <!-- MOBILE BOTTOM FLOATING GLASS DOCK (Visible on <= 768px screens) -->
-    <nav class="mobile-dock-nav md:hidden fixed z-40 bg-white/95 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
+    <nav class="mobile-dock-nav md:hidden fixed z-40 bg-white/95 dark:bg-[#151722]/95 backdrop-blur-lg border border-[rgba(0,0,0,0.12)] dark:border-white/10 rounded-2xl shadow-xl px-2 py-1.5 flex items-center justify-around text-center">
         <button onclick="switchTab('stocks')" data-tab="stocks" class="mobile-dock-btn flex flex-col items-center py-1 px-2 rounded-xl text-[#007aff] active:scale-95 transition-all cursor-pointer">
             <span class="text-lg">📈</span>
             <span class="text-[9.5px] font-semibold mt-0.5">Terminal</span>
@@ -2323,14 +2323,14 @@
 
     <!-- MOBILE DESKS SLIDE-UP BOTTOM SHEET -->
     <div id="mobileMoreSheet" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end justify-center p-0 transition-opacity" onclick="if(event.target === this) toggleMobileMoreSheet()">
-        <div class="w-full max-w-lg bg-white rounded-t-3xl shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto border-t border-[rgba(0,0,0,0.12)]">
-            <div class="w-10 h-1 rounded-full bg-[#d1d1d6] mx-auto"></div>
+        <div class="w-full max-w-lg bg-white dark:bg-[#151722] rounded-t-3xl shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto border-t border-[rgba(0,0,0,0.12)] dark:border-white/10">
+            <div class="w-10 h-1 rounded-full bg-[#d1d1d6] dark:bg-white/20 mx-auto"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="font-bold text-sm text-[#1c1c1e]">All Operational Desks</h3>
+                    <h3 class="font-bold text-sm text-[#1c1c1e] dark:text-white">All Operational Desks</h3>
                     <p class="text-[10.5px] text-[#6e6e73]">Switch to any analytical workstation</p>
                 </div>
-                <button onclick="toggleMobileMoreSheet()" class="text-xs text-[#007aff] font-semibold px-2.5 py-1 rounded-lg bg-[#eff6ff] cursor-pointer">Done</button>
+                <button onclick="toggleMobileMoreSheet()" class="text-xs text-[#007aff] dark:text-blue-300 font-semibold px-2.5 py-1 rounded-lg bg-[#eff6ff] dark:bg-blue-950/40 cursor-pointer">Done</button>
             </div>
             <div class="grid grid-cols-2 gap-2 text-xs">
                 <button onclick="switchTab('options'); toggleMobileMoreSheet()" class="p-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] hover:bg-[#eff6ff] text-left flex items-center gap-2">
