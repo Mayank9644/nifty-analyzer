@@ -2513,6 +2513,17 @@ function setAppTheme(theme) {
     if (typeof applyChartTheme === "function") {
         applyChartTheme(theme);
     }
+
+    // Dynamic re-render of TradingView embedded widgets on theme switch
+    if (typeof renderTradingViewTechnicalGauge === "function" && typeof appState !== "undefined" && appState.currentSymbol) {
+        renderTradingViewTechnicalGauge(appState.currentSymbol);
+    }
+    if (typeof updateTradingViewProSymbol === "function" && typeof appState !== "undefined" && appState.currentSymbol) {
+        const tvContainer = document.getElementById("tvProChartContainer");
+        if (tvContainer && tvContainer.offsetWidth > 0) {
+            updateTradingViewProSymbol(appState.currentSymbol);
+        }
+    }
 }
 window.setAppTheme = setAppTheme;
 window.toggleAppTheme = toggleAppTheme;
