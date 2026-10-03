@@ -284,6 +284,30 @@
                             <span id="heroBandVerdictBadge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">BUY</span>
                         </div>
                     </div>
+
+                    <!-- INTERLINKED CROSS-DESK ACTION BAR -->
+                    <div class="pt-2.5 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[11px] font-semibold text-[#86868b] dark:text-[#a1a1a6] flex items-center gap-1">
+                                <span>🔗</span> Quick Actions:
+                            </span>
+                            <button onclick="openBacktestForCurrentStock()" class="px-2.5 py-1 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] dark:bg-white/10 dark:hover:bg-white/15 text-[#007aff] dark:text-blue-300 font-semibold text-[11px] border border-[#bfdbfe] dark:border-blue-800/40 flex items-center gap-1 transition-all cursor-pointer" title="Simulate 3-year algorithmic backtest on this stock">
+                                <span>🧪 Backtest Strategy</span>
+                            </button>
+                            <button onclick="openOptionsForCurrentStock()" class="px-2.5 py-1 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] dark:bg-white/10 dark:hover:bg-white/15 text-[#007aff] dark:text-blue-300 font-semibold text-[11px] border border-[#bfdbfe] dark:border-blue-800/40 flex items-center gap-1 transition-all cursor-pointer" title="Analyze derivatives options chain & payoff">
+                                <span>⛓️ Options Chain</span>
+                            </button>
+                            <button onclick="openPositionCalcModal()" class="px-2.5 py-1 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] dark:bg-white/10 dark:hover:bg-white/15 text-[#007aff] dark:text-blue-300 font-semibold text-[11px] border border-[#bfdbfe] dark:border-blue-800/40 flex items-center gap-1 transition-all cursor-pointer" title="Calculate exact shares and risk amount">
+                                <span>🧮 Position Size</span>
+                            </button>
+                            <button onclick="logCurrentStockToJournal()" class="px-2.5 py-1 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] dark:bg-white/10 dark:hover:bg-white/15 text-[#007aff] dark:text-blue-300 font-semibold text-[11px] border border-[#bfdbfe] dark:border-blue-800/40 flex items-center gap-1 transition-all cursor-pointer" title="Log this trade setup directly into Journal">
+                                <span>📒 Log to Journal</span>
+                            </button>
+                        </div>
+                        <button onclick="openAlertModalFromHero()" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-semibold text-[11px] border border-amber-500/30 flex items-center gap-1 transition-all cursor-pointer" title="Set technical breakout price watchdog alert">
+                            <span>🔔 Set Alert</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- MULTI-TIMEFRAME (MTF) CONFLUENCE STRIP (15M · 1H · Daily · Weekly) -->
@@ -2058,9 +2082,12 @@
                         </div>
                     </div>
                     <p id="calcNote" class="text-[11px] text-[#0062cc] dark:text-blue-300 leading-relaxed pt-1 border-t border-[#bfdbfe] dark:border-blue-800/40"></p>
-                    <div class="pt-2 border-t border-[#bfdbfe] dark:border-blue-800/40 flex justify-end">
+                    <div class="pt-2 border-t border-[#bfdbfe] dark:border-blue-800/40 flex flex-wrap items-center justify-between gap-2">
+                        <button onclick="logCalculatedPositionToJournal()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer" title="Directly log this calculated position to Trading Journal">
+                            <span>📒</span> <span>Log into Trade Journal</span>
+                        </button>
                         <button onclick="executeCalculatedPositionOnBroker()" class="px-3 py-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
-                            <span>⚡</span> <span>Execute Calculated Shares on Broker</span>
+                            <span>⚡</span> <span>Execute on Broker</span>
                         </button>
                     </div>
                 </div>
@@ -2386,24 +2413,24 @@
     </div>
 
     <!-- Custom Scripts -->
-    <script src="/static/js/utils.js?v=20260924_v2"></script>
-    <script src="/static/js/charts.js?v=20260924_v2"></script>
-    <script src="/static/js/options_charts.js?v=20260924_v2"></script>
-    <script src="/static/js/scanner.js?v=20260924_v2"></script>
-    <script src="/static/js/screener.js?v=20260924_v2"></script>
-    <script src="/static/js/ipo.js?v=20260924_v2"></script>
-    <script src="/static/js/calendar.js?v=20260924_v2"></script>
-    <script src="/static/js/sectors.js?v=20260924_v2"></script>
-    <script src="/static/js/etf.js?v=20260924_v2"></script>
-    <script src="/static/js/journal.js?v=20260924_v2"></script>
-    <script src="/static/js/backtest.js?v=20260924_v2"></script>
-    <script src="/static/js/recommendations.js?v=20260924_v2"></script>
-    <script src="/static/js/bees.js?v=20260924_v2"></script>
-    <script src="/static/js/institutional.js?v=20260924_v2"></script>
-    <script src="/static/js/broker_bridge.js?v=20260924_v2"></script>
-    <script src="/static/js/alerts.js?v=20260924_v2"></script>
-    <script src="/static/js/premarket.js?v=20260924_v2"></script>
-    <script src="/static/js/app.js?v=20260924_v2"></script>
+    <script src="/static/js/utils.js?v=20261003_v1"></script>
+    <script src="/static/js/charts.js?v=20261003_v1"></script>
+    <script src="/static/js/options_charts.js?v=20261003_v1"></script>
+    <script src="/static/js/scanner.js?v=20261003_v1"></script>
+    <script src="/static/js/screener.js?v=20261003_v1"></script>
+    <script src="/static/js/ipo.js?v=20261003_v1"></script>
+    <script src="/static/js/calendar.js?v=20261003_v1"></script>
+    <script src="/static/js/sectors.js?v=20261003_v1"></script>
+    <script src="/static/js/etf.js?v=20261003_v1"></script>
+    <script src="/static/js/journal.js?v=20261003_v1"></script>
+    <script src="/static/js/backtest.js?v=20261003_v1"></script>
+    <script src="/static/js/recommendations.js?v=20261003_v1"></script>
+    <script src="/static/js/bees.js?v=20261003_v1"></script>
+    <script src="/static/js/institutional.js?v=20261003_v1"></script>
+    <script src="/static/js/broker_bridge.js?v=20261003_v1"></script>
+    <script src="/static/js/alerts.js?v=20261003_v1"></script>
+    <script src="/static/js/premarket.js?v=20261003_v1"></script>
+    <script src="/static/js/app.js?v=20261003_v1"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

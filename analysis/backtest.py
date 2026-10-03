@@ -28,39 +28,47 @@ from config import (
 
 def calculate_supertrend(df: pd.DataFrame, period: int = 10, multiplier: float = 3.0):
     """
-    Computes Supertrend indicator using vector-accelerated NumPy 1D arrays
-    for ~50x faster execution over pandas scalar indexing.
+    Computes Supertrend indicator (Olivier Seban formula) using vector-accelerated
+    NumPy 1D arrays for exact fidelity with TradingView and Zerodha charting engines.
     """
-    close_np = df["Close"].to_numpy(dtype="float64")
-    atr_np = calculate_atr(df, period).fillna(0).to_numpy(dtype="float64")
-    hl2_np = ((df["High"] + df["Low"]) / 2.0).to_numpy(dtype="float64")
+    high = df["High"].to_numpy(dtype="float64")
+    low = df["Low"].to_numpy(dtype="float64")
+    close = df["Close"].to_numpy(dtype="float64")
+    atr = calculate_atr(df, period).bfill().fillna(0).to_numpy(dtype="float64")
+    hl2 = (high + low) / 2.0
 
-    upper_band = hl2_np + (multiplier * atr_np)
-    lower_band = hl2_np - (multiplier * atr_np)
+    basic_upper = hl2 + (multiplier * atr)
+    basic_lower = hl2 - (multiplier * atr)
     n = len(df)
 
+    final_upper = np.zeros(n, dtype="float64")
+    final_lower = np.zeros(n, dtype="float64")
     supertrend = np.zeros(n, dtype="float64")
     direction = np.zeros(n, dtype="int64")
 
-    in_uptrend = True
     for i in range(period, n):
-        c = close_np[i]
-        curr_upper = upper_band[i]
-        curr_lower = lower_band[i]
-        prev_upper = upper_band[i - 1]
-        prev_lower = lower_band[i - 1]
-
-        if c > prev_upper:
-            in_uptrend = True
-        elif c < prev_lower:
-            in_uptrend = False
-
-        if in_uptrend:
-            supertrend[i] = max(curr_lower, prev_lower) if i > period else curr_lower
-            direction[i] = 1
+        # Final Upper Band
+        if basic_upper[i] < final_upper[i - 1] or close[i - 1] > final_upper[i - 1]:
+            final_upper[i] = basic_upper[i]
         else:
-            supertrend[i] = min(curr_upper, prev_upper) if i > period else curr_upper
-            direction[i] = -1
+            final_upper[i] = final_upper[i - 1]
+
+        # Final Lower Band
+        if basic_lower[i] > final_lower[i - 1] or close[i - 1] < final_lower[i - 1]:
+            final_lower[i] = basic_lower[i]
+        else:
+            final_lower[i] = final_lower[i - 1]
+
+        # Supertrend Trend Direction
+        if i == period:
+            direction[i] = 1 if close[i] >= final_lower[i] else -1
+        else:
+            if supertrend[i - 1] == final_upper[i - 1]:
+                direction[i] = 1 if close[i] > final_upper[i] else -1
+            else:
+                direction[i] = -1 if close[i] < final_lower[i] else 1
+
+        supertrend[i] = final_lower[i] if direction[i] == 1 else final_upper[i]
 
     return pd.Series(supertrend, index=df.index), pd.Series(direction, index=df.index)
 
@@ -100,7 +108,13 @@ def run_strategy_backtest(symbol: str = "RELIANCE.NS", period: str = "3y", strat
     target_price = 0.0
     qty = 0
 
-    start_idx = 200 if len(df) >= 200 else 50
+    # Dynamic strategy warmup index
+    if strategy == "sepa" and len(df) >= 250:
+        start_idx = 200
+    elif len(df) >= 70:
+        start_idx = 50
+    else:
+        start_idx = 20
     equity = float(capital)
     equity_curve = [{"date": str(dates[start_idx])[:10], "equity": equity, "benchmark": equity}]
     initial_stock_price = float(close.iloc[start_idx]) if float(close.iloc[start_idx]) > 0 else 1.0
@@ -302,6 +316,7 @@ def run_strategy_backtest(symbol: str = "RELIANCE.NS", period: str = "3y", strat
         "winning_trades": len(wins),
         "losing_trades": len(losses),
         "win_rate": win_rate,
+        "win_rate_pct": win_rate,
         "total_return_pct": total_return_pct,
         "benchmark_return_pct": benchmark_return_pct,
         "alpha_pct": round(total_return_pct - benchmark_return_pct, 2),

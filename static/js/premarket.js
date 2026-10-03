@@ -52,18 +52,31 @@ function renderPremarketWidget(data) {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
                 <!-- Col 1: Global Macro Cues -->
                 <div class="p-3 rounded-xl bg-[#f8f8fa] dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.04)] dark:border-white/10 space-y-2">
-                    <span class="text-[11px] font-bold text-[#48484a] dark:text-[#d1d1d6] uppercase tracking-wider block">🌍 Global Macro Cues</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold text-[#48484a] dark:text-[#d1d1d6] uppercase tracking-wider block">🌍 Global Macro Cues</span>
+                        <span class="text-[9.5px] text-[#8e8e93] dark:text-[#a1a1a6]">Interlinked Impacts</span>
+                    </div>
                     <div class="space-y-1.5">
                         ${cues.map(c => {
                             const isGreen = c.change_pct >= 0;
+                            const isCrude = c.name.toLowerCase().includes("crude");
+                            const isUS = c.name.toLowerCase().includes("street") || c.name.toLowerCase().includes("s&p");
+                            const isForex = c.name.toLowerCase().includes("usd") || c.name.toLowerCase().includes("inr");
+                            const impactText = isCrude ? "Paints, OMCs, Airlines" : (isUS ? "Tech & IT High-Beta" : (isForex ? "IT & Pharma Exporters" : "Macro Sentiment"));
+                            const clickAction = isCrude ? "switchTab('commodities')" : "switchTab('sectors')";
                             return `
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-[#6e6e73] dark:text-[#a1a1a6]">${c.name}</span>
-                                    <div class="flex items-center gap-1.5 font-semibold mono">
-                                        <span class="text-[#1c1c1e] dark:text-[#f5f5f7]">${c.value}</span>
-                                        <span class="${c.sentiment === 'BULLISH' ? 'text-emerald-700 dark:text-emerald-400' : (c.sentiment === 'BEARISH' ? 'text-red-600 dark:text-red-400' : 'text-[#8e8e93] dark:text-[#a1a1a6]')}">
-                                            (${isGreen ? '+' : ''}${c.change_pct}%)
-                                        </span>
+                                <div class="p-1 rounded-lg hover:bg-white dark:hover:bg-white/5 transition-all cursor-pointer" onclick="${clickAction}" title="Click to view correlated sector performance">
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-[#6e6e73] dark:text-[#a1a1a6] font-medium">${c.name}</span>
+                                        <div class="flex items-center gap-1.5 font-semibold mono">
+                                            <span class="text-[#1c1c1e] dark:text-[#f5f5f7]">${c.value}</span>
+                                            <span class="${c.sentiment === 'BULLISH' ? 'text-emerald-700 dark:text-emerald-400' : (c.sentiment === 'BEARISH' ? 'text-red-600 dark:text-red-400' : 'text-[#8e8e93] dark:text-[#a1a1a6]')}">
+                                                (${isGreen ? '+' : ''}${c.change_pct}%)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-[9.5px] text-[#007aff] dark:text-blue-400 flex items-center gap-1 mt-0.5">
+                                        <span>⚡ Impact:</span> <span>${impactText}</span>
                                     </div>
                                 </div>
                             `;
@@ -92,6 +105,11 @@ function renderPremarketWidget(data) {
                         <span>R1: <strong class="mono text-red-600 dark:text-red-400">₹${pivots.resistance_1?.toLocaleString('en-IN')}</strong></span>
                         <span>Spot: <strong class="mono text-[#1c1c1e] dark:text-[#f5f5f7]">₹${pivots.spot?.toLocaleString('en-IN')}</strong></span>
                         <span>S1: <strong class="mono text-emerald-700 dark:text-emerald-400">₹${pivots.support_1?.toLocaleString('en-IN')}</strong></span>
+                    </div>
+                    <div class="pt-1.5 border-t border-[rgba(0,0,0,0.04)] dark:border-white/10 text-center">
+                        <button onclick="openOptionsForSymbol('NIFTY')" class="text-[10.5px] text-[#007aff] dark:text-blue-400 font-semibold hover:underline flex items-center justify-center gap-1 w-full cursor-pointer">
+                            <span>⛓️ Compare with Live Options Chain & Max Pain</span> <span>➔</span>
+                        </button>
                     </div>
                 </div>
 

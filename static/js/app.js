@@ -2048,6 +2048,137 @@ function executeCalculatedPositionOnBroker() {
 }
 window.executeCalculatedPositionOnBroker = executeCalculatedPositionOnBroker;
 
+function logCalculatedPositionToJournal() {
+    if (!_lastCalculatedPosition) return;
+    const sym = appState.currentSymbol || "RELIANCE.NS";
+    closePositionCalcModal();
+    switchTab("journal");
+    if (typeof openManualTradeModal === "function") {
+        openManualTradeModal({
+            symbol: sym,
+            entry: _lastCalculatedPosition.price,
+            qty: _lastCalculatedPosition.qty,
+            sl: _lastCalculatedPosition.sl,
+            t1: _lastCalculatedPosition.target,
+            style: "Swing",
+            notes: `Calculated position sizing: strict ${document.getElementById("calcRiskPct")?.value || '1.5'}% capital at risk.`
+        });
+    }
+}
+window.logCalculatedPositionToJournal = logCalculatedPositionToJournal;
+
+function logCurrentStockToJournal() {
+    const sym = appState.currentSymbol || "RELIANCE.NS";
+    const curPrice = appState.currentStock?.info?.current_price || 2500;
+    const bandSl = parseFloat(document.getElementById("heroBandStop")?.innerText?.replace(/[^0-9.]/g, "")) || Math.round(curPrice * 0.96 * 10) / 10;
+    const bandTarget = parseFloat(document.getElementById("heroBandTarget")?.innerText?.replace(/[^0-9.]/g, "")) || Math.round(curPrice * 1.06 * 10) / 10;
+    const riskDiff = Math.abs(curPrice - bandSl) || 10;
+    const suggestedQty = Math.max(1, Math.floor(7500 / riskDiff));
+
+    switchTab("journal");
+    if (typeof openManualTradeModal === "function") {
+        openManualTradeModal({
+            symbol: sym,
+            entry: curPrice,
+            qty: suggestedQty,
+            sl: bandSl,
+            t1: bandTarget,
+            style: "Swing",
+            notes: `Direct log from Terminal Hero setup for ${sym}. R:R Target: ₹${bandTarget}`
+        });
+    }
+}
+window.logCurrentStockToJournal = logCurrentStockToJournal;
+
+function openBacktestForSymbol(symbol, strategy) {
+    if (!symbol) symbol = appState.currentSymbol || "RELIANCE.NS";
+    switchTab("backtest");
+    const sel = document.getElementById("backtestSymbolSelect");
+    if (sel) {
+        let exists = false;
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === symbol) {
+                sel.selectedIndex = i;
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            const opt = document.createElement("option");
+            opt.value = symbol;
+            opt.textContent = symbol;
+            sel.appendChild(opt);
+            sel.value = symbol;
+        }
+    }
+    if (strategy) {
+        const stratSel = document.getElementById("backtestStrategySelect");
+        if (stratSel) stratSel.value = strategy;
+    }
+    if (typeof runBacktest === "function") {
+        runBacktest();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.openBacktestForSymbol = openBacktestForSymbol;
+
+function openBacktestForCurrentStock() {
+    openBacktestForSymbol(appState.currentSymbol || "RELIANCE.NS");
+}
+window.openBacktestForCurrentStock = openBacktestForCurrentStock;
+
+function openOptionsForSymbol(symbol) {
+    if (!symbol) symbol = appState.currentSymbol || "RELIANCE.NS";
+    const cleaned = symbol.replace(/\.NS$/i, "").replace(/\.BO$/i, "").trim().toUpperCase();
+    switchTab("options");
+    const container = document.getElementById("optionsUnderlyingSelector");
+    if (container) {
+        let matched = false;
+        container.querySelectorAll(".macos-segmented-item").forEach(b => {
+            const txt = b.textContent.trim().toUpperCase();
+            if (txt === cleaned || txt.startsWith(cleaned)) {
+                b.classList.add("active");
+                matched = true;
+            } else {
+                b.classList.remove("active");
+            }
+        });
+        if (!matched) {
+            const newBtn = document.createElement("button");
+            newBtn.className = "macos-segmented-item active";
+            newBtn.textContent = cleaned;
+            newBtn.onclick = function() { selectOptionsUnderlying(this, cleaned); };
+            container.appendChild(newBtn);
+        }
+    }
+    if (typeof loadOptionsDashboard === "function") {
+        loadOptionsDashboard(cleaned);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.openOptionsForSymbol = openOptionsForSymbol;
+
+function openOptionsForCurrentStock() {
+    openOptionsForSymbol(appState.currentSymbol || "RELIANCE.NS");
+}
+window.openOptionsForCurrentStock = openOptionsForCurrentStock;
+
+function openAlertModalFromHero() {
+    const sym = appState.currentSymbol || "RELIANCE.NS";
+    const price = appState.currentStock?.info?.current_price || 2500;
+    const bandTarget = parseFloat(document.getElementById("heroBandTarget")?.innerText?.replace(/[^0-9.]/g, "")) || Math.round(price * 1.03 * 10) / 10;
+    if (typeof openAlertWatchdogModal === "function") {
+        openAlertWatchdogModal();
+        setTimeout(() => {
+            const symInput = document.getElementById("alertSymbolInput");
+            const priceInput = document.getElementById("alertPriceInput");
+            if (symInput) symInput.value = sym;
+            if (priceInput) priceInput.value = bandTarget;
+        }, 100);
+    }
+}
+window.openAlertModalFromHero = openAlertModalFromHero;
+
 // Global click handler to select stock from screener / picks
 function selectSearchedStock(symbol) {
     if (!symbol) return;

@@ -1601,7 +1601,7 @@ let _manualSearchDebounce = null;
 let _manualHighlightedIndex = -1;
 let _currentManualSearchResults = [];
 
-function openManualTradeModal() {
+function openManualTradeModal(prefill = null) {
     const today = new Date().toISOString().split("T")[0];
     const existing = document.getElementById("manualTradeModal");
     if (existing) existing.remove();
@@ -1754,6 +1754,37 @@ function openManualTradeModal() {
         }
     });
     document.body.appendChild(modal);
+
+    if (prefill) {
+        if (prefill.symbol) {
+            const sym = document.getElementById("mt_symbol");
+            if (sym) sym.value = prefill.symbol;
+        }
+        if (prefill.entry) {
+            const entry = document.getElementById("mt_entry");
+            if (entry) entry.value = prefill.entry;
+        }
+        if (prefill.qty) {
+            const qty = document.getElementById("mt_qty");
+            if (qty) qty.value = prefill.qty;
+        }
+        if (prefill.sl) {
+            const sl = document.getElementById("mt_sl");
+            if (sl) sl.value = prefill.sl;
+        }
+        if (prefill.t1) {
+            const t1 = document.getElementById("mt_t1");
+            if (t1) t1.value = prefill.t1;
+        }
+        if (prefill.style) {
+            const style = document.getElementById("mt_style");
+            if (style) style.value = prefill.style;
+        }
+        if (prefill.notes) {
+            const notes = document.getElementById("mt_notes");
+            if (notes) notes.value = prefill.notes;
+        }
+    }
 }
 window.openManualTradeModal = openManualTradeModal;
 
