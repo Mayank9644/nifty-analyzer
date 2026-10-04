@@ -170,30 +170,76 @@ function renderSectorTreemap(sectors) {
     const sorted = [...sectors].sort((a, b) => (b.market_cap_weight || 1) - (a.market_cap_weight || 1));
 
     container.innerHTML = `
-        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
             ${sorted.map(s => {
-                const isPos = (s.change_pct || 0) >= 0;
-                const bg = isPos ? "bg-[#edf7ee] border-[#c3e6cb] hover:bg-[#d4edda]" : "bg-[#fdf0f0] border-[#f5c6cb] hover:bg-[#f8d7da]";
-                const textColor = isPos ? "text-[#1e7e34]" : "text-[#b32020]";
+                const chg = Number(s.change_pct) || 0.0;
+                const weight = Number(s.market_cap_weight) || 3.0;
+
+                // Bento span based on index weighting
+                let spanClass = "col-span-1 min-h-[110px]";
+                if (weight >= 12.0) {
+                    spanClass = "col-span-2 sm:col-span-2 md:col-span-3 min-h-[150px]";
+                } else if (weight >= 6.0) {
+                    spanClass = "col-span-2 sm:col-span-2 md:col-span-2 min-h-[130px]";
+                }
+
+                // Dynamic Finviz heat scale
+                let tileTheme = "";
+                let changeColor = "";
+                if (chg >= 2.0) {
+                    tileTheme = "bg-emerald-600/90 text-white border-emerald-700 dark:bg-emerald-700/80 dark:border-emerald-600";
+                    changeColor = "text-white font-extrabold";
+                } else if (chg >= 0.3) {
+                    tileTheme = "bg-emerald-100/90 text-emerald-950 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-800/60";
+                    changeColor = "text-emerald-700 dark:text-emerald-300 font-bold";
+                } else if (chg >= 0.0) {
+                    tileTheme = "bg-[#edf7ee] text-emerald-900 border-[#c3e6cb] dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40";
+                    changeColor = "text-emerald-700 dark:text-emerald-400 font-bold";
+                } else if (chg > -1.5) {
+                    tileTheme = "bg-[#fdf0f0] text-rose-900 border-[#f5c6cb] dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-900/40";
+                    changeColor = "text-rose-700 dark:text-rose-400 font-bold";
+                } else {
+                    tileTheme = "bg-rose-600/90 text-white border-rose-700 dark:bg-rose-800/80 dark:border-rose-700";
+                    changeColor = "text-white font-extrabold";
+                }
+
+                const constituents = (s.top_stocks || []).slice(0, weight >= 12.0 ? 4 : (weight >= 6.0 ? 3 : 2));
 
                 return `
-                    <div class="p-3.5 rounded-xl border ${bg} transition-all cursor-pointer flex flex-col justify-between"
-                        onclick="switchTab('stocks'); loadStock('${s.top_stocks[0]}.NS')" title="Click to view top constituent ${s.top_stocks[0]}">
+                    <div class="${spanClass} p-3.5 rounded-xl border ${tileTheme} transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer flex flex-col justify-between"
+                        onclick="switchTab('stocks'); loadStock('${s.top_stocks[0]}.NS')" title="Click to inspect ${s.name} in Stock Desk">
                         <div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xl">${s.icon}</span>
-                                <span class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-white/70 border border-black/5 text-[#48484a]">
-                                    ${s.market_cap_weight}% Weight
+                            <div class="flex items-center justify-between gap-1.5">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="text-lg flex-shrink-0">${s.icon}</span>
+                                    <h4 class="font-bold text-xs truncate">${s.name}</h4>
+                                </div>
+                                <span class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 flex-shrink-0">
+                                    ${weight}%
                                 </span>
                             </div>
-                            <h4 class="font-bold text-xs text-[#1c1c1e] mt-2 line-clamp-1">${s.name}</h4>
-                            <span class="text-[10px] text-[#86868b] font-mono">${s.code}</span>
+                            <div class="flex items-baseline justify-between mt-2">
+                                <span class="text-base sm:text-lg mono ${changeColor}">
+                                    ${chg >= 0 ? '+' : ''}${chg}%
+                                </span>
+                                <span class="text-[9.5px] uppercase tracking-wider font-semibold opacity-85">
+                                    ${s.quadrant}
+                                </span>
+                            </div>
                         </div>
-                        <div class="mt-3 pt-2 border-t border-black/5 flex items-center justify-between">
-                            <span class="text-[10px] font-semibold text-[#6e6e73]">${s.quadrant}</span>
-                            <span class="font-bold text-xs mono ${textColor}">
-                                ${isPos ? '+' : ''}${s.change_pct || 0.0}%
-                            </span>
+
+                        <!-- Top constituent quick links -->
+                        <div class="mt-2.5 pt-2 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-1">
+                            <span class="text-[9.5px] opacity-75 font-mono">${s.code}</span>
+                            <div class="flex flex-wrap gap-1">
+                                ${constituents.map(stk => `
+                                    <button onclick="event.stopPropagation(); switchTab('stocks'); loadStock('${stk}.NS');"
+                                        class="px-1.5 py-0.5 rounded text-[9.5px] font-mono font-medium bg-black/10 dark:bg-white/15 hover:bg-black/20 dark:hover:bg-white/30 transition-colors"
+                                        title="View ${stk}">
+                                        ${stk}
+                                    </button>
+                                `).join("")}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -221,8 +267,8 @@ function renderSectorsGrid(sectors) {
                         <div class="flex items-center space-x-2">
                             <span class="text-2xl">${s.icon}</span>
                             <div>
-                                <h4 class="text-sm font-semibold text-[#1c1c1e]">${s.name}</h4>
-                                <span class="text-[10px] text-[#86868b] font-mono">${s.code}</span>
+                                <h4 class="text-sm font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">${s.name}</h4>
+                                <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] font-mono">${s.code}</span>
                             </div>
                         </div>
                         ${quadrantBadge}
@@ -231,28 +277,28 @@ function renderSectorsGrid(sectors) {
                     <!-- Metrics Grid -->
                     <div class="macos-box grid grid-cols-3 gap-2 my-3 p-2.5 text-center text-xs">
                         <div>
-                            <span class="text-[10px] text-[#86868b] block font-medium">Score</span>
-                            <span class="font-bold text-[#1c1c1e] mono">${s.sector_score}/100</span>
+                            <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block font-medium">Score</span>
+                            <span class="font-bold text-[#1c1c1e] dark:text-white mono">${s.sector_score}/100</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-[#86868b] block font-medium">Money Flow</span>
-                            <span class="font-bold ${s.cmf_signal.includes('Inflow') ? 'text-[#1e7e34]' : 'text-[#b32020]'} text-[11px]">${s.cmf_signal}</span>
+                            <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block font-medium">Money Flow</span>
+                            <span class="font-bold ${s.cmf_signal.includes('Inflow') ? 'text-[#1e7e34] dark:text-emerald-400' : 'text-[#b32020] dark:text-rose-400'} text-[11px]">${s.cmf_signal}</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-[#86868b] block font-medium">Breadth >50D</span>
-                            <span class="font-bold text-[#007aff] mono">${s.breadth_50dma}%</span>
+                            <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block font-medium">Breadth >50D</span>
+                            <span class="font-bold text-[#007aff] dark:text-blue-400 mono">${s.breadth_50dma}%</span>
                         </div>
                     </div>
 
-                    <p class="text-[11px] text-[#48484a] leading-relaxed">${s.commentary}</p>
+                    <p class="text-[11px] text-[#48484a] dark:text-[#d1d1d6] leading-relaxed">${s.commentary}</p>
                 </div>
 
                 <!-- Top Leaders -->
-                <div class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)]">
-                    <span class="text-[10px] text-[#86868b] block mb-1.5 font-medium">Top Relative Strength Leaders:</span>
+                <div class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10">
+                    <span class="text-[10px] text-[#86868b] dark:text-[#a1a1a6] block mb-1.5 font-medium">Top Relative Strength Leaders:</span>
                     <div class="flex flex-wrap gap-1.5">
                         ${s.top_stocks.map(tk => `
-                            <button onclick="switchTab('stocks'); loadStock('${tk}.NS')" class="text-[10px] px-2 py-0.5 rounded-md bg-[#eef5fd] text-[#007aff] hover:bg-[#007aff] hover:text-white transition-colors font-mono font-medium border border-[#b9d7fb]/50">
+                            <button onclick="switchTab('stocks'); loadStock('${tk}.NS')" class="text-[10px] px-2 py-0.5 rounded-md bg-[#eef5fd] dark:bg-white/10 text-[#007aff] dark:text-blue-300 hover:bg-[#007aff] hover:text-white dark:hover:bg-[#007aff] transition-colors font-mono font-medium border border-[#b9d7fb]/50 dark:border-white/10">
                                 ${tk}
                             </button>
                         `).join("")}
@@ -262,3 +308,4 @@ function renderSectorsGrid(sectors) {
         `;
     }).join("");
 }
+
