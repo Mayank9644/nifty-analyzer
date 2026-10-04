@@ -6,12 +6,14 @@ Converts global benchmarks into Indian Rupee (INR) equivalents.
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import concurrent.futures
 from cachetools import TTLCache
-from config import CACHE_TTL, DEFAULT_USD_INR
+from config import CACHE_TTL, CACHE_TTL_LIVE, CACHE_TTL_CLOSED, DEFAULT_USD_INR
 from data.stock_list import COMMODITIES_LIST
 
-_comm_cache = TTLCache(maxsize=50, ttl=CACHE_TTL)
-_usdinr_cache = TTLCache(maxsize=5, ttl=CACHE_TTL)
+_comm_cache = TTLCache(maxsize=50, ttl=120)
+_usdinr_cache = TTLCache(maxsize=5, ttl=300)
+_COMM_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=5, thread_name_prefix="CommWorker")
 
 
 def get_usd_inr_rate() -> float:
@@ -131,11 +133,16 @@ def get_commodity_info(symbol: str) -> dict:
 
 
 def get_all_commodities_overview() -> list:
-    """Get snapshot list of all tracked commodities."""
+    """Get snapshot list of all tracked commodities concurrently."""
+    futures = [_COMM_EXECUTOR.submit(get_commodity_info, c["symbol"]) for c in COMMODITIES_LIST]
     results = []
-    for c in COMMODITIES_LIST:
-        info = get_commodity_info(c["symbol"])
-        results.append(info)
+    for f in futures:
+        try:
+            res = f.result(timeout=6)
+            if res:
+                results.append(res)
+        except Exception:
+            pass
     return results
 
 

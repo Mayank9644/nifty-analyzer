@@ -224,10 +224,15 @@ def api_market_overview():
         clear_stock_cache()
 
     try:
-        nifty_info = get_stock_info(DEFAULT_BENCHMARK)
-        bank_info = get_stock_info(DEFAULT_BANKNIFTY)
-        usd_inr = get_usd_inr_rate()
-        commodities = get_all_commodities_overview()
+        f_nifty = _STOCK_BUNDLE_EXECUTOR.submit(get_stock_info, DEFAULT_BENCHMARK)
+        f_bank = _STOCK_BUNDLE_EXECUTOR.submit(get_stock_info, DEFAULT_BANKNIFTY)
+        f_usd = _STOCK_BUNDLE_EXECUTOR.submit(get_usd_inr_rate)
+        f_comm = _STOCK_BUNDLE_EXECUTOR.submit(get_all_commodities_overview)
+
+        nifty_info = f_nifty.result(timeout=6)
+        bank_info = f_bank.result(timeout=6)
+        usd_inr = f_usd.result(timeout=6)
+        commodities = f_comm.result(timeout=6)
 
         # Determine overall market sentiment
         nifty_change = nifty_info.get("day_change_pct", 0.0)
