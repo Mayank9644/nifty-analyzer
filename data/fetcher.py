@@ -5,15 +5,84 @@ Stock data fetcher using yfinance with in-memory caching.
 import time
 import pandas as pd
 import numpy as np
+import threading
 import yfinance as yf
 from cachetools import TTLCache
-from config import CACHE_TTL
+from config import CACHE_TTL, CACHE_TTL_LIVE, CACHE_TTL_CLOSED, CACHE_TTL_DAILY, CACHE_TTL_NEWS, CACHE_TTL_BENCHMARK
 from data.market_schedule import get_market_status
 
-# Cache to avoid repeated network calls: 5-minute TTL, max 200 items
-_stock_data_cache = TTLCache(maxsize=200, ttl=CACHE_TTL)
-_stock_info_cache = TTLCache(maxsize=200, ttl=CACHE_TTL)
-_search_cache = TTLCache(maxsize=100, ttl=600)
+
+class MarketAwareCache:
+    """Thread-safe cache that applies dynamic TTLs based on live vs closed market state."""
+    def __init__(self, maxsize=500, default_ttl=CACHE_TTL_CLOSED):
+        self._cache = {}
+        self._maxsize = maxsize
+        self._default_ttl = default_ttl
+        self._lock = threading.Lock()
+
+    def get(self, key):
+        now = time.time()
+        with self._lock:
+            entry = self._cache.get(key)
+            if entry:
+                if entry["expires_at"] > now:
+                    return entry["val"]
+                else:
+                    self._cache.pop(key, None)
+        return None
+
+    def set(self, key, val, ttl=None):
+        if ttl is None:
+            try:
+                ms = get_market_status()
+                ttl = CACHE_TTL_LIVE if ms.get("is_live", False) else CACHE_TTL_CLOSED
+            except Exception:
+                ttl = self._default_ttl
+        now = time.time()
+        with self._lock:
+            if len(self._cache) >= self._maxsize:
+                expired = [k for k, v in self._cache.items() if v["expires_at"] <= now]
+                for k in expired:
+                    self._cache.pop(k, None)
+                if len(self._cache) >= self._maxsize and self._cache:
+                    oldest = min(self._cache.keys(), key=lambda k: self._cache[k]["timestamp"])
+                    self._cache.pop(oldest, None)
+            self._cache[key] = {
+                "val": val,
+                "timestamp": now,
+                "expires_at": now + ttl
+            }
+
+    def pop(self, key, default=None):
+        with self._lock:
+            res = self._cache.pop(key, None)
+            return res["val"] if res is not None else default
+
+    def clear(self):
+        with self._lock:
+            self._cache.clear()
+
+    def __contains__(self, key):
+        return self.get(key) is not None
+
+    def __getitem__(self, key):
+        val = self.get(key)
+        if val is None:
+            raise KeyError(key)
+        return val
+
+    def __setitem__(self, key, val):
+        self.set(key, val)
+
+    def keys(self):
+        with self._lock:
+            return list(self._cache.keys())
+
+
+# Dynamic market-aware caches for resilient sub-millisecond lookups
+_stock_data_cache = MarketAwareCache(maxsize=300, default_ttl=CACHE_TTL_CLOSED)
+_stock_info_cache = MarketAwareCache(maxsize=300, default_ttl=CACHE_TTL_CLOSED)
+_search_cache = TTLCache(maxsize=100, ttl=86400)
 
 
 def search_stocks(query: str) -> list:
@@ -589,23 +658,24 @@ def get_stock_info(symbol: str) -> dict:
             day_o = fast_o if fast_o > 0 else prev_close
             vol = fast_v
 
-        # Authoritative session check via daily candles
-        try:
-            hist = ticker.history(period="5d", interval="1d")
-            if hist is not None and not hist.empty:
-                hist = hist.dropna(subset=["Close"])
-                if len(hist) >= 1:
-                    hist_c = float(hist["Close"].iloc[-1])
-                    hist_pc = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else hist_c
-                    if hist_c > 0:
-                        current_price = hist_c
-                        prev_close = hist_pc
-                        day_h = float(hist["High"].iloc[-1])
-                        day_l = float(hist["Low"].iloc[-1])
-                        day_o = float(hist["Open"].iloc[-1])
-                        vol = int(hist["Volume"].iloc[-1])
-        except Exception as e:
-            print(f"Candle history check note for {symbol}: {e}")
+        # Authoritative session check via daily candles (only if price not yet discovered)
+        if current_price <= 0.0:
+            try:
+                hist = ticker.history(period="5d", interval="1d")
+                if hist is not None and not hist.empty:
+                    hist = hist.dropna(subset=["Close"])
+                    if len(hist) >= 1:
+                        hist_c = float(hist["Close"].iloc[-1])
+                        hist_pc = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else hist_c
+                        if hist_c > 0:
+                            current_price = hist_c
+                            prev_close = hist_pc
+                            day_h = float(hist["High"].iloc[-1])
+                            day_l = float(hist["Low"].iloc[-1])
+                            day_o = float(hist["Open"].iloc[-1])
+                            vol = int(hist["Volume"].iloc[-1])
+            except Exception as e:
+                print(f"Candle history check note for {symbol}: {e}")
 
         # Direct v8 chart check for authoritative real market quote
         v8_data = None
@@ -855,11 +925,14 @@ def get_stock_info(symbol: str) -> dict:
         "target_mean_price": round(float(raw_info.get("targetMeanPrice") or 0), 2),
         "recommendation": raw_info.get("recommendationKey") or "none",
         "description": raw_info.get("longBusinessSummary") or f"Leading enterprise listed on National Stock Exchange of India (NSE). Specializing in {sector}.",
+        "raw_info": raw_info,
+        "heldPercentInsiders": raw_info.get("heldPercentInsiders"),
+        "heldPercentInstitutions": raw_info.get("heldPercentInstitutions"),
     }
 
-    # Only cache if live exchange data or valid daily candles were obtained
+    # Cache with market-aware dynamic duration
     if not is_fallback:
-        _stock_info_cache[cache_key] = info
+        _stock_info_cache.set(cache_key, info)
     return info.copy()
 
 
@@ -888,22 +961,32 @@ def clear_stock_cache(symbol: str = None):
         _stock_data_cache.clear()
 
 
-def get_shareholding(symbol: str) -> dict:
+def get_shareholding(symbol: str, info_dict: dict = None) -> dict:
     """
     Get promoter and institutional shareholding breakdown.
     Provides estimated/standardized shareholding data for Indian equities.
+    Reuses pre-fetched info_dict or warm cache to avoid redundant network scrapes.
     """
-    ticker = get_stock_ticker(symbol)
     promoter = 50.0
     fii = 20.0
     dii = 15.0
     public = 15.0
 
     try:
-        info = ticker.info or {}
+        info = info_dict
+        if not info:
+            resolved = resolve_symbol(symbol)
+            cached_info = _stock_info_cache.get(f"info_{resolved}")
+            if cached_info:
+                info = cached_info.get("raw_info") or cached_info
+        if not info:
+            resolved = resolve_symbol(symbol)
+            ticker = get_stock_ticker(resolved)
+            info = getattr(ticker, "info", None) or {}
+
         insiders = info.get("heldPercentInsiders")
         institutions = info.get("heldPercentInstitutions")
-        
+
         if insiders is not None and insiders > 0:
             promoter = min(round(insiders * 100, 2), 85.0)
             if institutions is not None and institutions > 0:

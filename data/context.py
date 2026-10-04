@@ -236,14 +236,14 @@ class GlobalMarketFeedManager:
         # Parallel extraction of data components (keep 1y/1d daily baseline for indicators)
         bench_sym = DEFAULT_BANKNIFTY if clean_code in ["BANKNIFTY", "HDFCBANK", "ICICIBANK", "SBIN", "KOTAKBANK", "AXISBANK"] else DEFAULT_BENCHMARK
         f_info = self._executor.submit(get_stock_info, resolved)
-        f_share = self._executor.submit(get_shareholding, resolved)
         f_hist = self._executor.submit(get_stock_history, resolved, period="1y", interval="1d")
         f_bench = self._executor.submit(self.get_benchmark_context, bench_sym, period="1y", interval="1d")
 
         info = f_info.result(timeout=10)
-        shareholding = f_share.result(timeout=10)
         df_1d = f_hist.result(timeout=10)
         bench_ctx = f_bench.result(timeout=10)
+        # Instant zero-network derivation from pre-fetched profile
+        shareholding = get_shareholding(resolved, info_dict=info.get("raw_info") or info)
 
         # Ensure valid dataframe
         if df_1d is None or df_1d.empty:

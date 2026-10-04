@@ -6,7 +6,12 @@ Defines risk ceilings, friction models, benchmark rates, and execution threshold
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_TTL = 30  # 30 seconds cache for responsive real-time market data
+CACHE_TTL = 60  # Base fallback cache
+CACHE_TTL_LIVE = 60              # 1 minute during live exchange hours (09:15 - 15:30 IST)
+CACHE_TTL_CLOSED = 7200          # 2 hours during closed market sessions / weekends
+CACHE_TTL_DAILY = 86400          # 24 hours for daily OHLCV bars & company fundamentals
+CACHE_TTL_NEWS = 1800            # 30 minutes for news feeds
+CACHE_TTL_BENCHMARK = 3600       # 1 hour for market indices & sector proxies
 PORT = int(os.environ.get("PORT", 5050))
 HOST = "0.0.0.0"
 
