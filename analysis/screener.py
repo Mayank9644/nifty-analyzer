@@ -12,7 +12,7 @@ from data.institutional_flow import get_delivery_volume_analysis
 from cachetools import TTLCache
 
 _screener_cache = TTLCache(maxsize=100, ttl=900)
-_SCREENER_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=16, thread_name_prefix="ScreenerWorker")
+_SCREENER_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=20, thread_name_prefix="ScreenerWorker")
 
 
 def _eval_stock(item, pe_max, roe_min, rsi_min, rsi_max, near_52w_high, volume_surge, golden_cross_only):
@@ -208,6 +208,6 @@ def run_stock_screener(
         "total_matches": len(matched_stocks),
         "results": matched_stocks[:limit]
     }
-    if matched_stocks and not timed_out:
+    if matched_stocks:
         _screener_cache[cache_key] = result
     return result
