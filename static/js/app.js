@@ -1881,8 +1881,11 @@ async function loadOptionsDashboard(symbol = "NIFTY") {
                 `;
             }
 
-            // Render chain table
+            // Render chain table and strike-wise OI chart
             renderOptionsChainTable("optionsChainTableContainer", data);
+            if (typeof renderOptionsOiChart === "function") {
+                renderOptionsOiChart(data);
+            }
 
             // Sync Options Payoff Studio
             if (typeof setOptionsPayoffSymbol === "function" && typeof loadOptionsPayoff === "function") {

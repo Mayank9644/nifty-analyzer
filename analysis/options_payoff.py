@@ -128,6 +128,33 @@ def calculate_strategy_payoff(
             {"action": "BUY", "type": "CE", "strike": int(k_call_buy), "premium": round(prem_call_credit * 0.25, 1), "label": f"Long {int(k_call_buy)} CE"}
         ]
 
+    elif strategy in ("straddle", "long_straddle"):
+        k = atm_strike
+        prem_ce = round(spot * 0.012, 1)
+        prem_pe = round(spot * 0.012, 1)
+        net_debit = round(prem_ce + prem_pe, 1)
+
+        max_loss = round(net_debit * lot_size, 2)
+        max_profit = round(spot * 0.05 * lot_size, 2)
+        breakeven = f"₹{int(k - net_debit)} and ₹{int(k + net_debit)}"
+        rr_ratio = 2.1
+
+        title = f"⚡ Long Straddle ({int(k)} CE + {int(k)} PE)"
+        summary = f"Buy {int(k)} CE @ ₹{prem_ce} + Buy {int(k)} PE @ ₹{prem_pe}. Profit from massive volatility in either direction."
+
+        curve_spots = np.linspace(spot - (spread_width * 3.0), spot + (spread_width * 3.0), 25)
+        curve = []
+        for s in curve_spots:
+            p_ce = max(0, s - k) - prem_ce
+            p_pe = max(0, k - s) - prem_pe
+            net_pnl = round((p_ce + p_pe) * lot_size, 2)
+            curve.append({"price": round(float(s), 1), "pnl": net_pnl})
+
+        legs = [
+            {"action": "BUY", "type": "CE", "strike": int(k), "premium": prem_ce, "label": f"Long {int(k)} Call"},
+            {"action": "BUY", "type": "PE", "strike": int(k), "premium": prem_pe, "label": f"Long {int(k)} Put"}
+        ]
+
     else:
         # Default: Long Call
         k = atm_strike

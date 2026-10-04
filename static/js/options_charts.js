@@ -245,3 +245,131 @@ function renderPayoffChart(curve, spotPrice) {
     });
 }
 
+/**
+ * Strike-Wise Call OI vs Put OI & Max Pain Bar Chart
+ */
+let optionsOiChartInstance = null;
+
+function renderOptionsOiChart(optionsData) {
+    const canvas = document.getElementById("optionsOiChartCanvas");
+    if (!canvas) return;
+
+    const chain = optionsData.chain_table || [];
+    if (!chain.length) return;
+
+    const spot = optionsData.underlying_price || 0;
+    const maxPain = optionsData.max_pain ? optionsData.max_pain.strike : null;
+
+    // Update Max Pain badge in legend header
+    const mpBadge = document.getElementById("oiChartMaxPainBadge");
+    if (mpBadge && maxPain) {
+        mpBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Max Pain: ₹${Number(maxPain).toLocaleString("en-IN")}`;
+    }
+
+    const strikes = chain.map(r => r.strike);
+    const callOi = chain.map(r => Number(r.ce_oi) || 0);
+    const putOi = chain.map(r => Number(r.pe_oi) || 0);
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
+    const textColor = isDark ? "#a1a1a6" : "#6e6e73";
+
+    const ctx = canvas.getContext("2d");
+    if (optionsOiChartInstance) {
+        optionsOiChartInstance.destroy();
+    }
+
+    optionsOiChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: strikes,
+            datasets: [
+                {
+                    label: "Call OI (Resistance)",
+                    data: callOi,
+                    backgroundColor: "rgba(239, 68, 68, 0.82)",
+                    borderColor: "#ef4444",
+                    borderWidth: 1,
+                    borderRadius: 3
+                },
+                {
+                    label: "Put OI (Support)",
+                    data: putOi,
+                    backgroundColor: "rgba(16, 185, 129, 0.82)",
+                    borderColor: "#10b981",
+                    borderWidth: 1,
+                    borderRadius: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            if (!items.length) return "";
+                            const strike = items[0].label;
+                            let titleStr = `Strike: ₹${strike}`;
+                            if (Number(strike) === Number(maxPain)) titleStr += " ★ MAX PAIN";
+                            if (Math.abs(Number(strike) - spot) < 50) titleStr += " (ATM)";
+                            return titleStr;
+                        },
+                        label: function(item) {
+                            const val = item.raw || 0;
+                            const formatted = typeof formatVolume === "function" ? formatVolume(val) : val.toLocaleString("en-IN");
+                            return `${item.dataset.label}: ${formatted}`;
+                        },
+                        afterBody: function(items) {
+                            const cOi = items[0]?.raw || 0;
+                            const pOi = items[1]?.raw || 0;
+                            const ratio = cOi > 0 ? (pOi / cOi).toFixed(2) : "--";
+                            return [`Strike PCR: ${ratio}`];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        font: { size: 10 },
+                        color: textColor,
+                        callback: function(val, idx) {
+                            return strikes[idx] ? `₹${strikes[idx]}` : val;
+                        }
+                    }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        font: { size: 10 },
+                        color: textColor,
+                        callback: function(val) {
+                            return typeof formatVolume === "function" ? formatVolume(val) : val.toLocaleString("en-IN");
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function executeOptionsOrderModal() {
+    const sym = currentPayoffSymbol || "NIFTY";
+    const lot = currentPayoffLotSize || 25;
+    if (typeof openBrokerModal === "function") {
+        openBrokerModal(sym, lot);
+    }
+}
+
+window.renderOptionsOiChart = renderOptionsOiChart;
+window.executeOptionsOrderModal = executeOptionsOrderModal;
+
+
