@@ -121,14 +121,20 @@ function setupEventListeners() {
             return;
         }
 
-        // Instant local filter first for instant UI response
+        // Instant local filter first using pre-lowercased index (<1ms)
         const pool = appState.allAssets && appState.allAssets.length > 0 ? appState.allAssets : appState.stocksList;
-        const localMatches = pool.filter(s =>
-            (s.name && s.name.toLowerCase().includes(query.toLowerCase())) ||
-            (s.code && s.code.toLowerCase().includes(query.toLowerCase())) ||
-            (s.sector && s.sector.toLowerCase().includes(query.toLowerCase())) ||
-            (s.category && s.category.toLowerCase().includes(query.toLowerCase()))
-        ).slice(0, 8);
+        const qLower = query.toLowerCase();
+        const localMatches = [];
+        for (let i = 0; i < pool.length; i++) {
+            const item = pool[i];
+            if (item._searchStr ? item._searchStr.includes(qLower) : (
+                (item.name && item.name.toLowerCase().includes(qLower)) ||
+                (item.code && item.code.toLowerCase().includes(qLower))
+            )) {
+                localMatches.push(item);
+                if (localMatches.length >= 8) break;
+            }
+        }
 
         if (localMatches.length > 0) {
             renderSearchDropdown(localMatches, query);
@@ -237,8 +243,29 @@ async function loadInitialData() {
     try {
         const res = await fetch("/api/stocks/list");
         const data = await res.json();
-        appState.stocksList = data.stocks || [];
-        appState.allAssets = data.all_assets || data.stocks || [];
+        const rawPool = data.assets || data.all_assets || data.stocks || [];
+        
+        // Fast normalization & pre-lowercased indexing for <1ms keystroke search
+        const normalized = rawPool.map(a => {
+            const sym = a.s || a.symbol || `${a.c || a.code}.NS`;
+            const code = (a.c || a.code || sym.replace(".NS", "")).toUpperCase();
+            const name = a.n || a.name || code;
+            const sector = a.sec || a.sector || "Equity";
+            const category = a.cat || a.category || "Stock";
+            const fno = a.f !== undefined ? a.f : Boolean(a.fno);
+            return {
+                symbol: sym,
+                code: code,
+                name: name,
+                sector: sector,
+                category: category,
+                fno: fno,
+                _searchStr: `${code.toLowerCase()} ${name.toLowerCase()} ${sector.toLowerCase()} ${category.toLowerCase()}`
+            };
+        });
+
+        appState.stocksList = normalized;
+        appState.allAssets = normalized;
         appState.commoditiesList = data.commodities || [];
     } catch (e) {
         console.error("Error loading initial data:", e);

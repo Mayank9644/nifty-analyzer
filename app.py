@@ -193,16 +193,35 @@ def api_health():
 
 @app.route("/api/stocks/list")
 def api_stocks_list():
-    """Return list of all available stocks, ETFs, bonds, sectors, and commodities for search autocomplete."""
-    return jsonify({
-        "stocks": ALL_STOCKS,
-        "all_assets": ALL_ASSETS,
-        "etfs": POPULAR_ETFS,
-        "bonds": POPULAR_BONDS,
-        "sectors": SECTORS,
+    """Return compact list of all available instruments for instant autocomplete with 24h client caching."""
+    compact_assets = getattr(api_stocks_list, "_cached_compact", None)
+    if not compact_assets:
+        seen = set()
+        compact_assets = []
+        for a in ALL_ASSETS:
+            sym = a.get("symbol") or f"{a.get('code')}.NS"
+            code = a.get("code") or sym.replace(".NS", "")
+            if code in seen:
+                continue
+            seen.add(code)
+            compact_assets.append({
+                "s": sym,
+                "c": code,
+                "n": a.get("name", code),
+                "sec": a.get("sector", "Equity"),
+                "cat": a.get("category", "Stock"),
+                "f": bool(a.get("fno", False))
+            })
+        api_stocks_list._cached_compact = compact_assets
+
+    resp = jsonify({
+        "assets": compact_assets,
         "commodities": COMMODITIES_LIST,
-        "fno_indices": FNO_INDICES
+        "fno_indices": FNO_INDICES,
+        "sectors": SECTORS
     })
+    resp.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+    return resp
 
 
 
