@@ -1,4 +1,5 @@
 let _backtestChart = null;
+let _lastBacktestData = null;
 
 async function runBacktest() {
     const symbolInput = document.getElementById("backtestSymbolSelect");
@@ -26,6 +27,7 @@ async function runBacktest() {
         const data = await res.json();
 
         if (data.status === "success") {
+            _lastBacktestData = data;
             renderBacktestResults(data);
         } else {
             container.innerHTML = `<div class="p-8 text-center text-[#b32020] text-xs">${data.message || 'Backtest failed.'}</div>`;
@@ -239,3 +241,68 @@ function renderBacktestEquityChart(curveData) {
         }
     });
 }
+
+/**
+ * 1-Click Backtest Strategy Presets & CSV Trade Export
+ */
+function applyBacktestPreset(strategy, symbol, period) {
+    const stratEl = document.getElementById("backtestStrategySelect");
+    const symEl = document.getElementById("backtestSymbolSelect");
+    const perEl = document.getElementById("backtestPeriodSelect");
+    if (stratEl) stratEl.value = strategy;
+    if (symEl) symEl.value = symbol;
+    if (perEl) perEl.value = period;
+    runBacktest();
+}
+
+function exportBacktestTradesCSV() {
+    if (!_lastBacktestData) {
+        alert("Please run a backtest first to generate simulated trade data.");
+        return;
+    }
+    const trades = _lastBacktestData.all_trades || _lastBacktestData.trades || [];
+    if (!trades.length) {
+        alert("No trades were generated for this strategy/symbol combination.");
+        return;
+    }
+    const headers = [
+        "Entry Date", "Exit Date", "Symbol", "Strategy",
+        "Entry Price", "Exit Price", "Qty", "Gross PnL (INR)",
+        "Friction Deducted (INR)", "Net PnL (INR)", "Return (%)", "Reason"
+    ];
+    const sym = _lastBacktestData.symbol || "STOCK";
+    const strat = _lastBacktestData.strategy_name || _lastBacktestData.strategy || "Strategy";
+    const rows = [headers.join(",")];
+    trades.forEach(t => {
+        const row = [
+            t.entry_date || "",
+            t.exit_date || "",
+            `"${sym}"`,
+            `"${strat}"`,
+            t.entry_price || 0,
+            t.exit_price || 0,
+            t.quantity || 0,
+            t.gross_pnl || 0,
+            t.friction_deducted || 0,
+            t.net_pnl || 0,
+            t.return_pct || 0,
+            `"${(t.reason || '').replace(/"/g, '""')}"`
+        ];
+        rows.push(row.join(","));
+    });
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const cleanSym = sym.replace(".NS", "");
+    a.download = `backtest_${cleanSym}_${_lastBacktestData.strategy}_trades.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+window.applyBacktestPreset = applyBacktestPreset;
+window.exportBacktestTradesCSV = exportBacktestTradesCSV;
+

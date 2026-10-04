@@ -1995,41 +1995,65 @@
         <!-- TAB: HISTORICAL BACKTESTING ENGINE                                  -->
         <!-- =================================================================== -->
         <div id="tab-view-backtest" class="tab-view hidden space-y-5">
-            <div class="macos-card p-5 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-[#1c1c1e] flex items-center gap-2">
-                        <span>🧪</span> Historical Backtesting Engine
-                    </h2>
-                    <p class="text-xs text-[#6e6e73]">SEPA V3 · Trend Template + VCP Breakout · 21 EMA Trailing Exit</p>
+            <div class="macos-card p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-[#1c1c1e] dark:text-[#f5f5f7] flex items-center gap-2">
+                            <span>🧪</span> Historical Backtesting Engine
+                        </h2>
+                        <p class="text-xs text-[#6e6e73] dark:text-[#a1a1a6]">Multi-Strategy Institutional Simulator with exact Indian market friction deductions</p>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <select id="backtestStrategySelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
+                            <option value="sepa" selected>SEPA V3 Trend & VCP</option>
+                            <option value="supertrend">Supertrend (10, 3)</option>
+                            <option value="rsi_pullback">RSI Pullback (200 DMA + RSI < 35)</option>
+                            <option value="donchian">Donchian 20-Day Turtle</option>
+                        </select>
+                        <select id="backtestSymbolSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
+                            <option value="RELIANCE.NS">RELIANCE.NS</option>
+                            <option value="TCS.NS">TCS.NS</option>
+                            <option value="HDFCBANK.NS">HDFCBANK.NS</option>
+                            <option value="INFY.NS">INFY.NS</option>
+                            <option value="TATASTEEL.NS">TATASTEEL.NS</option>
+                            <option value="SUNPHARMA.NS">SUNPHARMA.NS</option>
+                            <option value="BEL.NS">BEL.NS</option>
+                        </select>
+                        <select id="backtestPeriodSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
+                            <option value="1y">1 Year</option>
+                            <option value="3y" selected>3 Years</option>
+                            <option value="5y">5 Years</option>
+                        </select>
+                        <div class="flex items-center gap-1.5 macos-box px-2.5 py-1 text-xs">
+                            <span class="text-[#86868b]">₹</span>
+                            <input type="number" id="backtestCapitalInput" value="100000" step="10000" class="w-20 bg-transparent font-bold text-[#1c1c1e] dark:text-white mono outline-none" title="Initial Backtest Capital">
+                        </div>
+                        <button onclick="runBacktest()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                            <span>▶</span> <span>Run Backtest</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 flex-wrap">
-                    <select id="backtestStrategySelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
-                        <option value="sepa" selected>SEPA V3 Trend & VCP</option>
-                        <option value="supertrend">Supertrend (10, 3)</option>
-                        <option value="rsi_pullback">RSI Pullback (200 DMA + RSI < 35)</option>
-                        <option value="donchian">Donchian 20-Day Turtle</option>
-                    </select>
-                    <select id="backtestSymbolSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
-                        <option value="RELIANCE.NS">RELIANCE.NS</option>
-                        <option value="TCS.NS">TCS.NS</option>
-                        <option value="HDFCBANK.NS">HDFCBANK.NS</option>
-                        <option value="INFY.NS">INFY.NS</option>
-                        <option value="TATASTEEL.NS">TATASTEEL.NS</option>
-                        <option value="SUNPHARMA.NS">SUNPHARMA.NS</option>
-                        <option value="BEL.NS">BEL.NS</option>
-                    </select>
-                    <select id="backtestPeriodSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
-                        <option value="1y">1 Year</option>
-                        <option value="3y" selected>3 Years</option>
-                        <option value="5y">5 Years</option>
-                    </select>
-                    <div class="flex items-center gap-1.5 macos-box px-2.5 py-1 text-xs">
-                        <span class="text-[#86868b]">₹</span>
-                        <input type="number" id="backtestCapitalInput" value="100000" step="10000" class="w-20 bg-transparent font-bold text-[#1c1c1e] dark:text-white mono outline-none" title="Initial Backtest Capital">
+                <!-- 1-Click Strategy Presets Bar & CSV Export -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10">
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="text-[11px] font-semibold text-[#86868b] dark:text-[#a1a1a6]">⚡ Presets:</span>
+                        <button onclick="applyBacktestPreset('sepa', 'RELIANCE.NS', '3y')" class="px-2.5 py-1 rounded-full bg-[#f0f0f3] dark:bg-white/10 hover:bg-[#007aff] hover:text-white dark:hover:bg-[#007aff] text-[#1c1c1e] dark:text-[#f5f5f7] font-medium text-[11px] transition-all cursor-pointer">
+                            ⚡ SEPA V3 Breakout
+                        </button>
+                        <button onclick="applyBacktestPreset('supertrend', 'RELIANCE.NS', '3y')" class="px-2.5 py-1 rounded-full bg-[#f0f0f3] dark:bg-white/10 hover:bg-[#007aff] hover:text-white dark:hover:bg-[#007aff] text-[#1c1c1e] dark:text-[#f5f5f7] font-medium text-[11px] transition-all cursor-pointer">
+                            🌊 Supertrend (10, 3)
+                        </button>
+                        <button onclick="applyBacktestPreset('rsi_pullback', 'TCS.NS', '3y')" class="px-2.5 py-1 rounded-full bg-[#f0f0f3] dark:bg-white/10 hover:bg-[#007aff] hover:text-white dark:hover:bg-[#007aff] text-[#1c1c1e] dark:text-[#f5f5f7] font-medium text-[11px] transition-all cursor-pointer">
+                            🎯 RSI 200 DMA Pullback
+                        </button>
+                        <button onclick="applyBacktestPreset('donchian', 'HDFCBANK.NS', '3y')" class="px-2.5 py-1 rounded-full bg-[#f0f0f3] dark:bg-white/10 hover:bg-[#007aff] hover:text-white dark:hover:bg-[#007aff] text-[#1c1c1e] dark:text-[#f5f5f7] font-medium text-[11px] transition-all cursor-pointer">
+                            🐢 Turtle Donchian 20/10
+                        </button>
                     </div>
-                    <button onclick="runBacktest()" class="btn-primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
-                        <span>▶</span> <span>Run Backtest</span>
+                    <button id="backtestExportCsvBtn" onclick="exportBacktestTradesCSV()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
+                        <span>📥</span> <span>Export Trades CSV</span>
                     </button>
                 </div>
             </div>

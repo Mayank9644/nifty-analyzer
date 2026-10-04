@@ -334,5 +334,36 @@ def run_strategy_backtest(symbol: str = "RELIANCE.NS", period: str = "3y", strat
             "slippage": f"{SLIPPAGE_BPS / 100:.2f}% per execution"
         },
         "equity_curve": equity_curve[::3],  # Sample points for snappy chart rendering
-        "trades": trades[-20:]  # Return last 20 trades
+        "trades": trades[-20:],  # Return last 20 trades for table preview
+        "all_trades": trades  # Full simulated trade list for complete CSV export
     }
+
+
+def generate_trades_csv(trades: list, symbol: str = "NIFTY", strategy: str = "SEPA") -> str:
+    """
+    Exports full trade log to CSV format with all friction and execution details.
+    """
+    headers = [
+        "Entry Date", "Exit Date", "Symbol", "Strategy",
+        "Entry Price", "Exit Price", "Qty", "Gross PnL (₹)",
+        "Friction (₹)", "Net PnL (₹)", "Return (%)", "Reason"
+    ]
+    rows = [",".join(headers)]
+    for t in trades:
+        row = [
+            str(t.get("entry_date", "")),
+            str(t.get("exit_date", "")),
+            f'"{symbol}"',
+            f'"{strategy}"',
+            str(t.get("entry_price", 0.0)),
+            str(t.get("exit_price", 0.0)),
+            str(t.get("quantity", 0)),
+            str(t.get("gross_pnl", 0.0)),
+            str(t.get("friction_deducted", 0.0)),
+            str(t.get("net_pnl", 0.0)),
+            str(t.get("return_pct", 0.0)),
+            f'"{t.get("reason", "")}"'
+        ]
+        rows.append(",".join(row))
+    return "\n".join(rows)
+
