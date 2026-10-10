@@ -404,6 +404,8 @@ def evaluate_security_unified(
     )
     suggested_qty = sizing.get("suggested_quantity", 10) if sizing.get("status") == "success" else 10
 
+    action_type = trade_plan.get("action_type", "BUY")
+    product = "MIS" if action_type == "SHORT" else "CNC"
     broker_ticket = generate_broker_order_links(
         symbol=ctx.symbol,
         quantity=max(1, suggested_qty),
@@ -411,7 +413,8 @@ def evaluate_security_unified(
         stop_loss=stop_l,
         target=target_1,
         order_type="LIMIT",
-        product="CNC"
+        product=product,
+        action="SELL" if action_type == "SHORT" else ("EXIT" if action_type == "EXIT_AVOID" else "BUY")
     )
 
     # Attach bidirectional execution links to signals trade plan

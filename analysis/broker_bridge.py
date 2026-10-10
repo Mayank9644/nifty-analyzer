@@ -14,20 +14,25 @@ def generate_broker_order_links(
     stop_loss: float = 0.0,
     target: float = 0.0,
     order_type: str = "LIMIT",
-    product: str = "CNC"  # CNC (Delivery/Positional) or MIS (Intraday)
+    product: str = "CNC",  # CNC (Delivery/Positional) or MIS (Intraday)
+    action: str = "BUY"
 ) -> dict:
     """
     Generates pre-populated execution links and webhook payloads for Indian brokers.
+    Supports BUY, SELL (Short), and EXIT (De-risk/Capital Defense).
     """
     clean_sym = symbol.replace(".NS", "").replace(".BO", "").upper()
     exchange = "NSE"
+    order_action = action.upper() if action else "BUY"
+    transaction_type = "SELL" if order_action in ("SELL", "EXIT") else "BUY"
+    action_verb = "Exit/Sell" if order_action == "EXIT" else ("Sell" if order_action == "SELL" else "Buy")
 
     # 1. Zerodha Kite Basket / Deep Link
     kite_basket = [{
         "variety": "regular",
         "tradingsymbol": clean_sym,
         "exchange": exchange,
-        "transaction_type": "BUY",
+        "transaction_type": transaction_type,
         "order_type": order_type,
         "quantity": int(quantity),
         "price": float(entry_price),
@@ -50,7 +55,8 @@ def generate_broker_order_links(
 
     # 3. Standard Webhook Payload (For OpenAlgo, AlgoTest, or TradingView alerts)
     webhook_payload = {
-        "action": "BUY",
+        "action": transaction_type,
+        "stance": order_action,
         "symbol": clean_sym,
         "exchange": exchange,
         "quantity": quantity,
@@ -65,6 +71,7 @@ def generate_broker_order_links(
         "status": "success",
         "symbol": symbol,
         "clean_symbol": clean_sym,
+        "action": order_action,
         "exchange": exchange,
         "quantity": quantity,
         "entry_price": entry_price,
@@ -76,13 +83,13 @@ def generate_broker_order_links(
                 "name": "Zerodha Kite",
                 "icon": "🪁",
                 "url": kite_url,
-                "label": f"Buy {quantity} shares on Kite @ ₹{entry_price}"
+                "label": f"{action_verb} {quantity} shares on Kite @ ₹{entry_price}"
             },
             "dhan": {
                 "name": "Dhan",
                 "icon": "🎯",
                 "url": dhan_url,
-                "label": f"Buy {quantity} shares on Dhan @ ₹{entry_price}"
+                "label": f"{action_verb} {quantity} shares on Dhan @ ₹{entry_price}"
             }
         },
         "webhook_payload": webhook_payload
