@@ -13,7 +13,23 @@ CACHE_TTL_DAILY = 86400          # 24 hours for daily OHLCV bars & company funda
 CACHE_TTL_NEWS = 1800            # 30 minutes for news feeds
 CACHE_TTL_BENCHMARK = 3600       # 1 hour for market indices & sector proxies
 PORT = int(os.environ.get("PORT", 5050))
-HOST = "0.0.0.0"
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
+# Local runs bind to loopback only. Set HOST=0.0.0.0 to expose the dev server on your LAN.
+# (Gunicorn/Docker deployments bind via their own command line and are unaffected.)
+HOST = os.environ.get("HOST", "127.0.0.1")
+# The Werkzeug debugger allows remote code execution, so it is opt-in.
+DEBUG = _env_flag("FLASK_DEBUG", False)
+
+# Shared secret protecting every state-changing /api route (POST/PUT/PATCH/DELETE).
+# Leave unset for local-only use; ALWAYS set it on a public deployment.
+API_KEY = os.environ.get("NIFTY_API_KEY", "").strip()
+# Set TRUST_PROXY=1 behind Render/Fly/nginx so the real client IP is used for rate limiting.
+TRUST_PROXY = _env_flag("TRUST_PROXY", False)
 
 # Default Market Benchmarks
 DEFAULT_BENCHMARK = "^NSEI"      # Nifty 50

@@ -1260,19 +1260,64 @@ function renderSignalsBox(signals, styleInfo) {
     }
 
     // Synchronize Top Hero Execution Band
-    const bandStop = document.getElementById("heroBandStop");
-    const bandStopPct = document.getElementById("heroBandStopPct");
-    const bandEntry = document.getElementById("heroBandEntry");
-    const bandTarget = document.getElementById("heroBandTarget");
-    const bandTargetPct = document.getElementById("heroBandTargetPct");
+    const heroBandItems = document.getElementById("heroBandItemsContainer");
+    if (heroBandItems) {
+        if (plan.action_type === "EXIT_AVOID") {
+            heroBandItems.innerHTML = `
+                <span class="font-bold text-[#1c1c1e] dark:text-white text-[11px] flex items-center gap-1">
+                    <span>⚠️</span> Risk Levels:
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
+                    <span>🔻 Downside Risk:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || '-0%'})</span>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[#b35900] font-semibold text-[11px]">
+                    <span>⚡ Ref CMP (Avoid Longs):</span> <strong id="heroBandEntry" class="mono font-bold">₹${plan.entry_price || '—'}</strong>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
+                    <span>🛑 Invalidation Level:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '+0%'})</span>
+                </span>
+            `;
+        } else if (plan.action_type === "SHORT") {
+            heroBandItems.innerHTML = `
+                <span class="font-bold text-[#1c1c1e] dark:text-white text-[11px] flex items-center gap-1">
+                    <span>⚡</span> MIS Short Range:
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-[#1e7e34] font-semibold text-[11px]">
+                    <span>🏁 Short Target:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || '+0%'})</span>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
+                    <span>⚡ Short Entry (MIS):</span> <strong id="heroBandEntry" class="mono font-bold">₹${plan.entry_price || '—'}</strong>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
+                    <span>🛑 Cover Stop:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '-0%'})</span>
+                </span>
+            `;
+        } else {
+            heroBandItems.innerHTML = `
+                <span class="font-bold text-[#1c1c1e] dark:text-white text-[11px] flex items-center gap-1">
+                    <span>🎯</span> Execution Range:
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
+                    <span>🛑 Stop Loss:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || `-${plan.stop_loss_pct || 0}%`})</span>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
+                    <span>⚡ Entry Zone:</span> <strong id="heroBandEntry" class="mono font-bold">₹${plan.entry_price || '—'}</strong>
+                </span>
+                <span class="text-[#8e8e93] hidden sm:inline">────</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-[#1e7e34] font-semibold text-[11px]">
+                    <span>🏁 Target 1:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || `+${plan.target_1_pct || 0}%`})</span>
+                </span>
+            `;
+        }
+    }
+
     const bandRiskReward = document.getElementById("heroBandRiskReward");
     const bandVerdict = document.getElementById("heroBandVerdictBadge");
-
-    if (bandStop) bandStop.innerText = `₹${plan.stop_loss || '—'}`;
-    if (bandStopPct) bandStopPct.innerText = `(-${plan.stop_loss_pct || 0}%)`;
-    if (bandEntry) bandEntry.innerText = `₹${plan.entry_price || '—'}`;
-    if (bandTarget) bandTarget.innerText = `₹${plan.target_1 || '—'}`;
-    if (bandTargetPct) bandTargetPct.innerText = `(+${plan.target_1_pct || 0}%)`;
     if (bandRiskReward) bandRiskReward.innerText = plan.risk_reward || "1 : 2.0";
     if (bandVerdict) {
         bandVerdict.innerText = sig.verdict || "HOLD";
@@ -1325,7 +1370,7 @@ function renderSignalsBox(signals, styleInfo) {
                     <!-- Target 1 vs Stop Loss Probability Gauge -->
                     <div class="space-y-1.5">
                         <div class="flex justify-between items-center text-xs">
-                            <span class="font-medium text-[#1c1c1e]">Target 1 Hit Likelihood (before Stop-Loss):</span>
+                            <span class="font-medium text-[#1c1c1e]">${plan.action_type === 'EXIT_AVOID' ? 'Downside Risk Test Likelihood (vs Recovery):' : (plan.action_type === 'SHORT' ? 'Short Target Hit Likelihood (before Stop):' : 'Target 1 Hit Likelihood (before Stop-Loss):')}</span>
                             <span class="mono font-bold" style="color: ${pTargetColor};">${pTarget}%</span>
                         </div>
                         <div class="w-full bg-red-500/20 rounded-full h-2.5 overflow-hidden flex">
@@ -1333,8 +1378,8 @@ function renderSignalsBox(signals, styleInfo) {
                             <div class="h-2.5 bg-red-500/60 transition-all duration-500 rounded-r-full" style="width: ${pRisk}%;"></div>
                         </div>
                         <div class="flex justify-between text-[10px] text-[#8e8e93]">
-                            <span>P(Hit Target 1 first): <strong class="text-[#1c1c1e]">${pTarget}%</strong></span>
-                            <span>P(Hit Stop Loss first): <strong class="text-[#b32020]">${pRisk}%</strong></span>
+                            <span>P(${plan.action_type === 'EXIT_AVOID' ? 'Test Downside Risk first' : (plan.action_type === 'SHORT' ? 'Hit Short Target first' : 'Hit Target 1 first')}): <strong class="text-[#1c1c1e]">${pTarget}%</strong></span>
+                            <span>P(${plan.action_type === 'EXIT_AVOID' ? 'Recover above Invalidation first' : 'Hit Stop Loss first'}): <strong class="text-[#b32020]">${pRisk}%</strong></span>
                         </div>
                     </div>
 
@@ -1453,22 +1498,63 @@ function renderSignalsBox(signals, styleInfo) {
 
             <!-- Trade Plan Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div class="macos-box p-3">
-                    <div class="text-[11px] text-[#6e6e73] font-medium">Entry Zone</div>
-                    <div class="text-base font-bold text-[#1c1c1e] mono mt-0.5">₹${plan.entry_price}</div>
-                </div>
-                <div class="macos-box p-3">
-                    <div class="text-[11px] text-[#b32020] font-medium">Stop-Loss ${renderJargonTooltip("RSI")}</div>
-                    <div class="text-base font-bold text-[#b32020] mono mt-0.5">₹${plan.stop_loss} <span class="text-xs font-normal">(-${plan.stop_loss_pct}%)</span></div>
-                </div>
-                <div class="macos-box p-3">
-                    <div class="text-[11px] text-[#1e7e34] font-medium">Target 1</div>
-                    <div class="text-base font-bold text-[#1e7e34] mono mt-0.5">₹${plan.target_1} <span class="text-xs font-normal">(+${plan.target_1_pct}%)</span></div>
-                </div>
-                <div class="macos-box p-3">
-                    <div class="text-[11px] text-[#0062cc] font-medium">Risk : Reward</div>
-                    <div class="text-base font-bold text-[#007aff] mono mt-0.5">${plan.risk_reward}</div>
-                </div>
+                ${plan.action_type === "EXIT_AVOID" ? `
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#6e6e73] font-medium">Reference CMP</div>
+                        <div class="text-base font-bold text-[#1c1c1e] dark:text-white mono mt-0.5">₹${plan.entry_price}</div>
+                        <div class="text-[10px] text-amber-600 font-semibold mt-0.5">Avoid New Longs</div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#b32020] font-medium">Downside Risk Area</div>
+                        <div class="text-base font-bold text-[#b32020] mono mt-0.5">₹${plan.target_1} <span class="text-xs font-normal">(${plan.target_1_pct_display || `-${plan.target_1_pct}%`})</span></div>
+                        <div class="text-[10px] text-[#8e8e93] mt-0.5">Projected Support Test</div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#007aff] font-medium">Resistance Invalidation</div>
+                        <div class="text-base font-bold text-[#007aff] mono mt-0.5">₹${plan.stop_loss} <span class="text-xs font-normal">(${plan.stop_loss_pct_display || `+${plan.stop_loss_pct}%`})</span></div>
+                        <div class="text-[10px] text-[#8e8e93] mt-0.5">Overhead Pivot Level</div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#8e8e93] font-medium">Action Stance</div>
+                        <div class="text-base font-bold text-[#b32020] mono mt-0.5">DEFENSIVE</div>
+                        <div class="text-[10px] text-[#8e8e93] mt-0.5">Exit Longs / Hold Cash</div>
+                    </div>
+                ` : plan.action_type === "SHORT" ? `
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#6e6e73] font-medium">Short Entry Zone</div>
+                        <div class="text-base font-bold text-[#1c1c1e] dark:text-white mono mt-0.5">₹${plan.entry_price}</div>
+                        <div class="text-[10px] text-[#007aff] font-semibold mt-0.5">Intraday MIS Only</div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#b32020] font-medium">Buy-to-Cover Stop</div>
+                        <div class="text-base font-bold text-[#b32020] mono mt-0.5">₹${plan.stop_loss} <span class="text-xs font-normal">(${plan.stop_loss_pct_display || `-${plan.stop_loss_pct}%`})</span></div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#1e7e34] font-medium">Downside Target 1</div>
+                        <div class="text-base font-bold text-[#1e7e34] mono mt-0.5">₹${plan.target_1} <span class="text-xs font-normal">(${plan.target_1_pct_display || `+${plan.target_1_pct}%`})</span></div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#0062cc] font-medium">Risk : Reward</div>
+                        <div class="text-base font-bold text-[#007aff] mono mt-0.5">${plan.risk_reward}</div>
+                    </div>
+                ` : `
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#6e6e73] font-medium">Entry Zone</div>
+                        <div class="text-base font-bold text-[#1c1c1e] dark:text-white mono mt-0.5">₹${plan.entry_price}</div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#b32020] font-medium">Stop-Loss ${renderJargonTooltip("RSI")}</div>
+                        <div class="text-base font-bold text-[#b32020] mono mt-0.5">₹${plan.stop_loss} <span class="text-xs font-normal">(${plan.stop_loss_pct_display || `-${plan.stop_loss_pct}%`})</span></div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#1e7e34] font-medium">Target 1</div>
+                        <div class="text-base font-bold text-[#1e7e34] mono mt-0.5">₹${plan.target_1} <span class="text-xs font-normal">(${plan.target_1_pct_display || `+${plan.target_1_pct}%`})</span></div>
+                    </div>
+                    <div class="macos-box p-3">
+                        <div class="text-[11px] text-[#0062cc] font-medium">Risk : Reward</div>
+                        <div class="text-base font-bold text-[#007aff] mono mt-0.5">${plan.risk_reward}</div>
+                    </div>
+                `}
             </div>
 
             <!-- Probabilistic Target Cone -->
@@ -2099,9 +2185,21 @@ window.logCalculatedPositionToJournal = logCalculatedPositionToJournal;
 
 function logCurrentStockToJournal() {
     const sym = appState.currentSymbol || "RELIANCE.NS";
+    const sig = appState.currentStock?.signals;
+    const plan = sig?.trade_plan;
+
+    if (plan && plan.action_type === "EXIT_AVOID") {
+        if (typeof showToast === "function") {
+            showToast(`⚠️ ${sym} is in a Bearish Breakdown state. Overnight short selling is not permitted in Indian cash equities. To record an exit, close your open trade in the Journal.`, "warning");
+        } else {
+            alert(`${sym} is in a Bearish Breakdown state. Overnight short selling is not permitted in Indian cash equities. To record an exit, close your open trade in the Journal.`);
+        }
+        return;
+    }
+
     const curPrice = appState.currentStock?.info?.current_price || 2500;
-    const bandSl = parseFloat(document.getElementById("heroBandStop")?.innerText?.replace(/[^0-9.]/g, "")) || Math.round(curPrice * 0.96 * 10) / 10;
-    const bandTarget = parseFloat(document.getElementById("heroBandTarget")?.innerText?.replace(/[^0-9.]/g, "")) || Math.round(curPrice * 1.06 * 10) / 10;
+    const bandSl = plan?.stop_loss || (Math.round(curPrice * 0.96 * 10) / 10);
+    const bandTarget = plan?.target_1 || (Math.round(curPrice * 1.06 * 10) / 10);
     const riskDiff = Math.abs(curPrice - bandSl) || 10;
     const suggestedQty = Math.max(1, Math.floor(7500 / riskDiff));
 
@@ -2113,7 +2211,7 @@ function logCurrentStockToJournal() {
             qty: suggestedQty,
             sl: bandSl,
             t1: bandTarget,
-            style: "Swing",
+            style: plan?.style || "Swing",
             notes: `Direct log from Terminal Hero setup for ${sym}. R:R Target: ₹${bandTarget}`
         });
     }

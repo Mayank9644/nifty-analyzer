@@ -78,13 +78,18 @@ def calculate_probability_cone(
 
     vol, drift = compute_historical_volatility(df)
 
+    # For bearish breakdown setups, align drift with downward momentum so forward cones project downside support
+    effective_drift = -abs(drift) if is_short else drift
+    if is_short and abs(effective_drift) < 0.05:
+        effective_drift = -0.12
+
     if not is_short:
         if stop_loss >= current_price or target_1 <= current_price:
             p_target = 0.50
         else:
             a = math.log(current_price / max(stop_loss, 0.001))
             b = math.log(target_1 / current_price)
-            alpha = drift - 0.5 * (vol ** 2)
+            alpha = effective_drift - 0.5 * (vol ** 2)
             gamma = 2.0 * alpha / (vol ** 2)
             if abs(gamma) < 1e-5:
                 p_target = a / (a + b)
@@ -101,7 +106,7 @@ def calculate_probability_cone(
         else:
             a = math.log(max(stop_loss, 0.001) / current_price)
             b = math.log(current_price / max(target_1, 0.001))
-            alpha = -(drift - 0.5 * (vol ** 2))
+            alpha = -(effective_drift - 0.5 * (vol ** 2))
             gamma = 2.0 * alpha / (vol ** 2)
             if abs(gamma) < 1e-5:
                 p_target = a / (a + b)
@@ -120,12 +125,12 @@ def calculate_probability_cone(
     cones = {}
     for days in [5, 10, 20]:
         t = days / 252.0
-        drift_adj = (drift - 0.5 * (vol ** 2)) * t
+        drift_adj = (effective_drift - 0.5 * (vol ** 2)) * t
         std_adj = vol * math.sqrt(t)
 
         cones[f"{days}d"] = {
             "days": days,
-            "expected": round(current_price * math.exp(drift * t), 2),
+            "expected": round(current_price * math.exp(effective_drift * t), 2),
             "upper_1sigma": round(current_price * math.exp(drift_adj + std_adj), 2),
             "lower_1sigma": round(current_price * math.exp(drift_adj - std_adj), 2),
             "upper_2sigma": round(current_price * math.exp(drift_adj + 2.0 * std_adj), 2),
@@ -135,6 +140,7 @@ def calculate_probability_cone(
     return {
         "p_target_before_sl": round(p_target * 100.0, 1),
         "annualized_volatility_pct": round(vol * 100.0, 1),
-        "annualized_drift_pct": round(drift * 100.0, 1),
+        "annualized_drift_pct": round(effective_drift * 100.0, 1),
         "cones": cones
     }
+

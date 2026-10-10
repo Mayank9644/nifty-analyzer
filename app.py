@@ -7,7 +7,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 import pandas as pd
 import yfinance as yf
 
-from config import PORT, HOST, DEFAULT_BENCHMARK, DEFAULT_BANKNIFTY
+from config import PORT, HOST, DEBUG, API_KEY, TRUST_PROXY, DEFAULT_BENCHMARK, DEFAULT_BANKNIFTY
 from data.stock_list import ALL_STOCKS, ALL_ASSETS, POPULAR_ETFS, POPULAR_BONDS, NIFTY_50_STOCKS, COMMODITIES_LIST, FNO_INDICES, SECTORS
 from data.fetcher import get_stock_history, format_chart_data, get_stock_info, get_shareholding, search_stocks, clear_stock_cache
 from data.commodity_fetcher import (
@@ -78,6 +78,7 @@ from data.context import (
 
 import csv
 import io
+import os
 from flask import Response
 
 import math
@@ -116,21 +117,52 @@ Compress(app)
 
 import re
 import time
-from collections import defaultdict
+import hmac
+import logging
+import threading
+from collections import deque
 
-# In-memory Token Bucket rate limiter (180 requests/min per IP)
-_IP_REQUEST_LOG = defaultdict(list)
+logger = logging.getLogger("nifty_analyzer")
+
+if TRUST_PROXY:
+    # Behind Render/Fly/nginx: trust exactly one proxy hop for the client IP.
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+# In-memory sliding-window rate limiter (180 requests/min per IP). Thread-safe, and idle
+# IPs are pruned so the table cannot grow without bound.
+_IP_REQUEST_LOG = {}
+_RATE_LIMIT_LOCK = threading.Lock()
 _RATE_LIMIT_WINDOW = 60
 _MAX_REQUESTS_PER_WINDOW = 180
+_MAX_TRACKED_IPS = 5000
 
 def _check_rate_limit(ip: str) -> bool:
     now = time.time()
-    timestamps = _IP_REQUEST_LOG[ip]
-    _IP_REQUEST_LOG[ip] = [t for t in timestamps if now - t < _RATE_LIMIT_WINDOW]
-    if len(_IP_REQUEST_LOG[ip]) >= _MAX_REQUESTS_PER_WINDOW:
+    with _RATE_LIMIT_LOCK:
+        if len(_IP_REQUEST_LOG) > _MAX_TRACKED_IPS:
+            for k in [k for k, q in _IP_REQUEST_LOG.items() if not q or now - q[-1] > _RATE_LIMIT_WINDOW]:
+                del _IP_REQUEST_LOG[k]
+        q = _IP_REQUEST_LOG.setdefault(ip, deque())
+        while q and now - q[0] >= _RATE_LIMIT_WINDOW:
+            q.popleft()
+        if len(q) >= _MAX_REQUESTS_PER_WINDOW:
+            return False
+        q.append(now)
+        return True
+
+# Routes that expose private positions are protected even for GET when an API key is set.
+_PRIVATE_PREFIXES = ("/api/journal", "/api/watchlist", "/api/portfolio", "/api/broker", "/api/cache")
+
+def _requires_api_key(path: str, method: str) -> bool:
+    if not API_KEY or not path.startswith("/api/"):
         return False
-    _IP_REQUEST_LOG[ip].append(now)
-    return True
+    return method not in ("GET", "HEAD", "OPTIONS") or path.startswith(_PRIVATE_PREFIXES)
+
+def _server_error(e: Exception, status: int = 500):
+    """Log the real error server-side; never leak internals (paths, SQL, tokens) to the client."""
+    logger.exception("Unhandled error on %s %s", request.method, request.path, exc_info=e)
+    return jsonify({"status": "error", "message": "Internal server error. Check the server logs."}), status
 
 TICKER_REGEX = re.compile(r"^[A-Z0-9^=._-]{1,25}$", re.IGNORECASE)
 
@@ -142,10 +174,15 @@ def validate_ticker_symbol(sym: str) -> bool:
 
 @app.before_request
 def before_request_security():
-    if request.path.startswith("/api/"):
-        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
-        if not _check_rate_limit(client_ip):
-            return jsonify({"status": "error", "message": "Rate limit exceeded. Please wait a moment."}), 429
+    if not request.path.startswith("/api/"):
+        return None
+    if _requires_api_key(request.path, request.method):
+        supplied = request.headers.get("X-API-Key", "")
+        if not hmac.compare_digest(supplied.encode(), API_KEY.encode()):
+            return jsonify({"status": "error", "message": "Unauthorized: missing or invalid API key."}), 401
+    if not _check_rate_limit(request.remote_addr or "127.0.0.1"):
+        return jsonify({"status": "error", "message": "Rate limit exceeded. Please wait a moment."}), 429
+    return None
 
 @app.after_request
 def add_security_headers(response):
@@ -248,13 +285,24 @@ def api_market_overview():
         f_usd = _STOCK_BUNDLE_EXECUTOR.submit(get_usd_inr_rate)
         f_comm = _STOCK_BUNDLE_EXECUTOR.submit(get_all_commodities_overview)
 
-        nifty_info = f_nifty.result(timeout=6)
-        bank_info = f_bank.result(timeout=6)
-        usd_inr = f_usd.result(timeout=6)
-        commodities = f_comm.result(timeout=6)
+        def _settle(fut, default, label):
+            try:
+                return fut.result(timeout=6)
+            except Exception:
+                logger.warning("market overview: %s unavailable", label, exc_info=True)
+                degraded.append(label)
+                return default
+
+        degraded = []
+        nifty_info = _settle(f_nifty, {}, "nifty")
+        bank_info = _settle(f_bank, {}, "bank_nifty")
+        usd_inr = _settle(f_usd, 0.0, "usd_inr")
+        commodities = _settle(f_comm, [], "commodities")
+        if "nifty" in degraded and "bank_nifty" in degraded:
+            return jsonify({"status": "error", "message": "Index data is temporarily unavailable."}), 502
 
         # Determine overall market sentiment
-        nifty_change = nifty_info.get("day_change_pct", 0.0)
+        nifty_change = nifty_info.get("day_change_pct", 0.0) or 0.0
         if nifty_change >= 0.7:
             mood = "Bullish"
             mood_color = "#10B981"
@@ -282,10 +330,11 @@ def api_market_overview():
                 "summary": f"Nifty is {'up' if nifty_change >= 0 else 'down'} {abs(nifty_change)}% today."
             },
             "usd_inr": round(usd_inr, 2),
-            "commodities": commodities
+            "commodities": commodities,
+            "degraded": degraded
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/market/status")
@@ -337,7 +386,6 @@ def api_stock_detail(symbol: str):
             set_warmed_stock(symbol, response_payload, style=style, bundle=bundle)
         return jsonify(response_payload)
     except Exception as e:
-        print(f"Error in api_stock_detail for {symbol}: {e}")
         try:
             info = get_stock_info(symbol)
             price = float(info.get("current_price") or info.get("previous_close") or 0.0)
@@ -359,7 +407,8 @@ def api_stock_detail(symbol: str):
                 })
         except Exception:
             pass
-        return jsonify({"status": "error", "message": f"Unable to fetch market data for {symbol}: {str(e)}"}), 500
+        logger.exception("api_stock_detail failed for %s", symbol)
+        return jsonify({"status": "error", "message": f"Unable to fetch market data for {symbol}. Try again shortly."}), 502
 
 
 @app.route("/api/stock/<symbol>/valuation")
@@ -395,7 +444,7 @@ def api_stock_chart(symbol: str):
             "indicator_series": indicator_series
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/stock/<symbol>/signals")
@@ -412,7 +461,7 @@ def api_stock_signals(symbol: str):
             "broker_ticket": eval_res.get("broker_ticket")
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/stock/<symbol>/news")
@@ -425,7 +474,7 @@ def api_stock_news(symbol: str):
         articles = get_stock_news(query, limit=6)
         return jsonify({"status": "success", "articles": articles})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/market/news")
@@ -436,7 +485,7 @@ def api_market_news():
         articles = get_market_wide_news(limit=limit)
         return jsonify({"status": "success", "articles": articles})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/screener")
@@ -472,7 +521,7 @@ def api_screener():
         )
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/ipo")
@@ -482,7 +531,7 @@ def api_ipo():
         data = get_ipo_tracker_data()
         return jsonify(data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/calendar")
@@ -492,7 +541,7 @@ def api_calendar():
         data = get_economic_calendar()
         return jsonify(data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/calculator/position-size", methods=["GET", "POST"])
@@ -514,7 +563,7 @@ def api_calculator_position_size():
         result = calculate_position_size(capital=capital, risk_pct=risk_pct, entry_price=entry, stop_loss=stop)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 
@@ -525,7 +574,7 @@ def api_commodity_detail(symbol: str):
         data = analyze_commodity(symbol)
         return jsonify(data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/commodity/<symbol>/chart")
@@ -541,7 +590,7 @@ def api_commodity_chart(symbol: str):
             "candles": candles
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/commodities/overview")
@@ -550,7 +599,7 @@ def api_commodities_all():
     try:
         return jsonify({"status": "success", "commodities": get_all_commodities_overview()})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/options/<symbol>")
@@ -561,7 +610,7 @@ def api_options_analysis(symbol: str):
         result = analyze_option_chain(chain_raw)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/scanner")
@@ -574,7 +623,7 @@ def api_scanner():
         res = scan_alpha_momentum(capital=capital, risk_pct=risk_pct, force_refresh=force)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/sectors")
@@ -584,7 +633,7 @@ def api_sectors():
         res = analyze_all_sectors()
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/etf/screener")
@@ -595,7 +644,7 @@ def api_etf_screener():
         res = run_etf_screener(total_capital=capital)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/breadth")
@@ -605,7 +654,7 @@ def api_breadth():
         res = calculate_market_breadth()
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/active")
@@ -616,7 +665,7 @@ def api_journal_active():
         summary = get_active_portfolio_summary()
         return jsonify({"status": "success", "trades": trades, "portfolio_summary": summary})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/edit/<trade_id>", methods=["POST"])
@@ -627,7 +676,7 @@ def api_journal_edit(trade_id: str):
         res = update_trade_details(trade_id, data)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/partial-exit/<trade_id>", methods=["POST"])
@@ -641,7 +690,7 @@ def api_journal_partial_exit(trade_id: str):
         res = execute_partial_exit(trade_id, exit_qty=exit_qty, exit_price=exit_price, exit_tags=exit_tags)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/auto-risk", methods=["POST"])
@@ -653,7 +702,7 @@ def api_journal_auto_risk():
         res = auto_calculate_risk_parameters(trade_id=trade_id)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/import", methods=["POST"])
@@ -673,41 +722,72 @@ def api_journal_import():
         res = bulk_import_trades_from_csv(csv_text)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
+
+
+def _parse_trade_numbers(data: dict) -> dict:
+    """Validates numeric trade fields; raises ValueError with a user-readable message."""
+    symbol = str(data.get("symbol") or "").strip()
+    if not validate_ticker_symbol(symbol):
+        raise ValueError("A valid symbol is required.")
+    try:
+        entry_price = float(data.get("entry_price", 0))
+        quantity = int(data.get("quantity", 1))
+        stop_loss = float(data.get("stop_loss", 0) or 0)
+        target_1 = float(data.get("target_1", 0) or 0)
+        target_2 = float(data.get("target_2", 0) or 0)
+    except (TypeError, ValueError):
+        raise ValueError("Prices must be numbers and quantity a whole number.")
+    if not all(math.isfinite(v) for v in (entry_price, stop_loss, target_1, target_2)):
+        raise ValueError("Prices must be finite numbers.")
+    if entry_price <= 0:
+        raise ValueError("Entry price must be greater than 0.")
+    if quantity <= 0:
+        raise ValueError("Quantity must be at least 1.")
+    if min(stop_loss, target_1, target_2) < 0:
+        raise ValueError("Stop loss and targets cannot be negative.")
+    return dict(symbol=symbol, entry_price=entry_price, quantity=quantity,
+                stop_loss=stop_loss, target_1=target_1, target_2=target_2)
 
 
 @app.route("/api/journal/add", methods=["POST"])
 def api_journal_add():
     """Add new trade to journal."""
     try:
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
+        try:
+            nums = _parse_trade_numbers(data)
+        except ValueError as ve:
+            return jsonify({"status": "error", "message": str(ve)}), 400
         trade = add_trade(
-            symbol=data.get("symbol", "RELIANCE.NS"),
-            entry_price=float(data.get("entry_price", 0)),
-            quantity=int(data.get("quantity", 1)),
-            stop_loss=float(data.get("stop_loss", 0)),
-            target_1=float(data.get("target_1", 0)),
-            target_2=float(data.get("target_2", 0)),
+            **nums,
             style=data.get("style", "Swing"),
             notes=data.get("notes", "")
         )
         return jsonify({"status": "success", "trade": trade})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/close/<trade_id>", methods=["POST"])
 def api_journal_close(trade_id: str):
     """Close trade and update realized P&L."""
     try:
-        data = request.get_json() or {}
-        exit_price = data.get("exit_price")
+        data = request.get_json(silent=True) or {}
+        try:
+            exit_price = float(data.get("exit_price"))
+            if not math.isfinite(exit_price) or exit_price <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "A positive exit_price is required."}), 400
         reason = data.get("reason", "Manual Close")
         exit_tags = data.get("exit_tags")
         success = close_trade(trade_id, exit_price=exit_price, reason=reason, exit_tags=exit_tags)
-        return jsonify({"status": "success" if success else "error"})
+        if not success:
+            return jsonify({"status": "error", "message": "Active trade not found."}), 404
+        return jsonify({"status": "success"})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/stats")
@@ -717,7 +797,7 @@ def api_journal_stats():
         stats = get_journal_stats()
         return jsonify({"status": "success", "stats": stats})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/analytics")
@@ -727,7 +807,7 @@ def api_journal_analytics():
         analytics = get_journal_analytics()
         return jsonify(analytics)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/diagnostics")
@@ -737,7 +817,7 @@ def api_journal_diagnostics():
         diagnostics = compute_trader_behavior_diagnostics()
         return jsonify(diagnostics)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/backtest")
@@ -751,7 +831,7 @@ def api_backtest():
         res = run_strategy_backtest(symbol=symbol, period=period, strategy=strategy, capital=capital)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/recommendations")
@@ -765,7 +845,7 @@ def api_recommendations():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/bees")
@@ -781,7 +861,7 @@ def api_bees():
             res["journal_etf_status"] = None
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/etf/journal-status")
@@ -791,21 +871,20 @@ def api_etf_journal_status():
         status_data = get_journal_etf_status()
         return jsonify(status_data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/manual", methods=["POST"])
 def api_journal_manual():
     """Add a manually entered previous/current position to the journal."""
     try:
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
+        try:
+            nums = _parse_trade_numbers(data)
+        except ValueError as ve:
+            return jsonify({"status": "error", "message": str(ve)}), 400
         trade = add_trade(
-            symbol=data.get("symbol", "RELIANCE.NS"),
-            entry_price=float(data.get("entry_price", 0)),
-            quantity=int(data.get("quantity", 1)),
-            stop_loss=float(data.get("stop_loss", 0)),
-            target_1=float(data.get("target_1", 0)),
-            target_2=float(data.get("target_2", 0)),
+            **nums,
             style=data.get("style", "Manual"),
             notes=data.get("notes", "Manually added position"),
             entry_date=data.get("entry_date", None),
@@ -813,7 +892,7 @@ def api_journal_manual():
         )
         return jsonify({"status": "success", "trade": trade})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/reset", methods=["POST"])
@@ -827,7 +906,7 @@ def api_journal_reset():
         result = clear_journal(scope=scope)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/recommendation")
@@ -840,7 +919,7 @@ def api_journal_recommendation():
         data = get_trade_recommendation(symbol)
         return jsonify(data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/<trade_id>/advice")
@@ -857,7 +936,7 @@ def api_journal_advice(trade_id):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/favicon.ico")
@@ -885,30 +964,46 @@ def api_institutional_radar():
         data = get_institutional_radar_data()
         return jsonify(data)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/options/<symbol>/payoff")
 def api_options_payoff(symbol: str):
     """Calculates multi-leg options strategy payoff curve & IV percentile."""
+    if not validate_ticker_symbol(symbol):
+        return jsonify({"status": "error", "message": "Invalid ticker symbol format"}), 400
     strategy = request.args.get("strategy", "bull_call_spread")
-    lot_size = int(request.args.get("lot_size", 25))
     try:
-        spot_price = 25200.0
-        try:
-            info = get_stock_info(symbol)
-            spot_price = float(info.get("current_price") or info.get("price") or 25200.0)
-        except Exception:
-            pass
+        lot_size = int(request.args.get("lot_size", 25))
+        if not 1 <= lot_size <= 100000:
+            raise ValueError
+    except ValueError:
+        return jsonify({"status": "error", "message": "lot_size must be a positive integer"}), 400
+
+    # Placeholder inputs are only used when live data cannot be fetched, and the response
+    # says so explicitly so the UI/user never mistakes them for real market data.
+    PLACEHOLDER_SPOT, PLACEHOLDER_VIX = 25200.0, 13.6
+    spot_price, spot_is_live = PLACEHOLDER_SPOT, False
+    try:
+        info = get_stock_info(symbol)
+        live = float(info.get("current_price") or info.get("price") or 0.0)
+        if live > 0:
+            spot_price, spot_is_live = live, True
+    except Exception:
+        logger.warning("payoff: live spot unavailable for %s", symbol, exc_info=True)
+
+    try:
         payoff = calculate_strategy_payoff(strategy=strategy, spot_price=spot_price, lot_size=lot_size)
-        iv_data = calculate_iv_percentile(current_vix=13.6)
-        payoff["iv_analysis"] = iv_data
+        payoff["iv_analysis"] = calculate_iv_percentile(current_vix=PLACEHOLDER_VIX)
+        payoff["data_quality"] = {
+            "spot_is_live": spot_is_live,
+            "vix_is_live": False,
+            "warning": None if spot_is_live else
+                f"Live price unavailable; payoff drawn at a placeholder spot of {PLACEHOLDER_SPOT:,.0f}.",
+        }
         return jsonify(payoff)
     except Exception as e:
-        print(f"Error in api_options_payoff: {e}")
-        payoff = calculate_strategy_payoff(strategy=strategy, spot_price=25200.0, lot_size=lot_size)
-        payoff["iv_analysis"] = calculate_iv_percentile(current_vix=13.6)
-        return jsonify(payoff)
+        return _server_error(e)
 
 
 @app.route("/api/broker/order-link", methods=["GET", "POST"])
@@ -940,7 +1035,7 @@ def api_broker_order_link():
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/journal/export")
@@ -996,7 +1091,7 @@ def api_journal_export():
             headers={"Content-Disposition": "attachment; filename=nifty_analyzer_tradebook.csv"}
         )
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/portfolio/risk")
@@ -1007,7 +1102,7 @@ def api_portfolio_risk():
         res = calculate_portfolio_risk(total_portfolio_capital=capital)
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/macro/premarket")
@@ -1017,7 +1112,7 @@ def api_macro_premarket():
         res = generate_premarket_briefing()
         return jsonify(res)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/macro/fii-dii")
@@ -1059,7 +1154,7 @@ def api_get_watchlist():
             })
         return jsonify({"status": "success", "watchlist": items})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/watchlist/add", methods=["POST"])
@@ -1073,7 +1168,7 @@ def api_add_watchlist():
         symbols = db_add_to_watchlist(sym, "Default")
         return jsonify({"status": "success", "message": f"{sym} added to Watchlist", "symbols": symbols})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/watchlist/remove/<path:symbol>", methods=["DELETE", "POST"])
@@ -1083,7 +1178,7 @@ def api_remove_watchlist(symbol: str):
         symbols = db_remove_from_watchlist(symbol, "Default")
         return jsonify({"status": "success", "message": f"{symbol} removed from Watchlist", "symbols": symbols})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _server_error(e)
 
 
 @app.route("/api/cache/stats")
@@ -1093,7 +1188,10 @@ def api_cache_stats():
 
 
 def _should_run_background_warmer():
-    """Ensures only a single worker runs background scrapers in multi-worker Gunicorn setups."""
+    """Ensures only a single worker runs background scrapers in multi-worker Gunicorn setups.
+    Set DISABLE_BACKGROUND_WARMER=1 (tests, CI, quick local runs) to skip it entirely."""
+    if os.environ.get("DISABLE_BACKGROUND_WARMER", "").strip().lower() in ("1", "true", "yes", "on"):
+        return False
     try:
         import fcntl
         lock_file = open("/tmp/nifty_warmer.lock", "w")
@@ -1134,5 +1232,5 @@ if _should_run_background_warmer():
 
 if __name__ == "__main__":
     print(f"🚀 Nifty Stock & Commodity Analyzer starting on http://localhost:{PORT}")
-    app.run(host=HOST, port=PORT, debug=True)
+    app.run(host=HOST, port=PORT, debug=DEBUG)
 

@@ -6,6 +6,7 @@ Backed by SQLite persistent database with automatic WAL concurrency
 and parallelized live quote resolution.
 """
 
+import logging
 import time
 import uuid
 from datetime import datetime
@@ -61,12 +62,19 @@ def _fetch_single_trade_mtm(t: dict) -> dict:
     entry = float(t.get("entry_price") or 0.0)
     qty = int(t.get("quantity") or 1)
 
+    price_is_live = True
     try:
         info = get_stock_info(sym)
-        curr = float(info.get("current_price") or entry)
+        live = float(info.get("current_price") or 0.0)
+        if live > 0:
+            curr = live
+        else:
+            curr, price_is_live = entry, False
         sector = info.get("sector") or "Diversified"
     except Exception:
-        curr = entry
+        # Quote lookup failed: fall back to entry price but FLAG it, so a P&L of 0 is never
+        # mistaken for a real live valuation.
+        curr, price_is_live = entry, False
         sector = "Diversified"
 
     pnl_per_share = curr - entry
@@ -80,6 +88,7 @@ def _fetch_single_trade_mtm(t: dict) -> dict:
     return {
         **t,
         "current_price": curr,
+        "price_is_live": price_is_live,
         "sector": sector,
         "pnl": total_pnl,
         "pnl_pct": pnl_pct,
@@ -94,13 +103,19 @@ def get_active_trades() -> list:
     if not active:
         return []
 
+    # Keep the database order (stable UI) and never drop a position just because its
+    # valuation failed: fall back to the stored trade, flagged as not live.
+    futures = [(t, _JOURNAL_EXECUTOR.submit(_fetch_single_trade_mtm, t)) for t in active]
     results = []
-    futures = [_JOURNAL_EXECUTOR.submit(_fetch_single_trade_mtm, t) for t in active]
-    for future in as_completed(futures):
+    for trade, future in futures:
         try:
             results.append(future.result())
         except Exception:
-            pass
+            logging.getLogger("nifty_analyzer").warning(
+                "MTM failed for trade %s", trade.get("id"), exc_info=True)
+            results.append({**trade, "current_price": trade.get("entry_price"),
+                            "price_is_live": False, "pnl": 0.0, "pnl_pct": 0.0,
+                            "is_profit": True, "total_risk": 0.0})
 
     return results
 

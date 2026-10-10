@@ -376,6 +376,7 @@ def generate_signals(
     atr = max(atr, current_price * 0.005)
 
     is_short = total_score < 0
+    is_intraday = style == "intraday"
 
     if is_short:
         # Bearish / Short Setup
@@ -386,11 +387,34 @@ def generate_signals(
         target2 = round(max(0.01, current_price - (params["target2_mult"] * atr)), 2)
         target3 = round(max(0.01, current_price - (params["target3_mult"] * atr)), 2)
 
-        sl_pct = round(((stop_loss - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
-        t1_pct = round(((current_price - target1) / current_price * 100), 2) if current_price > 0 else 0.0
-        t2_pct = round(((current_price - target2) / current_price * 100), 2) if current_price > 0 else 0.0
-        t3_pct = round(((current_price - target3) / current_price * 100), 2) if current_price > 0 else 0.0
-        direction = "SHORT / SELL"
+        # Stop loss is above price (+distance); Targets are below price (-distance)
+        sl_diff_pct = round(((stop_loss - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
+        t1_diff_pct = round(((current_price - target1) / current_price * 100), 2) if current_price > 0 else 0.0
+        t2_diff_pct = round(((current_price - target2) / current_price * 100), 2) if current_price > 0 else 0.0
+        t3_diff_pct = round(((current_price - target3) / current_price * 100), 2) if current_price > 0 else 0.0
+
+        if is_intraday:
+            direction = "SHORT / SELL (INTRADAY MIS)"
+            action_type = "SHORT"
+            entry_label = "Short Entry Zone"
+            stop_label = "Buy-to-Cover Stop"
+            target_label = "Downside Target 1"
+            sl_pct_display = f"-{sl_diff_pct}%"
+            t1_pct_display = f"+{t1_diff_pct}%"
+        else:
+            # Swing or Positional cash equity: Multi-day shorting is not permitted in Indian cash equities.
+            direction = "BEARISH BREAKDOWN (EXIT / DEFENSIVE)"
+            action_type = "EXIT_AVOID"
+            entry_label = "Reference CMP (Avoid Longs)"
+            stop_label = "Resistance Invalidation"
+            target_label = "Downside Support Test"
+            sl_pct_display = f"+{sl_diff_pct}%"
+            t1_pct_display = f"-{t1_diff_pct}%"
+
+        sl_pct = sl_diff_pct
+        t1_pct = t1_diff_pct
+        t2_pct = t2_diff_pct
+        t3_pct = t3_diff_pct
     else:
         # Bullish / Long Setup
         stop_loss = round(max(0.01, current_price - (params["stop_atr_mult"] * atr)), 2)
@@ -405,6 +429,12 @@ def generate_signals(
         t2_pct = round(((target2 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
         t3_pct = round(((target3 - current_price) / current_price * 100), 2) if current_price > 0 else 0.0
         direction = "LONG / BUY"
+        action_type = "BUY"
+        entry_label = "Entry Zone"
+        stop_label = "Stop-Loss"
+        target_label = "Target 1"
+        sl_pct_display = f"-{sl_pct}%"
+        t1_pct_display = f"+{t1_pct}%"
 
     t1_r = round(params.get("target1_mult", 1.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
     t2_r = round(params.get("target2_mult", 2.5) / max(params.get("stop_atr_mult", 1.0), 0.01), 1)
@@ -461,14 +491,21 @@ def generate_signals(
         "probability_cone": prob_cone,
         "trade_plan": {
             "direction": direction,
+            "action_type": action_type,
+            "is_short": is_short,
             "style": style,
             "time_horizon": params["horizon"],
             "entry_price": round(current_price, 2),
             "entry_range": [entry_low, entry_high],
+            "entry_label": entry_label,
             "stop_loss": stop_loss,
             "stop_loss_pct": sl_pct,
+            "stop_loss_pct_display": sl_pct_display,
+            "stop_loss_label": stop_label,
             "target_1": target1,
             "target_1_pct": t1_pct,
+            "target_1_pct_display": t1_pct_display,
+            "target_1_label": target_label,
             "target_2": target2,
             "target_2_pct": t2_pct,
             "target_3": target3,
@@ -478,7 +515,7 @@ def generate_signals(
                 {"tranche": f"T2 ({t2_r}R - 30% Profit)", "price": target2, "gain_pct": t2_pct, "allocation_pct": 30},
                 {"tranche": "T3 (Runner - 20% Trailing)", "price": target3, "gain_pct": t3_pct, "allocation_pct": 20}
             ],
-            "risk_reward": f"1 : {round(t1_pct / sl_pct, 1) if sl_pct > 0 else 2.0}"
+            "risk_reward": f"1 : {round(t1_pct / max(sl_pct, 0.01), 1) if sl_pct > 0 else 2.0}"
         }
     }
 
@@ -487,17 +524,18 @@ def calculate_position_size(capital: float, risk_pct: float, entry_price: float,
     """
     Univest-Grade Position Sizing with Institutional Portfolio Caps.
     Enforces maximum portfolio capital at risk and enforces a 15% single-stock capital allocation ceiling.
+    Supports both long setups (entry > stop_loss) and short setups (stop_loss > entry).
     """
-    if entry_price <= 0 or stop_loss <= 0 or entry_price <= stop_loss:
+    if entry_price <= 0 or stop_loss <= 0 or entry_price == stop_loss:
         return {
             "status": "error",
-            "message": "Entry price must be strictly greater than stop-loss."
+            "message": "Entry price and stop-loss must be positive and not equal."
         }
 
     # Bounded risk percentage (default max 2.0%)
     effective_risk_pct = min(risk_pct, MAX_PORTFOLIO_RISK_PCT)
     risk_amount = round(capital * (effective_risk_pct / 100.0), 2)
-    risk_per_share = round(entry_price - stop_loss, 2)
+    risk_per_share = round(abs(entry_price - stop_loss), 2)
 
     raw_shares = int(risk_amount / risk_per_share) if risk_per_share > 0 else 0
 

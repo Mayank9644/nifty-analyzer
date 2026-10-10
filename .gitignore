@@ -6,3 +6,9 @@ __pycache__/
 *.db-wal
 *.db-shm
 scratch/
+.env
+.pytest_cache/
+
+# Personal trading data: never commit your journal or watchlists
+data/*.db
+data/trade_journal.json

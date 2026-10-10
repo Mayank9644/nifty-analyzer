@@ -14,3 +14,7 @@ services:
         sync: false
       - key: TURSO_AUTH_TOKEN
         sync: false
+      - key: NIFTY_API_KEY
+        generateValue: true
+      - key: TRUST_PROXY
+        value: "1"

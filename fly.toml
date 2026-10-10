@@ -7,6 +7,7 @@ primary_region = "sin"
   PORT = "8080"
   PYTHONUNBUFFERED = "1"
   DB_PATH = "/data/trading_platform.db"
+  TRUST_PROXY = "1"
 
 [http_service]
   internal_port = 8080

@@ -2,6 +2,49 @@
  * Financial formatters, tooltips, and helper utilities.
  */
 
+// ---------------------------------------------------------------------------
+// API-key support. When the server sets NIFTY_API_KEY, state-changing routes and
+// private data (journal, watchlist, portfolio) answer 401 until the key is sent.
+// This wrapper attaches the stored key to every same-origin /api request and asks
+// for it once on a 401, so no call site elsewhere has to change.
+// ---------------------------------------------------------------------------
+(function installApiKeyFetch() {
+    const KEY_STORE = "nifty_api_key";
+    const nativeFetch = window.fetch.bind(window);
+
+    const readKey = () => { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } };
+    const writeKey = (k) => { try { localStorage.setItem(KEY_STORE, k); } catch (e) { /* private mode */ } };
+    const isApiCall = (input) => {
+        const url = typeof input === "string" ? input : (input && input.url) || "";
+        return url.startsWith("/api/") || url.startsWith(window.location.origin + "/api/");
+    };
+    const withKey = (init, key) => {
+        const headers = new Headers((init && init.headers) || {});
+        if (key) headers.set("X-API-Key", key);
+        return Object.assign({}, init, { headers });
+    };
+
+    let promptInFlight = null;
+    window.fetch = async function (input, init) {
+        if (!isApiCall(input) || typeof input !== "string") return nativeFetch(input, init);
+        let resp = await nativeFetch(input, withKey(init, readKey()));
+        if (resp.status !== 401) return resp;
+
+        // Only one prompt at a time even if several requests fail together.
+        if (!promptInFlight) {
+            promptInFlight = Promise.resolve(
+                window.prompt("This server is protected. Enter the API key (NIFTY_API_KEY):")
+            ).finally(() => { promptInFlight = null; });
+        }
+        const entered = await promptInFlight;
+        if (!entered) return resp;
+        writeKey(entered.trim());
+        resp = await nativeFetch(input, withKey(init, entered.trim()));
+        if (resp.status === 401) writeKey("");   // wrong key: forget it
+        return resp;
+    };
+})();
+
 // Layman definitions for financial terms
 const JARGON_DICTIONARY = {
     "P/E Ratio": "Price-to-Earnings: Tells you how many rupees investors are paying for every ₹1 of company profit. Under 25 is generally considered reasonable in India.",
