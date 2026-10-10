@@ -1236,20 +1236,20 @@ function renderStockHeader(info, rs, minervini, mtf) {
     const rsBadge = document.getElementById("stockRsBadge");
     if (rsBadge) {
         if (rs && rs.rs_rating) {
-            rsBadge.innerText = `RS ${rs.rs_rating}/99`;
+            rsBadge.innerText = `⚡ Strength: ${rs.rs_rating}/99 (vs Nifty)`;
             rsBadge.style.color = rs.rating_color || "#007aff";
             rsBadge.style.backgroundColor = `${rs.rating_color || "#007aff"}15`;
             rsBadge.style.borderColor = `${rs.rating_color || "#007aff"}35`;
-            rsBadge.title = rs.summary || "Mansfield Relative Strength vs NIFTY 50";
+            rsBadge.title = rs.summary || "Mansfield Relative Strength vs NIFTY 50 (Higher than 70 means beating the index)";
         } else {
-            rsBadge.innerText = "RS 75/99";
+            rsBadge.innerText = "⚡ Strength: 75/99 (vs Nifty)";
         }
     }
 
     const minBadge = document.getElementById("stockMinerviniBadge");
     if (minBadge) {
         if (minervini && minervini.verdict) {
-            minBadge.innerText = minervini.stage_2_confirmed ? "Stage 2 Mark-Up" : (minervini.passed_count >= 5 ? "Stage 1 Transition" : "Stage 4 Downtrend");
+            minBadge.innerText = minervini.stage_2_confirmed ? "Stage 2 (Strong Uptrend)" : (minervini.passed_count >= 5 ? "Stage 1 (Bottom Base)" : "Stage 4 (Downtrend)");
             minBadge.style.color = minervini.verdict_color || "#10b981";
             minBadge.style.backgroundColor = `${minervini.verdict_color || "#10b981"}15`;
             minBadge.style.borderColor = `${minervini.verdict_color || "#10b981"}35`;
@@ -1335,15 +1335,15 @@ function renderSignalsBox(signals, styleInfo) {
                     <span>⚠️</span> Risk Levels:
                 </span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
-                    <span>🔻 Downside Risk:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || '-0%'})</span>
+                    <span>🔻 Downside Target / Support:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || '-0%'})</span>
                 </span>
                 <span class="text-[#8e8e93] hidden sm:inline">────</span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[#b35900] font-semibold text-[11px]">
-                    <span>⚡ Ref CMP (Avoid Longs):</span> <strong id="heroBandEntry" class="mono font-bold">₹${plan.entry_price || '—'}</strong>
+                    <span>📍 Reference Price (Avoid Buying):</span> <strong id="heroBandEntry" class="mono font-bold">₹${plan.entry_price || '—'}</strong>
                 </span>
                 <span class="text-[#8e8e93] hidden sm:inline">────</span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
-                    <span>🛑 Invalidation Level:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '+0%'})</span>
+                    <span>🛑 Safety Exit / Stop-Loss:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '+0%'})</span>
                 </span>
             `;
         } else if (plan.action_type === "SHORT") {
@@ -1360,7 +1360,7 @@ function renderSignalsBox(signals, styleInfo) {
                 </span>
                 <span class="text-[#8e8e93] hidden sm:inline">────</span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
-                    <span>🛑 Cover Stop:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '-0%'})</span>
+                    <span>🛑 Safety Exit (Stop):</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || '-0%'})</span>
                 </span>
             `;
         } else {
@@ -1369,7 +1369,7 @@ function renderSignalsBox(signals, styleInfo) {
                     <span>🎯</span> Execution Range:
                 </span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[#b32020] font-semibold text-[11px]">
-                    <span>🛑 Stop Loss:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || `-${plan.stop_loss_pct || 0}%`})</span>
+                    <span>🛑 Stop-Loss / Safety Exit:</span> <strong id="heroBandStop" class="mono font-bold">₹${plan.stop_loss || '—'}</strong> <span id="heroBandStopPct" class="text-[10px] opacity-85">(${plan.stop_loss_pct_display || `-${plan.stop_loss_pct || 0}%`})</span>
                 </span>
                 <span class="text-[#8e8e93] hidden sm:inline">────</span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[#007aff] font-semibold text-[11px]">
@@ -1377,7 +1377,7 @@ function renderSignalsBox(signals, styleInfo) {
                 </span>
                 <span class="text-[#8e8e93] hidden sm:inline">────</span>
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-[#1e7e34] font-semibold text-[11px]">
-                    <span>🏁 Target 1:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || `+${plan.target_1_pct || 0}%`})</span>
+                    <span>🏁 Profit Target 1:</span> <strong id="heroBandTarget" class="mono font-bold">₹${plan.target_1 || '—'}</strong> <span id="heroBandTargetPct" class="text-[10px] opacity-85">(${plan.target_1_pct_display || `+${plan.target_1_pct || 0}%`})</span>
                 </span>
             `;
         }
@@ -2036,6 +2036,23 @@ async function loadOptionsDashboard(symbol = "NIFTY") {
             document.getElementById("optionsStrategyName").innerHTML = `${strat.icon} ${strat.name}`;
             document.getElementById("optionsStrategySetup").innerText = strat.setup;
             document.getElementById("optionsStrategyRationale").innerText = strat.rationale;
+
+            const pcrSub = document.getElementById("pcrLaymanSubtext");
+            if (pcrSub) {
+                const pVal = Number(data.pcr.pcr_oi) || 1.0;
+                if (pVal >= 1.1) {
+                    pcrSub.innerText = "🟢 More traders are protecting downside than expecting a crash (Solid floor support).";
+                } else if (pVal <= 0.8) {
+                    pcrSub.innerText = "🔴 Heavy Call writing overhead: More traders expecting resistance and capping upside.";
+                } else {
+                    pcrSub.innerText = "⚖️ Balanced options positioning between call buyers and put writers.";
+                }
+            }
+
+            const mpSub = document.getElementById("maxPainLaymanSubtext");
+            if (mpSub) {
+                mpSub.innerText = `Expected Expiry Pin: Big option sellers lose the least money if ${symbol} settles near ₹${data.max_pain.strike}.`;
+            }
 
             // F&O Prominent Callout Banner
             const banner = document.getElementById("fnoCalloutBanner");

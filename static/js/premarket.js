@@ -62,7 +62,7 @@ function renderPremarketWidget(data) {
                             const isCrude = c.name.toLowerCase().includes("crude");
                             const isUS = c.name.toLowerCase().includes("street") || c.name.toLowerCase().includes("s&p");
                             const isForex = c.name.toLowerCase().includes("usd") || c.name.toLowerCase().includes("inr");
-                            const impactText = isCrude ? "Paints, OMCs, Airlines" : (isUS ? "Tech & IT High-Beta" : (isForex ? "IT & Pharma Exporters" : "Macro Sentiment"));
+                            const impactText = isCrude ? "Paints, OMCs, Airlines" : (isUS ? "Tech & IT (High Movement / Sensitive)" : (isForex ? "IT & Pharma Exporters" : "Macro Sentiment"));
                             const clickAction = isCrude ? "switchTab('commodities')" : "switchTab('sectors')";
                             return `
                                 <div class="p-1 rounded-lg hover:bg-white dark:hover:bg-white/5 transition-all cursor-pointer" onclick="${clickAction}" title="Click to view correlated sector performance">

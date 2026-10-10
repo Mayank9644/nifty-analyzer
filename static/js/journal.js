@@ -575,7 +575,7 @@ function renderJournalAnalytics(analytics) {
     }
 
     if (document.getElementById("statsExpectancy")) {
-        document.getElementById("statsExpectancy").innerText = `${s.expectancy_inr > 0 ? '+' : ''}₹${formatNumber(s.expectancy_inr, 0)}/tr`;
+        document.getElementById("statsExpectancy").innerText = `${s.expectancy_inr > 0 ? '+' : ''}₹${formatNumber(s.expectancy_inr, 0)} / trade`;
     }
     if (document.getElementById("statsMaxDrawdown")) {
         document.getElementById("statsMaxDrawdown").innerText = `-₹${formatNumber(s.max_drawdown_inr, 0)}`;

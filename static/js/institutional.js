@@ -96,6 +96,17 @@ function renderMarketBreadth(data) {
     if (decEl) decEl.textContent = ad.declines || 0;
     if (highsEl) highsEl.textContent = hl.highs_52w || 0;
     if (lowsEl) lowsEl.textContent = hl.lows_52w || 0;
+
+    const adviceEl = document.getElementById("breadthLaymanAdvice");
+    if (adviceEl) {
+        if (pct50 < 30) {
+            adviceEl.innerText = `Market Temperature: 🐻 Cold & Defensive (Only ${pct50}% of Nifty 50 stocks above 50-DMA). High risk of false breakouts. Prioritize capital protection or Gold over aggressive buying.`;
+        } else if (pct50 >= 60) {
+            adviceEl.innerText = `Market Temperature: 🟢 Warm & Bullish (${pct50}% of Nifty 50 stocks above 50-DMA). Broad internal participation supports trend continuation. Breakout trades have high statistical success.`;
+        } else {
+            adviceEl.innerText = `Market Temperature: ⚖️ Neutral & Selective (${pct50}% of Nifty 50 stocks above 50-DMA). Narrow market. Stick to high Relative Strength leaders and avoid speculative laggards.`;
+        }
+    }
 }
 
 function renderFiiDiiCashFlows(cashFlows, summary) {

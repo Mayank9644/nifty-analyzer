@@ -50,6 +50,7 @@ const JARGON_DICTIONARY = {
     "P/E Ratio": "Price-to-Earnings: Tells you how many rupees investors are paying for every ₹1 of company profit. Under 25 is generally considered reasonable in India.",
     "P/B Ratio": "Price-to-Book: Compares market value to actual asset value. Low P/B indicates bargain asset backing.",
     "ROE": "Return on Equity: Measures how efficiently management turns shareholders' money into net profit. Above 15% indicates an elite business.",
+    "ROCE": "Return on Capital Employed: Measures profits generated from all capital deployed. Above 15% is strong.",
     "Debt to Equity": "Financial leverage: Compares total debt to equity capital. Below 0.5 means the company is very safe from bankruptcy.",
     "RSI": "Relative Strength Index (0-100): Measures buying momentum. Below 30 is oversold (cheap/bounce likely), above 70 is overbought (heated).",
     "MACD": "Moving Average Convergence Divergence: When the MACD line crosses above the Signal line, buying momentum is accelerating.",
@@ -61,7 +62,14 @@ const JARGON_DICTIONARY = {
     "FII / DII": "Foreign Institutional Investors (global funds) and Domestic Institutional Investors (Indian mutual funds).",
     "PCR": "Put-Call Ratio: Ratio of put options to call options. Over 1.1 means bullish sentiment; under 0.7 signals caution.",
     "Max Pain": "The strike price where option buyers would lose the maximum money on expiry day. Prices often gravitate toward this level.",
-    "Option Greeks": "Mathematical risk measures: Delta (price move), Gamma (acceleration), Theta (daily time decay loss), Vega (volatility impact)."
+    "Option Greeks": "Mathematical risk measures: Delta (price move), Gamma (acceleration), Theta (daily time decay loss), Vega (volatility impact).",
+    "Altman Z-Score": "Predicts financial distress. Above 3.0 means company is financially sound with low risk of insolvency.",
+    "Piotroski F-Score": "Score out of 9 assessing accounting quality and profitability. 8-9 indicates pristine balance sheet health.",
+    "DCF Intrinsic Value": "Discounted Cash Flow: The estimated fair value of the business based on future cash generation.",
+    "Relative Strength (RS)": "Mansfield Relative Strength vs NIFTY 50. Scores above 70 indicate a market leader outperforming the index.",
+    "Minervini Stage 2": "Mark Minervini's 8-point checklist confirming whether a stock is in a confirmed institutional mark-up uptrend.",
+    "Expectancy": "The mathematical average rupee profit expected per executed trade over time.",
+    "Max Drawdown": "The largest percentage drop from an account's highest peak to its lowest trough."
 };
 
 function escapeHtml(str) {

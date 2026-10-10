@@ -92,8 +92,33 @@ function renderSectorRrgGraph(sectors) {
     }));
 
     const ctx = canvas.getContext("2d");
+    const sectorLabelsPlugin = {
+        id: 'sectorLabelsPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data) return;
+            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+            ctx.save();
+            ctx.font = "bold 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            ctx.fillStyle = isDark ? "#f5f5f7" : "#1c1c1e";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+
+            meta.data.forEach((element, index) => {
+                const pt = scatterPoints[index];
+                if (pt && pt.code) {
+                    const shortName = pt.code.replace("NIFTY_", "").replace("NIFTY ", "");
+                    ctx.fillText(shortName, element.x + 9, element.y);
+                }
+            });
+            ctx.restore();
+        }
+    };
+
     _sectorRrgChart = new Chart(ctx, {
         type: "scatter",
+        plugins: [sectorLabelsPlugin],
         data: {
             datasets: [{
                 data: scatterPoints,
@@ -160,6 +185,43 @@ function renderSectorRrgGraph(sectors) {
             }
         }
     });
+
+    // Populate Plain-English Sector Leaderboard
+    const leaderboardEl = document.getElementById("sectorLeaderboardContainer");
+    if (leaderboardEl) {
+        const sorted = [...sectors].sort((a, b) => (Number(b.change_pct) || 0) - (Number(a.change_pct) || 0));
+        const winners = sorted.slice(0, 3);
+        const laggards = sorted.slice(-3).reverse();
+
+        leaderboardEl.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5">
+                    <div class="font-bold text-[#1e7e34] dark:text-emerald-400 flex items-center gap-1.5">
+                        <span>🟢</span> <span>Top 3 Winning Sectors Today:</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${winners.map(w => {
+                            const chg = Number(w.change_pct) || 0;
+                            return `<span class="px-2 py-0.5 rounded-md bg-white dark:bg-white/10 font-semibold mono text-[11px] text-[#1e7e34] dark:text-emerald-300 border border-emerald-500/30">${w.icon || '📊'} ${w.name}: +${chg.toFixed(2)}%</span>`;
+                        }).join("")}
+                    </div>
+                    <div class="text-[10.5px] text-[#48484a] dark:text-[#d1d1d6]">Institutional capital is actively rotating into these sectors.</div>
+                </div>
+                <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs space-y-1.5">
+                    <div class="font-bold text-[#b32020] dark:text-rose-400 flex items-center gap-1.5">
+                        <span>🔴</span> <span>Lagging Sectors Today:</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${laggards.map(l => {
+                            const chg = Number(l.change_pct) || 0;
+                            return `<span class="px-2 py-0.5 rounded-md bg-white dark:bg-white/10 font-semibold mono text-[11px] text-[#b32020] dark:text-rose-300 border border-rose-500/30">${l.icon || '📉'} ${l.name}: ${chg.toFixed(2)}%</span>`;
+                        }).join("")}
+                    </div>
+                    <div class="text-[10.5px] text-[#48484a] dark:text-[#d1d1d6]">Underperforming the index today. Exercise defensive discipline.</div>
+                </div>
+            </div>
+        `;
+    }
 }
 
 function renderSectorTreemap(sectors) {

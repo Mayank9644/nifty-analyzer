@@ -24,6 +24,22 @@ function loadScreenerPresets(preset) {
         if (near52wCheck) near52wCheck.checked = false;
         if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = true;
+    } else if (preset === "bargain_compounder" || preset === "compounder") {
+        if (peInput) peInput.value = "30";
+        if (roeInput) roeInput.value = "15";
+        if (rsiMinInput) rsiMinInput.value = "35";
+        if (rsiMaxInput) rsiMaxInput.value = "70";
+        if (near52wCheck) near52wCheck.checked = false;
+        if (volSurgeCheck) volSurgeCheck.checked = false;
+        if (goldenCrossCheck) goldenCrossCheck.checked = true;
+    } else if (preset === "momentum_leaders") {
+        if (peInput) peInput.value = "";
+        if (roeInput) roeInput.value = "12";
+        if (rsiMinInput) rsiMinInput.value = "50";
+        if (rsiMaxInput) rsiMaxInput.value = "75";
+        if (near52wCheck) near52wCheck.checked = true;
+        if (volSurgeCheck) volSurgeCheck.checked = false;
+        if (goldenCrossCheck) goldenCrossCheck.checked = true;
     } else if (preset === "breakout") {
         if (peInput) peInput.value = "";
         if (roeInput) roeInput.value = "";
@@ -32,19 +48,11 @@ function loadScreenerPresets(preset) {
         if (near52wCheck) near52wCheck.checked = true;
         if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = true;
-    } else if (preset === "compounder") {
-        if (peInput) peInput.value = "45";
-        if (roeInput) roeInput.value = "15";
-        if (rsiMinInput) rsiMinInput.value = "35";
-        if (rsiMaxInput) rsiMaxInput.value = "75";
-        if (near52wCheck) near52wCheck.checked = false;
-        if (volSurgeCheck) volSurgeCheck.checked = false;
-        if (goldenCrossCheck) goldenCrossCheck.checked = true;
     } else if (preset === "oversold") {
         if (peInput) peInput.value = "";
         if (roeInput) roeInput.value = "";
         if (rsiMinInput) rsiMinInput.value = "20";
-        if (rsiMaxInput) rsiMaxInput.value = "50";
+        if (rsiMaxInput) rsiMaxInput.value = "40";
         if (near52wCheck) near52wCheck.checked = false;
         if (volSurgeCheck) volSurgeCheck.checked = false;
         if (goldenCrossCheck) goldenCrossCheck.checked = false;
@@ -171,13 +179,13 @@ function _renderScreenerRows(container, results) {
                         ${s.day_change_pct != null ? (isGreen ? '▲ +' : '▼ ') + chgVal + '%' : '—'}
                     </div>
                 </td>
-                <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e] dark:text-[#f5f5f7]">
+                <td class="px-4 py-3 text-center mono text-xs text-[#1c1c1e] dark:text-[#f5f5f7]" title="Valuation (P/E Ratio): Investors pay ₹${s.pe_ratio || 0} for every ₹1 of profit. Lower is cheaper.">
                     ${s.pe_ratio > 0 ? s.pe_ratio + 'x' : '—'}
                 </td>
-                <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e] dark:text-[#f5f5f7]'}">
+                <td class="px-4 py-3 text-center mono text-xs font-medium ${s.roe >= 18 ? 'text-[#1e7e34]' : 'text-[#1c1c1e] dark:text-[#f5f5f7]'}" title="Profitability (ROE): Measures efficiency in generating profits from shareholder funds. Above 15% is excellent.">
                     ${s.roe > 0 ? s.roe + '%' : '—'}
                 </td>
-                <td class="px-4 py-3 text-center mono text-xs font-medium">
+                <td class="px-4 py-3 text-center mono text-xs font-medium" title="Momentum (RSI 14): Speed gauge of price. <35 is a temporary dip, >70 is hot.">
                     <span class="px-2 py-0.5 rounded-full ${s.rsi >= 70 ? 'bg-[#fdf0f0] text-[#b32020]' : (s.rsi <= 35 ? 'bg-[#edf7ee] text-[#1e7e34]' : 'bg-[#f5f5f7] dark:bg-white/10 text-[#1c1c1e] dark:text-[#f5f5f7]')}">
                         ${s.rsi}
                     </span>

@@ -226,8 +226,8 @@
                                 <h2 id="stockName" class="text-xl lg:text-2xl font-bold text-[#1c1c1e] tracking-tight">Reliance Industries Ltd</h2>
                                 <span id="stockSymbol" class="text-xs px-2 py-0.5 rounded-md bg-[#e5e5ea] text-[#48484a] font-mono font-medium">RELIANCE.NS</span>
                                 <span id="stockSector" class="badge-stock">Energy</span>
-                                <span id="stockRsBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]">RS 88/99</span>
-                                <span id="stockMinerviniBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">Minervini Stage 2</span>
+                                <span id="stockRsBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe]" title="Mansfield Relative Strength vs NIFTY 50 (Higher than 70 means beating the index)">⚡ Strength: 88/99 (vs Nifty)</span>
+                                <span id="stockMinerviniBadge" class="text-xs px-2 py-0.5 rounded-md font-bold bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]" title="Minervini 8-point Stage 2 trend criteria">Stage 2 (Strong Uptrend)</span>
                             </div>
                             <div class="flex flex-wrap items-center gap-3.5 mt-2 text-xs text-[#6e6e73]">
                                 <span id="stockHighLow">Day H: — | L: —</span>
@@ -314,7 +314,7 @@
                 <div id="stockMtfStrip" class="macos-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div class="flex items-center space-x-2">
                         <span class="font-bold text-[#1c1c1e] text-[11.5px] flex items-center gap-1.5">
-                            <span>🧭</span> Multi-Timeframe Trend Confluence:
+                            <span>⏱️</span> Trend Across Timeframes (Intraday, Daily, Weekly):
                         </span>
                         <span id="mtfVerdictBadge" class="px-2 py-0.5 rounded-md font-bold text-[10.5px] bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc]">
                             Checking alignment...
@@ -990,17 +990,20 @@
                     <!-- Quick Preset Pills & Export -->
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <span class="text-[11px] text-[#8e8e93] font-medium mr-1">Presets:</span>
-                        <button onclick="loadScreenerPresets('all_active')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f2f2f7] text-[#1c1c1e] border border-[rgba(0,0,0,0.12)] hover:bg-[#e5e5ea] transition-all">
+                        <button onclick="loadScreenerPresets('bargain_compounder')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe] hover:bg-[#dbeafe] transition-all cursor-pointer" title="High ROE (>15%) + Reasonable P/E (<30)">
+                            💎 Quality Bargains
+                        </button>
+                        <button onclick="loadScreenerPresets('momentum_leaders')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all cursor-pointer" title="Near 52W High + Strong Momentum (RSI > 50)">
+                            🚀 Momentum Leaders
+                        </button>
+                        <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all cursor-pointer" title="Temporary price dip (RSI < 40)">
+                            🎯 Oversold Dips
+                        </button>
+                        <button onclick="loadScreenerPresets('all_active')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f2f2f7] text-[#1c1c1e] border border-[rgba(0,0,0,0.12)] hover:bg-[#e5e5ea] transition-all cursor-pointer">
                             ⚡ All Leaders
                         </button>
-                        <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] hover:bg-[#d8eedb] transition-all">
+                        <button onclick="loadScreenerPresets('breakout')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#f5f3ff] text-[#7c3aed] border border-[#ddd6fe] hover:bg-[#ede9fe] transition-all cursor-pointer">
                             🔥 52W Breakouts
-                        </button>
-                        <button onclick="loadScreenerPresets('compounder')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#eff6ff] text-[#007aff] border border-[#bfdbfe] hover:bg-[#dbeafe] transition-all">
-                            💎 Compounders
-                        </button>
-                        <button onclick="loadScreenerPresets('oversold')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#fef6ed] text-[#8a4500] border-[#fcdcb8] hover:bg-[#feecd8] transition-all">
-                            🎯 Oversold Dips
                         </button>
                         <button onclick="exportScreenerToCSV()" title="Download Screened Stocks CSV" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white dark:bg-[#2c2c2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 text-[#1c1c1e] dark:text-white hover:bg-[#f2f2f7] dark:hover:bg-[#3a3a3c] shadow-xs flex items-center gap-1 transition-all ml-1 cursor-pointer">
                             <span>📥</span> <span>Export CSV</span>
@@ -1074,18 +1077,18 @@
 
             <!-- Screener Results Table -->
             <div class="macos-card overflow-hidden">
-                <div class="overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                <div class="overflow-x-auto max-h-[620px]" style="-webkit-overflow-scrolling: touch;">
                     <table class="w-full text-left min-w-[720px]">
-                        <thead>
-                            <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa]">
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Stock / Company</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73]">Sector</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">CMP & Day Change</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">P/E</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">ROE</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">RSI (14)</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-center">Setup Type</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] text-right">Action</th>
+                        <thead class="sticky top-0 z-10 bg-[#f8f8fa] dark:bg-[#1c1c1e] shadow-xs">
+                            <tr class="border-b border-[rgba(0,0,0,0.08)] bg-[#f8f8fa] dark:bg-[#1c1c1e]">
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">Stock / Company</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6]">Sector</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-right">Price (CMP) &amp; Day Change</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-center" title="Price-to-Earnings Ratio: Measures how expensive the stock is relative to profits">Valuation (P/E)</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-center" title="Return on Equity: Profit efficiency on shareholders' funds. >15% is excellent">Profitability (ROE)</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-center" title="Relative Strength Index (0-100): Price speed. <35 is cheap/dip, >70 is hot">Speed (RSI 14)</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-center">Chart Setup</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-[#6e6e73] dark:text-[#a1a1a6] text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody id="screenerResultsTable">
@@ -1254,7 +1257,7 @@
                             <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
                                 <div id="breadthBar20" class="h-2 rounded-full bg-[#007aff] transition-all duration-500" style="width: 0%"></div>
                             </div>
-                            <div class="text-[10.5px] text-[#8e8e93]">Stocks above 20-day moving average</div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Quick short-term momentum (Stocks above 20-day average)</div>
                         </div>
 
                         <!-- Metric 2: % Above 50 EMA -->
@@ -1266,7 +1269,7 @@
                             <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
                                 <div id="breadthBar50" class="h-2 rounded-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
                             </div>
-                            <div class="text-[10.5px] text-[#8e8e93]">Primary regime filter (>50% is bullish)</div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Health threshold (>50% means market is in a healthy uptrend)</div>
                         </div>
 
                         <!-- Metric 3: % Above 200 EMA -->
@@ -1278,24 +1281,30 @@
                             <div class="w-full bg-[#e5e5ea] rounded-full h-2 overflow-hidden">
                                 <div id="breadthBar200" class="h-2 rounded-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
                             </div>
-                            <div class="text-[10.5px] text-[#8e8e93]">Structural long-term secular trend</div>
+                            <div class="text-[10.5px] text-[#8e8e93]">Big long-term picture (>50% means multi-month bull market)</div>
                         </div>
 
                         <!-- Metric 4: Advance/Decline & 52W Expansion -->
                         <div class="p-3.5 rounded-xl bg-[#f8f8fa] border border-[rgba(0,0,0,0.04)] space-y-2">
                             <div class="flex justify-between items-center text-xs">
-                                <span class="text-[#6e6e73] font-medium">A/D Ratio & 52W Highs</span>
+                                <span class="text-[#6e6e73] font-medium">Market Participation (A/D)</span>
                                 <span id="breadthAdRatio" class="font-bold mono text-sm text-[#1c1c1e]">--</span>
                             </div>
                             <div class="flex items-center justify-between text-xs font-semibold mono">
-                                <span class="text-emerald-700">▲ <span id="breadthAdvCount">--</span> Adv</span>
-                                <span class="text-red-600">▼ <span id="breadthDecCount">--</span> Dec</span>
+                                <span class="text-emerald-700">▲ <span id="breadthAdvCount">--</span> Advancing</span>
+                                <span class="text-red-600">▼ <span id="breadthDecCount">--</span> Declining</span>
                             </div>
                             <div class="flex justify-between items-center text-[10.5px] text-[#6e6e73] pt-0.5 border-t border-[rgba(0,0,0,0.05)]">
                                 <span>52W Highs: <strong id="breadth52wHighs" class="text-emerald-700 mono font-bold">0</strong></span>
                                 <span>52W Lows: <strong id="breadth52wLows" class="text-red-600 mono font-bold">0</strong></span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Plain-English Market Health Advice Banner -->
+                    <div id="breadthPlainEnglishCard" class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs flex items-center gap-2.5 text-[#b35900] dark:text-amber-300">
+                        <span class="text-base flex-shrink-0">🌡️</span>
+                        <span id="breadthLaymanAdvice">Market Temperature: When internal health is below 30%, focus on capital defense or Gold rather than aggressive stock buying.</span>
                     </div>
                 </div>
 
@@ -1459,6 +1468,8 @@
                 <div class="w-full h-[400px]">
                     <canvas id="sectorRrgCanvas"></canvas>
                 </div>
+                <!-- Plain-English 1-2-3 Sector Rotation Leaderboard -->
+                <div id="sectorLeaderboardContainer" class="mt-4 pt-3 border-t border-[rgba(0,0,0,0.06)] dark:border-white/10"></div>
             </div>
 
             <!-- View 2: Treemap Heatmap -->
@@ -1553,24 +1564,24 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="macos-card p-4">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs text-[#6e6e73] font-medium">Put-Call Ratio (PCR)</span>
+                        <span class="text-xs text-[#6e6e73] font-medium" title="Put-Call Ratio: Ratio of put options to call options. Above 1.0 means market has strong floor support">Put-Call Ratio (PCR)</span>
                         <span id="pcrValue" class="text-xl font-bold mono text-emerald-700">1.15</span>
                     </div>
                     <div id="pcrSentiment" class="text-xs font-semibold text-emerald-700 mt-1">Strong Bullish</div>
-                    <p class="text-[11px] text-[#8e8e93] mt-1">PCR > 1.0 indicates put writing support.</p>
+                    <p id="pcrLaymanSubtext" class="text-[11px] text-[#8e8e93] mt-1">More traders are protecting downside than expecting a crash (Solid floor support).</p>
                 </div>
 
                 <div class="macos-card p-4">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs text-[#6e6e73] font-medium">Max Pain Strike</span>
+                        <span class="text-xs text-[#6e6e73] font-medium" title="Max Pain: The price level where big institutional option sellers expect market to settle">Max Pain Target</span>
                         <span id="maxPainStrike" class="text-xl font-bold mono text-[#b35900]">₹—</span>
                     </div>
                     <div id="maxPainDistance" class="text-xs font-semibold text-[#48484a] mt-1">—</div>
-                    <p class="text-[11px] text-[#8e8e93] mt-1">Strike where writers face least liability.</p>
+                    <p id="maxPainLaymanSubtext" class="text-[11px] text-[#8e8e93] mt-1">Expected Expiry Pin: Institutional option sellers expect index to settle near here.</p>
                 </div>
 
                 <div class="macos-card p-4">
-                    <div class="text-xs text-[#007aff] font-semibold uppercase tracking-wider">Suggested Strategy</div>
+                    <div class="text-xs text-[#007aff] font-semibold uppercase tracking-wider">Suggested Low-Risk Strategy</div>
                     <div id="optionsStrategyName" class="text-sm font-bold text-[#1c1c1e] mt-1">🐂 Bull Call Spread</div>
                     <div id="optionsStrategySetup" class="text-[11px] text-emerald-700 mt-0.5 font-medium"></div>
                     <p id="optionsStrategyRationale" class="text-[11px] text-[#6e6e73] mt-1 line-clamp-2"></p>
@@ -1880,11 +1891,11 @@
                     <span id="statsNetPnl" class="text-xl font-bold mono text-[#1c1c1e]">₹0.00</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Expectancy</span>
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block" title="Average Profit or Loss expected per completed trade">Avg Profit / Trade</span>
                     <span id="statsExpectancy" class="text-xl font-bold mono text-[#007aff]">₹0/tr</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
-                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block">Max Drawdown</span>
+                    <span class="text-[10px] text-[#6e6e73] uppercase tracking-wider block" title="Largest peak-to-trough decline experienced in account equity">Biggest Drop (Peak)</span>
                     <span id="statsMaxDrawdown" class="text-xl font-bold mono text-[#b32020]">₹0</span>
                 </div>
                 <div class="macos-card p-3.5 text-center">
@@ -2055,10 +2066,10 @@
 
                     <div class="flex items-center gap-2.5 flex-wrap">
                         <select id="backtestStrategySelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] outline-none">
-                            <option value="sepa" selected>SEPA V3 Trend & VCP</option>
-                            <option value="supertrend">Supertrend (10, 3)</option>
-                            <option value="rsi_pullback">RSI Pullback (200 DMA + RSI < 35)</option>
-                            <option value="donchian">Donchian 20-Day Turtle</option>
+                            <option value="sepa" selected>⚡ SEPA V3 Trend &amp; VCP (Buys Strong Breakout Leaders)</option>
+                            <option value="supertrend">🌊 Supertrend (10, 3) (Follows Directional ATR Trend)</option>
+                            <option value="rsi_pullback">🎯 RSI Pullback (Buys Temporary Dips in Strong Uptrends)</option>
+                            <option value="donchian">🐢 Turtle 20-Day Trend (Classic 20-Day High Breakout)</option>
                         </select>
                         <select id="backtestSymbolSelect" class="bg-white dark:bg-[#1c1f2e] border border-[rgba(0,0,0,0.12)] dark:border-white/10 px-3 py-1.5 rounded-lg text-xs text-[#1c1c1e] dark:text-[#f5f5f7] mono outline-none">
                             <option value="RELIANCE.NS">RELIANCE.NS</option>
