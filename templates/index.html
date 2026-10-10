@@ -460,155 +460,171 @@
             <!-- =============================================================== -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
-                <!-- COLUMN 1: TECHNICAL INDICATORS CARD (UNIFIED SINGLE-BOX DESIGN - ZERO SCROLL) -->
-                <div class="macos-card p-4 sm:p-5 flex flex-col justify-between" id="technicalAnalysisCard">
-                    <!-- CARD HEADER WITH SEGMENTED VIEW SWITCHER -->
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.08)] pb-3">
+                <!-- COLUMN 1: TECHNICAL TRENDS & MARKET METER CARD (SINGLE UNIFIED VIEW - ZERO TABS, ZERO SCROLL) -->
+                <div class="macos-card p-4 sm:p-5 flex flex-col space-y-3.5" id="technicalAnalysisCard">
+                    <!-- CARD HEADER -->
+                    <div class="flex justify-between items-center border-b border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.08)] pb-3">
                         <div class="flex items-center gap-2">
                             <span class="text-base">⚡</span>
                             <div>
-                                <h3 class="text-sm font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">Technical Momentum & Indicators</h3>
-                                <span class="text-[10.5px] text-[#8e8e93] block">Multi-timeframe mathematical analytics & momentum</span>
+                                <h3 class="text-sm font-semibold text-[#1c1c1e] dark:text-[#f5f5f7]">Technical Trends & Market Meter</h3>
+                                <span class="text-[11px] text-[#8e8e93] block">Easy-to-read trend analysis & momentum metrics</span>
                             </div>
                         </div>
-                        
-                        <!-- Segmented Tab Controls (Matrix vs TradingView Gauge) -->
-                        <div class="inline-flex p-0.5 rounded-lg bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] text-xs">
-                            <button id="btnTechViewMatrix" onclick="switchTechView('matrix')" class="px-2.5 py-1 font-medium rounded-md text-[11px] transition-all bg-white dark:bg-[#2c2c2e] text-[#1c1c1e] dark:text-white shadow-2xs">
-                                📊 Matrix View
-                            </button>
-                            <button id="btnTechViewGauge" onclick="switchTechView('gauge')" class="px-2.5 py-1 font-medium rounded-md text-[11px] transition-all text-[#6e6e73] dark:text-[#a1a1a6] hover:text-[#1c1c1e] dark:hover:text-white">
-                                🧭 Gauge Consensus
-                            </button>
-                        </div>
+                        <span class="text-[11px] text-[#007aff] font-medium bg-[#eff6ff] dark:bg-blue-950/40 px-2.5 py-0.5 rounded-full border border-[#bfdbfe] dark:border-blue-800">
+                            Live Analysis
+                        </span>
                     </div>
 
-                    <!-- MACRO TREND & MOVING AVERAGES RIBBON (Always Visible) -->
-                    <div class="mt-3 p-2.5 rounded-xl bg-[rgba(0,0,0,0.02)] dark:bg-[rgba(255,255,255,0.03)] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+                    <!-- BIG PICTURE: OVERALL TREND RIBBON -->
+                    <div class="p-3 rounded-xl bg-[rgba(0,0,0,0.02)] dark:bg-[rgba(255,255,255,0.03)] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
                         <div class="flex flex-wrap items-center justify-between gap-1.5 text-xs">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-[#6e6e73] font-medium text-[11px]">Macro Trend:</span>
-                                <span id="maTrendStatus" class="font-bold text-emerald-700 dark:text-emerald-400">BULLISH</span>
-                                <span id="crossBadge" class="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40">
-                                    🌟 Golden Cross Active (50 DMA > 200 DMA)
+                                <span class="text-[#6e6e73] font-medium text-[11px]">Big Picture Trend:</span>
+                                <span id="maTrendStatus" class="font-bold text-emerald-700 dark:text-emerald-400">RISING (UPTREND)</span>
+                                <span id="crossBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40">
+                                    🌟 Strong Long-Term Trend
                                 </span>
                             </div>
                             <div class="flex items-center gap-3 text-[11px] text-[#6e6e73] font-mono">
-                                <span>50 SMA: <strong id="valSma50" class="text-[#007aff] dark:text-[#3898ff]">₹0</strong></span>
-                                <span>200 SMA: <strong id="valSma200" class="text-[#8944ab] dark:text-[#c084fc]">₹0</strong></span>
+                                <span>50-Day Avg: <strong id="valSma50" class="text-[#007aff] dark:text-[#3898ff]">₹0</strong></span>
+                                <span>200-Day Avg: <strong id="valSma200" class="text-[#8944ab] dark:text-[#c084fc]">₹0</strong></span>
                             </div>
                         </div>
-                        <p id="maExplanation" class="text-[10px] text-[#8e8e93] mt-1 leading-tight truncate"></p>
+                        <p id="maExplanation" class="text-[10.5px] text-[#8e8e93] mt-1 leading-tight"></p>
                     </div>
 
-                    <!-- DYNAMIC DIVERGENCE / CONFLICT RESOLUTION BANNER -->
-                    <div id="techDivergenceBanner" class="hidden mt-2.5 p-2.5 rounded-xl text-xs space-y-1 border transition-all">
+                    <!-- DYNAMIC BEGINNER TIP / CONFLICT RESOLUTION BANNER -->
+                    <div id="techDivergenceBanner" class="hidden p-3 rounded-xl text-xs space-y-1.5 border transition-all">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-1.5 font-bold text-[11px]" id="techDivergenceTitle">
-                                <span>⚠️</span> <span>Momentum Divergence Warning</span>
+                                <span>💡</span> <span>Beginner Tip: Why the Meter & Trend might look different</span>
                             </div>
-                            <span class="text-[9.5px] px-1.5 py-0.5 rounded font-semibold mono" id="techDivergenceBadge">CONTRADICTION</span>
+                            <span class="text-[9.5px] px-1.5 py-0.5 rounded font-bold mono" id="techDivergenceBadge">QUICK BOUNCE</span>
                         </div>
-                        <p id="techDivergenceText" class="text-[10.5px] leading-snug"></p>
+                        <p id="techDivergenceText" class="text-[11px] leading-relaxed"></p>
                     </div>
 
-                    <!-- VIEW 1: BENTO MATRIX (Compact, High-Density 2x2 Grid + Pivots Strip) -->
-                    <div id="techViewBento" class="mt-3 space-y-2.5 flex-1">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <!-- 1. RSI Indicator -->
-                            <div class="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-[#6e6e73] font-medium text-[11px]">RSI (14)</span>
-                                    <span id="rsiValue" class="font-bold mono text-[#1c1c1e] dark:text-white">50.0</span>
+                    <!-- 4 KEY INDICATOR CARDS (Clean 2x2 Grid) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- 1. RSI Indicator -->
+                        <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[#1c1c1e] dark:text-white font-medium text-[11.5px] block">Speed & Strength (RSI)</span>
+                                    <span class="text-[10px] text-[#8e8e93]">Under 30 = Cheap, Over 70 = Hot</span>
                                 </div>
-                                <div class="w-full bg-[#e5e5ea] dark:bg-[#2c2c2e] rounded-full h-1.5 my-1.5 overflow-hidden">
-                                    <div id="rsiProgressBar" class="h-1.5 rounded-full bg-[#007aff] transition-all" style="width: 50%"></div>
-                                </div>
-                                <p id="rsiExplanation" class="text-[10px] text-[#8e8e93] leading-tight line-clamp-1"></p>
+                                <span id="rsiValue" class="font-bold mono text-sm text-[#1c1c1e] dark:text-white">50.0</span>
                             </div>
-
-                            <!-- 2. MACD Status -->
-                            <div class="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-[#6e6e73] font-medium text-[11px]">MACD (12, 26, 9)</span>
-                                    <span id="macdStatus" class="font-bold text-[10.5px] text-emerald-700 dark:text-emerald-400">BULLISH CROSS</span>
-                                </div>
-                                <div class="h-1.5 my-1.5"></div>
-                                <p id="macdExplanation" class="text-[10px] text-[#8e8e93] leading-tight line-clamp-1"></p>
+                            <div class="w-full bg-[#e5e5ea] dark:bg-[#2c2c2e] rounded-full h-1.5 my-2 overflow-hidden">
+                                <div id="rsiProgressBar" class="h-1.5 rounded-full bg-[#007aff] transition-all" style="width: 50%"></div>
                             </div>
-
-                            <!-- 3. Volume Trend & OBV -->
-                            <div class="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-[#6e6e73] font-medium text-[11px]">Volume Surge</span>
-                                    <span id="volRatio" class="font-bold mono text-[#1c1c1e] dark:text-white">1.0x</span>
-                                </div>
-                                <div id="volSpikeBadge" class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300 my-1 inline-block">
-                                    🔥 Institutional Surge (>1.8x)
-                                </div>
-                                <div class="text-[10px] text-[#6e6e73] flex justify-between items-center pt-1 border-t border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)]">
-                                    <span>OBV:</span>
-                                    <strong id="obvTrendText" class="text-[#1c1c1e] dark:text-white mono text-[10px]">Accumulation (Rising)</strong>
-                                </div>
-                                <p id="volExplanation" class="hidden"></p>
-                            </div>
-
-                            <!-- 4. NSE Delivery Accumulation Radar -->
-                            <div class="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-[#6e6e73] font-medium text-[11px] flex items-center gap-1">
-                                        <span>📦</span> Delivery
-                                    </span>
-                                    <span id="deliveryBadge" class="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300">
-                                        Checking...
-                                    </span>
-                                </div>
-                                <div class="flex justify-between items-center text-[10px] text-[#6e6e73] my-1">
-                                    <span>Del %: <strong id="deliveryPctVal" class="text-[#1c1c1e] dark:text-white mono">--%</strong></span>
-                                    <span>Surge: <strong id="deliverySurgeVal" class="text-[#007aff] mono">--x</strong></span>
-                                    <span class="hidden" id="deliveryAvgVal">--%</span>
-                                </div>
-                                <div class="w-full bg-[#e5e5ea] dark:bg-[#2c2c2e] rounded-full h-1 overflow-hidden">
-                                    <div id="deliveryProgressBar" class="h-1 rounded-full bg-[#34c759] transition-all" style="width: 50%"></div>
-                                </div>
-                                <p id="deliveryExplanation" class="hidden"></p>
-                            </div>
+                            <p id="rsiExplanation" class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6] leading-tight line-clamp-1"></p>
                         </div>
 
-                        <!-- 5. Key Risk Pivot Levels (Classic Daily Pivots) -->
-                        <div class="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs">
-                            <span class="text-[10px] text-[#8e8e93] font-medium block mb-1.5 uppercase tracking-wider">Key Floor & Ceiling Levels (Classic Daily Pivots):</span>
-                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                                <div class="py-1 px-2 rounded-lg bg-[rgba(179,32,32,0.05)] border border-[rgba(179,32,32,0.15)]">
-                                    <span class="text-[9.5px] text-[#b32020] dark:text-rose-400 block font-medium">Support (S1)</span>
-                                    <span id="supportLevel" class="font-bold mono text-[#b32020] dark:text-rose-400 text-xs">₹0</span>
+                        <!-- 2. MACD Status -->
+                        <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[#1c1c1e] dark:text-white font-medium text-[11.5px] block">Short-Term Direction (MACD)</span>
+                                    <span class="text-[10px] text-[#8e8e93]">Recent momentum turning point</span>
                                 </div>
-                                <div class="py-1 px-2 rounded-lg bg-[rgba(0,122,255,0.05)] border border-[rgba(0,122,255,0.15)]">
-                                    <span class="text-[9.5px] text-[#0062cc] dark:text-blue-400 block font-medium">Pivot Point</span>
-                                    <span id="pivotLevel" class="font-bold mono text-[#1c1c1e] dark:text-white text-xs">₹0</span>
-                                </div>
-                                <div class="py-1 px-2 rounded-lg bg-[rgba(30,126,52,0.05)] border border-[rgba(30,126,52,0.15)]">
-                                    <span class="text-[9.5px] text-[#1e7e34] dark:text-emerald-400 block font-medium">Resistance (R1)</span>
-                                    <span id="resistanceLevel" class="font-bold mono text-[#1e7e34] dark:text-emerald-400 text-xs">₹0</span>
-                                </div>
+                                <span id="macdStatus" class="font-bold text-[11px] text-emerald-700 dark:text-emerald-400">TURNING UP 🟢</span>
                             </div>
+                            <div class="h-1.5 my-2"></div>
+                            <p id="macdExplanation" class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6] leading-tight line-clamp-1"></p>
+                        </div>
+
+                        <!-- 3. Volume Trend & OBV -->
+                        <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[#1c1c1e] dark:text-white font-medium text-[11.5px] block">Trading Activity (Volume)</span>
+                                    <span class="text-[10px] text-[#8e8e93]">Compared to 20-day normal</span>
+                                </div>
+                                <span id="volRatio" class="font-bold mono text-sm text-[#1c1c1e] dark:text-white">1.0x</span>
+                            </div>
+                            <div id="volSpikeBadge" class="hidden text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300 my-1 inline-block">
+                                🔥 High Buyer Interest (>1.8x)
+                            </div>
+                            <div class="text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6] flex justify-between items-center pt-1.5 border-t border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)]">
+                                <span>Money Flow:</span>
+                                <strong id="obvTrendText" class="text-[#1c1c1e] dark:text-white mono text-[10.5px]">Accumulation (Buying)</strong>
+                            </div>
+                            <p id="volExplanation" class="hidden"></p>
+                        </div>
+
+                        <!-- 4. NSE Delivery Accumulation Radar -->
+                        <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs flex flex-col justify-between">
+                            <div class="flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[#1c1c1e] dark:text-white font-medium text-[11.5px] flex items-center gap-1">
+                                        <span>📦</span> Demat Delivery %
+                                    </span>
+                                    <span class="text-[10px] text-[#8e8e93]">Shares held for long term</span>
+                                </div>
+                                <span id="deliveryBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#edf7ee] text-[#1e7e34] border border-[#c6e8cc] dark:bg-emerald-950/40 dark:text-emerald-300">
+                                    Checking...
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center text-[11px] text-[#6e6e73] my-1.5">
+                                <span>Delivery: <strong id="deliveryPctVal" class="text-[#1c1c1e] dark:text-white mono">--%</strong></span>
+                                <span>Surge: <strong id="deliverySurgeVal" class="text-[#007aff] mono">--x</strong></span>
+                                <span class="hidden" id="deliveryAvgVal">--%</span>
+                            </div>
+                            <div class="w-full bg-[#e5e5ea] dark:bg-[#2c2c2e] rounded-full h-1 overflow-hidden">
+                                <div id="deliveryProgressBar" class="h-1 rounded-full bg-[#34c759] transition-all" style="width: 50%"></div>
+                            </div>
+                            <p id="deliveryExplanation" class="hidden"></p>
                         </div>
                     </div>
 
-                    <!-- VIEW 2: TRADINGVIEW TECHNICAL ANALYSIS SPEEDOMETER GAUGE -->
-                    <div id="techViewGauge" class="hidden mt-3 flex-1 flex flex-col justify-between">
-                        <div class="flex justify-between items-center text-xs mb-1">
-                            <span class="text-[#6e6e73] font-medium text-[11px]">TradingView Speedometer Consensus</span>
-                            <span class="text-[9.5px] text-[#007aff] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] border border-[#bfdbfe] dark:bg-blue-950/40 dark:border-blue-800">
-                                26 Technicals (11 Oscillators + 15 MAs)
+                    <!-- 5. Key Price Floor & Ceiling Levels -->
+                    <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-[10.5px] text-[#8e8e93] font-medium uppercase tracking-wider">Key Daily Price Levels (Where price usually reacts):</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="py-1.5 px-2 rounded-lg bg-[rgba(179,32,32,0.05)] border border-[rgba(179,32,32,0.15)]">
+                                <span class="text-[10px] text-[#b32020] dark:text-rose-400 block font-medium">Floor (Support)</span>
+                                <span id="supportLevel" class="font-bold mono text-[#b32020] dark:text-rose-400 text-xs">₹0</span>
+                                <span class="text-[9px] text-[#8e8e93] block">Buyers step in</span>
+                            </div>
+                            <div class="py-1.5 px-2 rounded-lg bg-[rgba(0,122,255,0.05)] border border-[rgba(0,122,255,0.15)]">
+                                <span class="text-[10px] text-[#0062cc] dark:text-blue-400 block font-medium">Middle (Pivot)</span>
+                                <span id="pivotLevel" class="font-bold mono text-[#1c1c1e] dark:text-white text-xs">₹0</span>
+                                <span class="text-[9px] text-[#8e8e93] block">Average price</span>
+                            </div>
+                            <div class="py-1.5 px-2 rounded-lg bg-[rgba(30,126,52,0.05)] border border-[rgba(30,126,52,0.15)]">
+                                <span class="text-[10px] text-[#1e7e34] dark:text-emerald-400 block font-medium">Ceiling (Resistance)</span>
+                                <span id="resistanceLevel" class="font-bold mono text-[#1e7e34] dark:text-emerald-400 text-xs">₹0</span>
+                                <span class="text-[9px] text-[#8e8e93] block">Sellers take profit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. TRADINGVIEW TECHNICAL ANALYSIS SPEEDOMETER GAUGE (TOGETHER IN SINGLE VIEW - ZERO SCROLL) -->
+                    <div class="p-3 rounded-xl bg-white dark:bg-[#1c1c1e] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-2xs space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <div>
+                                <span class="text-[#1c1c1e] dark:text-white font-semibold text-xs flex items-center gap-1.5">
+                                    <span>🧭</span> Market Consensus Meter
+                                </span>
+                                <span class="text-[10px] text-[#8e8e93] block">Real-time combined summary of 26 technical indicators</span>
+                            </div>
+                            <span class="text-[10px] text-[#007aff] font-bold px-2 py-0.5 rounded bg-[#eff6ff] border border-[#bfdbfe] dark:bg-blue-950/40 dark:border-blue-800">
+                                TradingView Consensus
                             </span>
                         </div>
-                        <div id="tvTechnicalGaugeContainer" class="w-full flex justify-center items-center overflow-hidden h-[260px] rounded-xl bg-white dark:bg-[#151722] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
-                            <div class="text-[11px] text-[#8e8e93] flex items-center justify-center py-8">Loading TradingView Consensus Gauge...</div>
+                        
+                        <!-- Speedometer container: height 425px with overflow hidden to eliminate any scrollbar completely -->
+                        <div id="tvTechnicalGaugeContainer" class="w-full flex justify-center items-center rounded-lg bg-white dark:bg-[#151722]" style="height: 425px; min-height: 425px; overflow: hidden; scrollbar-width: none; -ms-overflow-style: none;">
+                            <div class="text-[11px] text-[#8e8e93] flex items-center justify-center py-12">Loading Market Meter...</div>
                         </div>
-                        <p class="text-[10px] text-[#8e8e93] mt-1.5 text-center leading-tight">
-                            💡 Oscillators can signal short-term rebounds in severe downtrends. Always cross-reference with Macro Stage & Risk Stance.
-                        </p>
+
+                        <div class="p-2 rounded-lg bg-[rgba(0,0,0,0.02)] dark:bg-[rgba(255,255,255,0.02)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)] text-[10.5px] text-[#6e6e73] dark:text-[#a1a1a6] text-center leading-snug">
+                            💡 <strong>Tip for Beginners:</strong> The meter shows short-term trading mood. If the meter says "Buy" but the Big Picture Trend is "Falling", treat it as a temporary bounce rather than a long-term investment.
+                        </div>
                     </div>
                 </div>
 
