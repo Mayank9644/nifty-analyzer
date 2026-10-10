@@ -985,6 +985,9 @@ function renderAllStockComponents(stockData, chartData, newsData) {
 
     try {
         renderTechnicals(stockData.technicals);
+        if (typeof updateTechnicalDivergenceBanner === "function") {
+            updateTechnicalDivergenceBanner(stockData.technicals, stockData.signals, stockData.minervini);
+        }
     } catch (err) {
         console.error("renderTechnicals error:", err);
     }
@@ -1117,7 +1120,7 @@ function renderTradingViewTechnicalGauge(symbol) {
         "interval": "1D",
         "width": "100%",
         "isTransparent": true,
-        "height": "310",
+        "height": "260",
         "symbol": tvSymbol,
         "showIntervalTabs": true,
         "displayMode": "single",
@@ -1129,6 +1132,98 @@ function renderTradingViewTechnicalGauge(symbol) {
     container.appendChild(widgetWrapper);
 }
 window.renderTradingViewTechnicalGauge = renderTradingViewTechnicalGauge;
+
+function switchTechView(mode) {
+    const bento = document.getElementById("techViewBento");
+    const gauge = document.getElementById("techViewGauge");
+    const btnMatrix = document.getElementById("btnTechViewMatrix");
+    const btnGauge = document.getElementById("btnTechViewGauge");
+    if (!bento || !gauge) return;
+
+    if (mode === "gauge") {
+        bento.classList.add("hidden");
+        gauge.classList.remove("hidden");
+        if (btnGauge) {
+            btnGauge.className = "px-2.5 py-1 font-medium rounded-md text-[11px] transition-all bg-white dark:bg-[#2c2c2e] text-[#1c1c1e] dark:text-white shadow-2xs";
+        }
+        if (btnMatrix) {
+            btnMatrix.className = "px-2.5 py-1 font-medium rounded-md text-[11px] transition-all text-[#6e6e73] dark:text-[#a1a1a6] hover:text-[#1c1c1e] dark:hover:text-white";
+        }
+        // If container empty or has only loading message, trigger gauge render
+        const container = document.getElementById("tvTechnicalGaugeContainer");
+        if (container && (!container.querySelector("iframe") && !container.querySelector("script"))) {
+            const sym = appState?.currentSymbol || "RELIANCE.NS";
+            renderTradingViewTechnicalGauge(sym);
+        }
+    } else {
+        gauge.classList.add("hidden");
+        bento.classList.remove("hidden");
+        if (btnMatrix) {
+            btnMatrix.className = "px-2.5 py-1 font-medium rounded-md text-[11px] transition-all bg-white dark:bg-[#2c2c2e] text-[#1c1c1e] dark:text-white shadow-2xs";
+        }
+        if (btnGauge) {
+            btnGauge.className = "px-2.5 py-1 font-medium rounded-md text-[11px] transition-all text-[#6e6e73] dark:text-[#a1a1a6] hover:text-[#1c1c1e] dark:hover:text-white";
+        }
+    }
+}
+window.switchTechView = switchTechView;
+
+function updateTechnicalDivergenceBanner(technicals, signals, minervini) {
+    const banner = document.getElementById("techDivergenceBanner");
+    const titleEl = document.getElementById("techDivergenceTitle");
+    const badgeEl = document.getElementById("techDivergenceBadge");
+    const textEl = document.getElementById("techDivergenceText");
+    if (!banner || !titleEl || !badgeEl || !textEl) return;
+
+    if (!technicals || !technicals.moving_averages) {
+        banner.classList.add("hidden");
+        return;
+    }
+
+    const isDeathCross = !technicals.moving_averages.is_golden_cross_active;
+    const isStage4 = minervini?.stage && minervini.stage.toLowerCase().includes("stage 4");
+    const sigVerdict = (signals?.verdict || signals?.action || "").toUpperCase();
+    const sigStance = (signals?.stance || signals?.trade_plan?.action_type || "").toUpperCase();
+    const isMacroBearish = isDeathCross || isStage4 || sigStance.includes("DEFENSIVE") || sigStance === "EXIT_AVOID";
+    const isActionExit = sigVerdict.includes("SELL") || sigVerdict.includes("EXIT") || sigVerdict.includes("DEFENSIVE") || sigStance === "EXIT_AVOID";
+
+    const macdBullish = technicals?.macd?.status && technicals.macd.status.toLowerCase().includes("bullish");
+    const rsiBouncing = technicals?.rsi?.value && technicals.rsi.value >= 30 && technicals.rsi.value <= 65;
+
+    // SCENARIO 1: Bear Market Rally / Counter-Trend Divergence
+    // Macro is Bearish/Stage 4/Death Cross, but short-term oscillators (MACD/RSI/TradingView) show positive momentum
+    if (isMacroBearish && (macdBullish || rsiBouncing || isActionExit)) {
+        banner.classList.remove("hidden");
+        banner.className = "mt-2.5 p-2.5 rounded-xl text-xs space-y-1 border bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200 transition-all";
+        titleEl.innerHTML = `<span>⚠️</span> <span class="font-bold">Contradiction Clarified: Bear Market Rebound vs Macro Trend</span>`;
+        badgeEl.textContent = "COUNTER-TREND";
+        badgeEl.className = "text-[9.5px] px-1.5 py-0.5 rounded font-bold mono bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30";
+        textEl.innerHTML = `<strong>Why TradingView / Fast Oscillators may suggest BUY while our Engine says DEFENSIVE / SELL:</strong> TradingView's gauge aggregates 11 short-term oscillators (RSI bounce, MACD positive cross) that detect oversold mean-reversion. However, the stock is trapped in a <strong>Stage 4 Downtrend (Death Cross: 50 DMA &lt; 200 DMA)</strong>. In institutional risk management, counter-trend rallies into falling moving averages represent opportunities to <em>exit longs / harvest profit</em>, NOT safe entries.`;
+        return;
+    }
+
+    // SCENARIO 2: Bull Market Pullback / Healthy Dip
+    // Macro is Bullish/Stage 2/Golden Cross, but short-term oscillators are pulled back/oversold
+    const isGoldenCross = technicals.moving_averages.is_golden_cross_active;
+    const isStage2 = minervini?.stage && minervini.stage.toLowerCase().includes("stage 2");
+    const isMacroBullish = isGoldenCross || isStage2;
+    const macdBearish = technicals?.macd?.status && technicals.macd.status.toLowerCase().includes("bearish");
+    const rsiOversold = technicals?.rsi?.value && technicals.rsi.value < 40;
+
+    if (isMacroBullish && (macdBearish || rsiOversold)) {
+        banner.classList.remove("hidden");
+        banner.className = "mt-2.5 p-2.5 rounded-xl text-xs space-y-1 border bg-blue-500/10 border-blue-500/30 text-blue-900 dark:text-blue-200 transition-all";
+        titleEl.innerHTML = `<span>💡</span> <span class="font-bold">Pullback Opportunity in Secular Uptrend</span>`;
+        badgeEl.textContent = "DIP SETUP";
+        badgeEl.className = "text-[9.5px] px-1.5 py-0.5 rounded font-bold mono bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/30";
+        textEl.innerHTML = `Short-term momentum is cooling off, but the secular macro trend remains firmly <strong>Bullish (Golden Cross / Stage 2)</strong>. Look for floor support at S1/Pivot for favorable risk-to-reward continuation entries.`;
+        return;
+    }
+
+    // Otherwise, trend and momentum are in agreement: hide the banner
+    banner.classList.add("hidden");
+}
+window.updateTechnicalDivergenceBanner = updateTechnicalDivergenceBanner;
 
 function inspectPickOnChart(pick) {
     if (!pick) return;
